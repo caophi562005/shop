@@ -23,6 +23,7 @@ model User {
   soldOrder     Order[]        @relation("Shop")
   refreshTokens RefreshToken[]
   carts         CartItem[]
+  devices       Device[]
 
   roleId Int
   role   Role @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -132,12 +133,16 @@ model Permission {
 }
 
 model RefreshToken {
-  token  String @unique
+  token String @unique
+
   userId Int
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  deviceId Int // Foreign key tới Device
+  device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   expiresAt DateTime
-  createAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model CartItem {
@@ -444,6 +449,20 @@ model Order {
 
   @@index([deletedAt])
   @@index([status, deletedAt])
+}
+
+model Device {
+  id            Int            @id @default(autoincrement())
+  userAgent     String
+  ip            String
+  isActive      Boolean        @default(true)
+  refreshTokens RefreshToken[]
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  lastActive DateTime @updatedAt
+  createdAt  DateTime @default(now())
 }
 
 model ReviewMedia {
