@@ -6,9 +6,23 @@ import { SharedModule } from './shared/shared.module'
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import CustomZodValidationPipe from './shared/pipes/custom-zod-validation.pipe'
 import { ZodSerializerInterceptor } from 'nestjs-zod'
+import { CacheModule } from '@nestjs/cache-manager'
+import envConfig from './shared/envConfig'
+import { createKeyv } from '@keyv/redis'
 
 @Module({
-  imports: [AuthModule, SharedModule],
+  imports: [
+    CacheModule.register({
+      isGlobal: true,
+      useFactory: async () => {
+        return {
+          stores: [createKeyv(envConfig.REDIS_URL)],
+        }
+      },
+    }),
+    AuthModule,
+    SharedModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

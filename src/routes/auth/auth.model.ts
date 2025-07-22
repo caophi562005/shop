@@ -103,6 +103,51 @@ export const RefreshTokenResSchema = LoginResSchema
 
 export const LogoutBodySchema = RefreshTokenBodySchema
 
+export const ForgotPasswordBodySchema = z
+  .object({
+    email: z.string().email(),
+    code: z.string().length(6),
+    newPassword: z.string().min(6).max(100),
+    confirmNewPassword: z.string().min(6).max(100),
+  })
+  .strict()
+  .superRefine(({ newPassword, confirmNewPassword }, ctx) => {
+    if (confirmNewPassword !== newPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Error.PasswordDoNotMatch',
+        path: ['confirmNewPassword'],
+      })
+    }
+  })
+
+export const TwoFactorSetupSchema = z.object({
+  secret: z.string(),
+  uri: z.string(),
+})
+
+export const DisableTwoFactorBodySchema = z
+  .object({
+    totpCode: z.string().optional(),
+    code: z.string().optional(),
+  })
+  .strict()
+  .superRefine(({ totpCode, code }, ctx) => {
+    const message = 'Error.JustOneRequired'
+    if (totpCode !== undefined && code !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message,
+        path: ['totpCode'],
+      })
+      ctx.addIssue({
+        code: 'custom',
+        message,
+        path: ['code'],
+      })
+    }
+  })
+
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 export type RegisterResType = z.infer<typeof RegisterResSchema>
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
@@ -114,3 +159,6 @@ export type RefreshTokenType = z.infer<typeof RefreshTokenSchema>
 export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBodySchema>
 export type RefreshTokenResType = z.infer<typeof RefreshTokenResSchema>
 export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>
+export type TwoFactorSetupType = z.infer<typeof TwoFactorSetupSchema>
+export type DisableTwoFactorBodyType = z.infer<typeof DisableTwoFactorBodySchema>
