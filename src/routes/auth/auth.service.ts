@@ -82,6 +82,7 @@ export class AuthService {
           phoneNumber: body.phoneNumber,
           password: hashedPassword,
           roleId: clientRoleId,
+          avatar: null,
         }),
         this.authRepository.deleteVerificationCode({
           email_type: {
@@ -151,6 +152,23 @@ export class AuthService {
     const isPasswordMatch = await this.hashingService.compare(body.password, user.password)
     if (!isPasswordMatch) {
       throw InvalidPasswordException
+    }
+
+    // Nếu user bật 2FA thì kiểm tra mã 2FA có hợp lệ không
+    if (user.totpSecret) {
+      if (!body.totpCode) {
+        throw InvalidTOTPException
+      }
+
+      // Kiểm tra mã TOTP có hợp lệ không
+      const isValid = this.twoFactorService.verifyTOTP({
+        email: user.email,
+        secret: user.totpSecret,
+        token: body.totpCode,
+      })
+      if (!isValid) {
+        throw InvalidTOTPException
+      }
     }
 
     // Tạo mới device
@@ -317,7 +335,6 @@ export class AuthService {
     await this.sharedUserRepository.update({ id: user.id }, { totpSecret: secret, updatedById: user.id })
 
     return {
-      secret,
       uri,
     }
   }
@@ -350,6 +367,13 @@ export class AuthService {
         email: user.email,
         type: TypeOfVerificationCode.DISABLE_2FA,
       })
+    }
+
+    //Xoá secret trong DB
+    await this.sharedUserRepository.update({ id: userId }, { totpSecret: null, updatedById: userId })
+
+    return {
+      message: 'Đã tắt xác thực 2FA thành công',
     }
   }
 }

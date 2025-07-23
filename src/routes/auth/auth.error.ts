@@ -1,4 +1,5 @@
-import { UnprocessableEntityException } from '@nestjs/common'
+import { BadRequestException, UnprocessableEntityException } from '@nestjs/common'
+import path from 'path'
 
 export const InvalidOTPException = new UnprocessableEntityException([
   {
@@ -85,5 +86,12 @@ export const InvalidTOTPException = new UnprocessableEntityException([
   {
     message: 'Error.InvalidTOTP',
     path: 'totpCode',
+  },
+])
+
+export const GoogleUserInfoException = new BadRequestException([
+  {
+    message: 'Error.FailedToGetGoogleUserInfo',
+    path: 'google',
   },
 ])

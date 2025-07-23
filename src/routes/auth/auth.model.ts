@@ -34,24 +34,8 @@ export const LoginBodySchema = UserSchema.pick({
 })
   .extend({
     totpCode: z.string().optional(),
-    code: z.string().optional(),
   })
   .strict()
-  .superRefine(({ totpCode, code }, ctx) => {
-    const message = 'Error.JustOneRequired'
-    if (totpCode !== undefined && code !== undefined) {
-      ctx.addIssue({
-        code: 'custom',
-        message,
-        path: ['totpCode'],
-      })
-      ctx.addIssue({
-        code: 'custom',
-        message,
-        path: ['code'],
-      })
-    }
-  })
 
 export const LoginResSchema = z.object({
   accessToken: z.string(),
@@ -122,7 +106,6 @@ export const ForgotPasswordBodySchema = z
   })
 
 export const TwoFactorSetupSchema = z.object({
-  secret: z.string(),
   uri: z.string(),
 })
 
@@ -148,6 +131,15 @@ export const DisableTwoFactorBodySchema = z
     }
   })
 
+export const GoogleAuthStateSchema = DeviceSchema.pick({
+  userAgent: true,
+  ip: true,
+})
+
+export const GoogleAuthResSchema = z.object({
+  url: z.string().url(),
+})
+
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 export type RegisterResType = z.infer<typeof RegisterResSchema>
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
@@ -162,3 +154,5 @@ export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
 export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>
 export type TwoFactorSetupType = z.infer<typeof TwoFactorSetupSchema>
 export type DisableTwoFactorBodyType = z.infer<typeof DisableTwoFactorBodySchema>
+export type GoogleAuthStateType = z.infer<typeof GoogleAuthStateSchema>
+export type GoogleAuthResType = z.infer<typeof GoogleAuthResSchema>
