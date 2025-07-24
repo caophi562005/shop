@@ -21,6 +21,11 @@ include 'inc/header.php';
             </div>
 
             <button type="submit">Đăng nhập</button>
+
+            <!-- Liên kết Quên mật khẩu -->
+            <div class="forgot-password">
+                <a href="index.php?controller=login&action=forgotPassword">Quên mật khẩu?</a>
+            </div>
         </form>
 
         <!-- Hoặc đăng nhập bằng -->
@@ -37,56 +42,5 @@ include 'inc/header.php';
         </div>
     </div>
 </div>
-
-<style>
-.social-login {
-    text-align: center;
-    margin-top: 20px;
-}
-
-.social-login p {
-    margin-bottom: 10px;
-    font-size: 14px;
-    color: #888;
-}
-
-.social-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-}
-
-.social-buttons a {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    padding: 8px 16px;
-    border-radius: 5px;
-    color: white;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-}
-
-.google-btn {
-    background-color: #db4437;
-}
-
-.google-btn:hover {
-    background-color: #c33d30;
-}
-
-.facebook-btn {
-    background-color: #3b5998;
-}
-
-.facebook-btn:hover {
-    background-color: #334b84;
-}
-
-.social-buttons i {
-    font-size: 16px;
-}
-</style>
 
 <?php include 'inc/footer.php'; ?>
