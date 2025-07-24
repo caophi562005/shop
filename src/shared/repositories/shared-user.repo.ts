@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../services/prisma.service'
 import { UserType } from '../models/shared-user.model'
+import { RoleType } from '../models/shared-role.model'
+import { PermissionType } from '../models/shared-permission.model'
 
 export type WhereUniqueUserType = { id: number } | { email: string }
+
+type UserIncludeRolePermissionType = UserType & { role: RoleType & { permissions: PermissionType[] } }
 
 @Injectable()
 export class SharedUserRepository {
@@ -21,6 +25,23 @@ export class SharedUserRepository {
         deletedAt: null,
       },
       data,
+    })
+  }
+
+  findUniqueIncludeRolePermission(where: WhereUniqueUserType) {
+    return this.prismaService.user.findFirst({
+      where,
+      include: {
+        role: {
+          include: {
+            permissions: {
+              where: {
+                deletedAt: null,
+              },
+            },
+          },
+        },
+      },
     })
   }
 }
