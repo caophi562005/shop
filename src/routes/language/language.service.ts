@@ -60,12 +60,12 @@ export class LanguageService {
     }
   }
 
-  async delete(languageId: string) {
+  async delete({ languageId, deletedById }: { languageId: string; deletedById: number }) {
     try {
       // Xoá cứng
-      await this.languageRepository.delete(languageId, true)
+      await this.languageRepository.delete({ languageId, deletedById }, true)
       return {
-        message: 'Message.DeleteSuccessfully',
+        message: 'Message.DeleteLanguageSuccessfully',
       }
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
