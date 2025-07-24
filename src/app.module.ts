@@ -9,6 +9,7 @@ import { ZodSerializerInterceptor } from 'nestjs-zod'
 import { CacheModule } from '@nestjs/cache-manager'
 import envConfig from './shared/envConfig'
 import { createKeyv } from '@keyv/redis'
+import { LanguageModule } from './routes/language/language.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { createKeyv } from '@keyv/redis'
     }),
     AuthModule,
     SharedModule,
+    LanguageModule,
   ],
   controllers: [AppController],
   providers: [

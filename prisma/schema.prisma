@@ -52,10 +52,6 @@ model User {
   updatedLanguages Language[] @relation("LanguageUpdatedBy")
   deletedLanguages Language[] @relation("LanguageDeletedBy")
 
-  createdBrands Brand[] @relation("BrandCreatedBy")
-  updatedBrands Brand[] @relation("BrandUpdatedBy")
-  deletedBrands Brand[] @relation("BrandDeletedBy")
-
   createdProductTranslations ProductTranslation[] @relation("ProductTranslationCreatedBy")
   updatedProductTranslations ProductTranslation[] @relation("ProductTranslationUpdatedBy")
   deletedProductTranslations ProductTranslation[] @relation("ProductTranslationDeletedBy")
@@ -63,10 +59,6 @@ model User {
   createdCategoryTranslations CategoryTranslation[] @relation("CategoryTranslationCreatedBy")
   updatedCategoryTranslations CategoryTranslation[] @relation("CategoryTranslationUpdatedBy")
   deletedCategoryTranslations CategoryTranslation[] @relation("CategoryTranslationDeletedBy")
-
-  createdBrandTranslations BrandTranslation[] @relation("BrandTranslationCreatedBy")
-  updatedBrandTranslations BrandTranslation[] @relation("BrandTranslationUpdatedBy")
-  deletedBrandTranslations BrandTranslation[] @relation("BrandTranslationDeletedBy")
 
   createdOrders Order[] @relation("OrderCreatedBy")
   updatedOrders Order[] @relation("OrderUpdatedBy")
@@ -218,9 +210,6 @@ model Product {
   virtualPrice Float
   images       String[]
 
-  brandId Int
-  brand   Brand @relation(fields: [brandId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
   categories Category[]
 
   variants Json
@@ -325,61 +314,12 @@ model CategoryTranslation {
   @@index([deletedAt])
 }
 
-model Brand {
-  id   Int    @id @default(autoincrement())
-  logo String
-  name String
-
-  products Product[]
-
-  brandTranslations BrandTranslation[]
-
-  createdById Int?
-  createdBy   User? @relation("BrandCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  updatedById Int?
-  updatedBy   User? @relation("BrandUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  deletedById Int?
-  deletedBy   User? @relation("BrandDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-
-  deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@index([deletedAt])
-}
-
-model BrandTranslation {
-  id          Int    @id @default(autoincrement())
-  name        String
-  description String
-
-  brandId Int
-  brand   Brand @relation(fields: [brandId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  languageId String
-  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  createdById Int?
-  createdBy   User? @relation("BrandTranslationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  updatedById Int?
-  updatedBy   User? @relation("BrandTranslationUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  deletedById Int?
-  deletedBy   User? @relation("BrandTranslationDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-
-  deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@index([deletedAt])
-}
-
 model Language {
   id   String @id @db.VarChar(5)
   name String
 
   productTranslations  ProductTranslation[]
   categoryTranslations CategoryTranslation[]
-  brandTranslations    BrandTranslation[]
 
   createdById Int?
   createdBy   User? @relation("LanguageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
