@@ -11,7 +11,7 @@ export const GetRolesResSchema = z.object({
 
 export const GetRoleParamsSchema = z
   .object({
-    roleId: z.coerce.number(),
+    roleId: z.coerce.number().int().positive(),
   })
   .strict()
 

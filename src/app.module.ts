@@ -14,6 +14,7 @@ import { RoleModule } from './routes/role/role.module'
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
 import { PermissionModule } from './routes/permission/permission.module';
 import { ProfileModule } from './routes/profile/profile.module';
+import { UserModule } from './routes/user/user.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ProfileModule } from './routes/profile/profile.module';
     RoleModule,
     PermissionModule,
     ProfileModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

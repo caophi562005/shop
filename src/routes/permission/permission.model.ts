@@ -11,7 +11,7 @@ export const GetPermissionsResSchema = z.object({
 
 export const GetPermissionParamsSchema = z
   .object({
-    permissionId: z.coerce.number(),
+    permissionId: z.coerce.number().int().positive().int().positive().int().positive(),
   })
   .strict()
 

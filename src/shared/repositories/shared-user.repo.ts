@@ -28,7 +28,7 @@ export class SharedUserRepository {
     })
   }
 
-  findUniqueIncludeRolePermission(where: WhereUniqueUserType) {
+  findUniqueIncludeRolePermission(where: WhereUniqueUserType): Promise<UserIncludeRolePermissionType | null> {
     return this.prismaService.user.findFirst({
       where,
       include: {
