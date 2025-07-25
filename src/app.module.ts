@@ -12,12 +12,25 @@ import { createKeyv } from '@keyv/redis'
 import { LanguageModule } from './routes/language/language.module'
 import { RoleModule } from './routes/role/role.module'
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
-import { PermissionModule } from './routes/permission/permission.module';
-import { ProfileModule } from './routes/profile/profile.module';
-import { UserModule } from './routes/user/user.module';
+import { PermissionModule } from './routes/permission/permission.module'
+import { ProfileModule } from './routes/profile/profile.module'
+import { UserModule } from './routes/user/user.module'
+import { CategoryModule } from './routes/category/category.module'
+import { CategoryTranslationModule } from './routes/category/category-translation/category-translation.module'
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
+import path from 'path'
 
 @Module({
   imports: [
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.resolve('src/i18n'),
+        watch: true,
+      },
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
+      typesOutputPath: path.resolve('src/generated/i18n.generated.ts'),
+    }),
     CacheModule.register({
       isGlobal: true,
       useFactory: async () => {
@@ -33,6 +46,8 @@ import { UserModule } from './routes/user/user.module';
     PermissionModule,
     ProfileModule,
     UserModule,
+    CategoryModule,
+    CategoryTranslationModule,
   ],
   controllers: [AppController],
   providers: [
