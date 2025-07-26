@@ -61,7 +61,25 @@
             <?php endif; ?>
         </div>
 
+        <div class="order-summary">
+            <h2>Tóm tắt đơn hàng</h2>
+            <div class="summary-item">
+                <span>Tạm tính:</span>
+                <span><?= number_format($paymentInfo['total'] ?? 0,0,'.',',') ?> VNĐ</span>
+            </div>
+            <div class="summary-item">
+                <span>Giảm giá:</span>
+                <span>-<?= number_format($paymentInfo['discount_amount'] ?? 0,0,'.',',') ?> VNĐ</span>
+            </div>
+            <div class="summary-item total">
+                <span>Tổng cộng:</span>
+                <span><?= number_format($paymentInfo['finalTotal'] ?? 0,0,'.',',') ?> VNĐ</span>
+            </div>
+        </div>
 
+        <div class="return-home">
+            <button onclick="window.location.href='index.php'">Quay lại trang chủ</button>
+        </div>
     </div>
 </div>
 <?php include 'inc/footer.php'; ?>
