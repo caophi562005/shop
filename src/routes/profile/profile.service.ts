@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { NotFoundRecordException } from 'src/shared/errror'
+import { NotFoundRecordException } from 'src/shared/error'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { HashingService } from 'src/shared/services/hashing.service'
 import { ChangePasswordBodyType, UpdateMeBodyType } from './profile.model'

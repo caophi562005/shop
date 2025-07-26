@@ -4,7 +4,7 @@ import { HashingService } from 'src/shared/services/hashing.service'
 import { SharedUserRepository } from 'src/shared/repositories/shared-user.repo'
 import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo'
 import { RoleName } from 'src/shared/constants/role.constant'
-import { NotFoundRecordException } from 'src/shared/errror'
+import { NotFoundRecordException } from 'src/shared/error'
 import { PaginationQueryType } from 'src/shared/models/request.model'
 import { CreateUserBodyType, UpdateUserBodyType } from './user.model'
 import {

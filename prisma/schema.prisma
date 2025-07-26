@@ -2,6 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -197,6 +201,7 @@ model ProductSKUSnapshot {
   productId Int?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
+  /// [ProductTranslation]
   productTranslation Json
 
   createdAt DateTime @default(now())
@@ -211,8 +216,8 @@ model Product {
   images       String[]
 
   categories Category[]
-
-  variants Json
+  /// [Variants]
+  variants   Json
 
   skus SKU[]
 
@@ -367,9 +372,9 @@ model Order {
   products Product[]
   reviews  Review[]
 
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
+  userId   Int
+  user     User  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  /// [Receiver]
   receiver Json
   shopId   Int?
   shop     User? @relation("Shop", fields: [shopId], references: [id], onDelete: SetNull, onUpdate: NoAction)

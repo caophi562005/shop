@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { CategoryRepository } from './category.repo'
 import { CreateCategoryBodyType, GetCategoriesQueryType } from './category.model'
 import { I18nContext } from 'nestjs-i18n'
-import { NotFoundRecordException } from 'src/shared/errror'
+import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 import { CategoryAlreadyExistsException } from './category.error'
 

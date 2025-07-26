@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { CategoryTranslationRepository } from './category-translation.repo'
-import { NotFoundRecordException } from 'src/shared/errror'
+import { NotFoundRecordException } from 'src/shared/error'
 import { CreateCategoryTranslationBodyType, UpdateCategoryTranslationBodyType } from './category-translation.model'
 import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers'
 import { CategoryTranslationAlreadyExistsException } from './category-translation.error'
