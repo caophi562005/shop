@@ -15,7 +15,33 @@
         <div class="period-info"><span id="periodValue"></span></div>
     </div>
 
-
+    <div class="controls">
+        <div class="control-group">
+            <label for="chartType">Loại biểu đồ</label>
+            <select id="chartType" onchange="drawChart()">
+                <option value="line">Đường</option>
+                <option value="bar">Cột</option>
+                <option value="pie">Tròn</option>
+                <option value="doughnut">Donut</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="chartSelect">Thống kê theo</label>
+            <select id="chartSelect" onchange="drawChart()">
+                <option value="daily">Ngày</option>
+                <option value="monthly">Tháng</option>
+                <option value="yearly">Năm</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-export" onclick="exportExcel()">
+                <span class="icon">📊</span><span>Xuất Excel</span>
+            </button>
+            <a href="index.php?controller=home&action=index" class="btn btn-home">
+                <span class="icon">🏠</span><span>Về trang chủ</span>
+            </a>
+        </div>
+    </div>
 
     <!-- Daily -->
     <div class="card section" id="daily-section">
