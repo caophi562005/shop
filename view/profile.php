@@ -22,7 +22,16 @@
                     <input id="f-username" type="text" name="username"
                         value="<?= htmlspecialchars($user['username']) ?>" require>
                 </div>
-
+                <div class="field">
+                    <label for="f-email">Email</label>
+                    <input id="f-email" type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>"
+                        required>
+                </div>
+                <div class="field">
+                    <label for="f-phone">Phone</label>
+                    <input id="f-phone" type="text" name="phone" value="<?= htmlspecialchars($user['phone']) ?>"
+                        required>
+                </div>
 
                 <hr>
                 <br />
