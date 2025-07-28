@@ -8,6 +8,7 @@ export const GetUsersResSchema = z.object({
       password: true,
       totpSecret: true,
     }).extend({
+      phoneNumber: z.string().nullable(),
       role: RoleSchema.pick({
         id: true,
         name: true,

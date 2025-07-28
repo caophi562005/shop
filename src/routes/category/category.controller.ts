@@ -24,7 +24,7 @@ export class CategoryController {
     return this.categoryService.findAll(query)
   }
 
-  @Get()
+  @Get(':categoryId')
   @IsPublic()
   @ZodSerializerDto(GetCategoryDetailResDTO)
   findById(@Param() params: GetCategoryParamsDTO) {

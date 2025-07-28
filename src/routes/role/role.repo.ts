@@ -10,6 +10,7 @@ import {
   UpdateRoleResType,
 } from './role.model'
 import { RoleType } from 'src/shared/models/shared-role.model'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class RoleRepository {
@@ -76,7 +77,7 @@ export class RoleRepository {
     data: UpdateRoleBodyType
   }): Promise<UpdateRoleResType> {
     // Kiểm tra nếu có permission nào đã xoá mềm thì không cho cập nhập
-    if (data.permissions.length > 0) {
+    if (data.permissions && data.permissions.length > 0) {
       const permissions = await this.prismaService.permission.findMany({
         where: {
           id: {
@@ -92,20 +93,24 @@ export class RoleRepository {
       }
     }
 
+    const updateData: Prisma.XOR<Prisma.RoleUpdateInput, Prisma.RoleUncheckedUpdateInput> = {
+      name: data.name,
+      description: data.description,
+      isActive: data.isActive,
+      updatedById,
+    }
+    if (data.permissions) {
+      updateData.permissions = {
+        set: data.permissions.map((id) => ({ id })),
+      }
+    }
+
     return this.prismaService.role.update({
       where: {
         id: roleId,
         deletedAt: null,
       },
-      data: {
-        name: data.name,
-        description: data.description,
-        isActive: data.isActive,
-        updatedById,
-        permissions: {
-          set: data.permissions.map((id) => ({ id })),
-        },
-      },
+      data: updateData,
     })
   }
 

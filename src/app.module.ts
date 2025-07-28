@@ -21,6 +21,10 @@ import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n'
 import { ProductModule } from './routes/product/product.module'
 import path from 'path'
 import { ProductTranslationModule } from './routes/product/product-translation/product-translation.module'
+import { CartModule } from './routes/cart/cart.module'
+import { OrderModule } from './routes/order/order.module'
+import { PaymentModule } from './routes/payment/payment.module'
+import { BullModule } from '@nestjs/bullmq'
 
 @Module({
   imports: [
@@ -33,6 +37,11 @@ import { ProductTranslationModule } from './routes/product/product-translation/p
       resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
       typesOutputPath: path.resolve('src/generated/i18n.generated.ts'),
     }),
+    BullModule.forRoot({
+      connection: {
+        url: envConfig.REDIS_URL,
+      },
+    }),
     CacheModule.register({
       isGlobal: true,
       useFactory: async () => {
@@ -41,17 +50,20 @@ import { ProductTranslationModule } from './routes/product/product-translation/p
         }
       },
     }),
-    AuthModule,
     SharedModule,
+    AuthModule,
     LanguageModule,
-    RoleModule,
     PermissionModule,
+    RoleModule,
     ProfileModule,
     UserModule,
     CategoryModule,
     CategoryTranslationModule,
     ProductModule,
     ProductTranslationModule,
+    CartModule,
+    OrderModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [

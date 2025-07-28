@@ -8,7 +8,7 @@ import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { AccessTokenPayload } from 'src/shared/types/jwt.type'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -34,7 +34,7 @@ export class UserController {
     })
   }
 
-  @Put()
+  @Put(':userId')
   @ZodSerializerDto(UpdateProfileResDTO)
   update(@Body() body: UpdateUserBodyDTO, @Param() params: GetUserParamsDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.userService.update({

@@ -13,7 +13,7 @@ export class SharedPaymentRepository {
         id: paymentId,
       },
       include: {
-        orders: {
+        order: {
           include: {
             items: true,
           },
@@ -25,14 +25,15 @@ export class SharedPaymentRepository {
       throw Error('Payment not found')
     }
 
-    const { orders } = payment
-    const productSKUSnapshots = orders.map((order) => order.items).flat()
+    const { order } = payment
+    if (!order) {
+      throw Error('Order not found')
+    }
+    const productSKUSnapshots = order.items
     await this.prismaService.$transaction(async (tx) => {
       const updateOrder$ = tx.order.updateMany({
         where: {
-          id: {
-            in: orders.map((order) => order.id),
-          },
+          id: order.id,
           status: OrderStatus.PENDING_PAYMENT,
           deletedAt: null,
         },

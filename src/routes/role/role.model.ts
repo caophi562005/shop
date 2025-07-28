@@ -31,7 +31,7 @@ export const UpdateRoleBodySchema = RoleSchema.pick({
   isActive: true,
 })
   .extend({
-    permissions: z.array(z.number()),
+    permissions: z.array(z.number()).optional(),
   })
   .strict()
 

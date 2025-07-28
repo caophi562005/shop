@@ -171,7 +171,7 @@ export class OrderRepository {
           },
         },
       })
-      const sku$ = Promise.all([
+      const sku$ = Promise.all(
         cartItems.map((item) =>
           tx.sKU.update({
             where: {
@@ -184,7 +184,7 @@ export class OrderRepository {
             },
           }),
         ),
-      ])
+      )
       const addCancelPaymentJob$ = this.orderProducer.cancelPaymentJob(payment.id)
       const [orders] = await Promise.all([orders$, cartItem$, sku$, addCancelPaymentJob$])
       return [orders]
@@ -219,23 +219,45 @@ export class OrderRepository {
           userId,
           deletedAt: null,
         },
+        include: {
+          items: true,
+        },
       })
-      if (order.status !== OrderStatus.CANCELLED) {
+      if (order.status === OrderStatus.CANCELLED) {
         throw CannotCancelOrderException
       }
 
-      const updatedOrder = await this.prismaService.order.update({
-        where: {
-          id: orderId,
-          userId,
-          deletedAt: null,
-        },
-        data: {
-          status: OrderStatus.CANCELLED,
-          updatedById: userId,
-        },
+      const [cancel] = await this.prismaService.$transaction(async (tx) => {
+        const cancelOrder$ = tx.order.update({
+          where: {
+            id: orderId,
+            userId,
+            deletedAt: null,
+          },
+          data: {
+            status: OrderStatus.CANCELLED,
+            updatedById: userId,
+          },
+        })
+        const sku$ = Promise.all(
+          order.items.map((item) =>
+            tx.sKU.update({
+              where: {
+                id: item.skuId as number,
+              },
+              data: {
+                stock: {
+                  increment: item.quantity,
+                },
+              },
+            }),
+          ),
+        )
+        const [cancelOrder] = await Promise.all([cancelOrder$, sku$])
+        return [cancelOrder]
       })
-      return updatedOrder
+
+      return cancel
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw OrderNotFoundException

@@ -144,6 +144,9 @@ export class ProductRepository {
           where: {
             deletedAt: null,
           },
+          orderBy: {
+            updatedAt: 'desc',
+          },
         },
         categories: {
           where: {
