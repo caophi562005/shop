@@ -104,7 +104,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            ❌ Deploy thất bại!
+            ❌ Deploy thất bại!!!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
             
