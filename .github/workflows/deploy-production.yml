@@ -20,6 +20,44 @@ jobs:
         run: echo "${{ secrets.ENV_PRODUCTION }}" > .env
       - run: npm i --force
       - run: npm run build
+      - name: send telegram message after build
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✅ **Build thành công!**
+
+            🧑‍💻 Thực hiện bởi: **${{ github.actor }}**
+            
+            📝 **Commit:** `${{ github.event.commits[0].message }}`
+            
+            📦 **Repository:** `${{ github.repository }}`
+
+            🔗 **Xem chi tiết:**  
+            [🔍 Commit tại đây](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+      - name: send telegram message after build
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ❌ **Build thất bại!**
+
+            🧑‍💻 Thực hiện bởi: **${{ github.actor }}**
+            
+            📝 **Nội dung commit:**
+            `${{ github.event.commits[0].message }}`
+            
+            📦 **Kho lưu trữ:**  
+            `${{ github.repository }}`
+
+            ⚠️ Vui lòng kiểm tra lại mã nguồn.
+            
+            🔗 **Xem thay đổi chi tiết:**  
+            [🛠️ Nhấn để xem](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -42,3 +80,41 @@ jobs:
             npx prisma generate
             npm run build
             pm2 restart shop-backend
+      - name: send telegram message after deploy
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✅ **Deploy thành công!**
+
+            🧑‍💻 Thực hiện bởi: **${{ github.actor }}**
+            
+            📝 **Commit:** `${{ github.event.commits[0].message }}`
+            
+            📦 **Repository:** `${{ github.repository }}`
+
+            🔗 **Xem chi tiết:**  
+            [🔍 Commit tại đây](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+      - name: send telegram message after deploy
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ❌ **Deploy thất bại!**
+
+            🧑‍💻 Thực hiện bởi: **${{ github.actor }}**
+            
+            📝 **Nội dung commit:**
+            `${{ github.event.commits[0].message }}`
+            
+            📦 **Kho lưu trữ:**  
+            `${{ github.repository }}`
+            
+            ⚠️ Vui lòng kiểm tra lại mã nguồn.
+            
+            🔗 **Xem thay đổi chi tiết:**  
+            [🛠️ Nhấn để xem](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
