@@ -1,9 +1,16 @@
 // src/ChatPage.tsx
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 import http from "./http";
+import { jwtDecode } from "jwt-decode";
+
+// Định nghĩa kiểu cho payload của JWT
+interface JwtPayload {
+  userId: number;
+  // ... các trường khác trong token
+}
 
 // Định nghĩa kiểu dữ liệu cho một tin nhắn
 interface Message {
@@ -15,20 +22,28 @@ interface Message {
 }
 
 const ChatPage = () => {
-  // Lấy `userId` của người muốn chat từ URL, ví dụ: /chat/2
   const { userId: otherUserId } = useParams<{ userId: string }>();
-
-  // State để lưu danh sách tin nhắn
   const [messages, setMessages] = useState<Message[]>([]);
-  // State cho nội dung tin nhắn đang gõ
   const [newMessage, setNewMessage] = useState("");
-  // State để lưu instance của socket
   const [socket, setSocket] = useState<Socket | null>(null);
-  // Ref để trỏ tới khung chat, giúp tự động cuộn
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
+  // Lấy ID của người dùng hiện tại từ access token trong localStorage
+  const myUserId = useMemo(() => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) return null;
+      const decodedToken = jwtDecode<JwtPayload>(accessToken);
+      return decodedToken.userId;
+    } catch (error) {
+      console.error("Failed to decode token:", error);
+      return null;
+    }
+  }, []);
+
+  // useEffect chính để xử lý logic tải lịch sử và kết nối websocket
   useEffect(() => {
-    // --- BƯỚC 1: LẤY LỊCH SỬ CHAT KHI VÀO TRANG ---
+    // Hàm để gọi API lấy lịch sử chat
     const fetchHistory = async () => {
       if (!otherUserId) return;
       try {
@@ -39,57 +54,48 @@ const ChatPage = () => {
       }
     };
 
-    fetchHistory();
+    // Chỉ chạy logic khi đã lấy được ID của người dùng hiện tại
+    if (myUserId) {
+      // 1. Tải lịch sử chat
+      fetchHistory();
 
-    // --- BƯỚC 2: KẾT NỐI WEBSOCKET ---
-    // Lấy access token từ localStorage để xác thực
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      alert("Vui lòng đăng nhập để chat!");
-      return;
+      // 2. Kết nối WebSocket
+      const accessToken = localStorage.getItem("accessToken")!;
+      const newSocket = io("http://localhost:3003/message", {
+        extraHeaders: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setSocket(newSocket);
+
+      // 3. Lắng nghe tin nhắn mới
+      newSocket.on("newMessage", (message: Message) => {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      });
+
+      // 4. Hàm dọn dẹp khi component bị hủy
+      return () => {
+        newSocket.off("newMessage");
+        newSocket.disconnect();
+      };
     }
+  }, [otherUserId, myUserId]); // Chạy lại khi chat với người khác
 
-    // Thay đổi URL nếu server websocket của bạn chạy ở port/namespace khác
-    // Nếu muốn kết nối tới namespace "/message", thêm nó vào URL
-    const newSocket = io("http://localhost:3003/message", {
-      // Đưa namespace vào URL
-      // Không còn thuộc tính namespace ở đây
-      extraHeaders: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    setSocket(newSocket);
-
-    // --- BƯỚC 3: LẮNG NGHE TIN NHẮN MỚI ---
-    newSocket.on("newMessage", (message: Message) => {
-      // Khi có tin nhắn mới, thêm nó vào danh sách tin nhắn hiện tại
-      setMessages((prevMessages) => [...prevMessages, message]);
-    });
-
-    // --- BƯỚC 4: DỌN DẸP KHI RỜI TRANG ---
-    // Hàm này sẽ được gọi khi component unmount (rời khỏi trang chat)
-    return () => {
-      newSocket.off("newMessage"); // Gỡ bỏ listener
-      newSocket.disconnect(); // Ngắt kết nối socket
-    };
-  }, [otherUserId]); // useEffect sẽ chạy lại nếu bạn chuyển sang chat với người khác
-
-  // Tự động cuộn xuống tin nhắn mới nhất
+  // useEffect để tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
-    chatBoxRef.current?.scrollTo(0, chatBoxRef.current.scrollHeight);
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
   }, [messages]);
 
-  // Hàm xử lý gửi tin nhắn
+  // Hàm xử lý việc gửi tin nhắn
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() && socket && otherUserId) {
-      // Gửi sự kiện 'send-message' lên server
       socket.emit("send-message", {
         toUserId: parseInt(otherUserId, 10),
         content: newMessage,
       });
-      // Xóa nội dung trong ô input
       setNewMessage("");
     }
   };
@@ -97,21 +103,15 @@ const ChatPage = () => {
   return (
     <div>
       <h1>Chat với User {otherUserId}</h1>
-      <div
-        ref={chatBoxRef}
-        style={{
-          height: "400px",
-          border: "1px solid #ccc",
-          overflowY: "auto",
-          padding: "10px",
-          marginBottom: "10px",
-        }}
-      >
+      <div ref={chatBoxRef} className="chat-box">
         {messages.map((msg) => (
-          <div key={msg.id} style={{ marginBottom: "10px" }}>
-            <strong>User {msg.fromUserId}:</strong> {msg.content}
-            <br />
-            <small>{new Date(msg.createdAt).toLocaleTimeString()}</small>
+          <div
+            key={msg.id}
+            className={`message ${
+              msg.fromUserId === myUserId ? "sent" : "received"
+            }`}
+          >
+            <p className="message-content">{msg.content}</p>
           </div>
         ))}
       </div>
