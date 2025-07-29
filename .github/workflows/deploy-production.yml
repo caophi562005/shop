@@ -17,6 +17,6 @@ jobs:
           node-version: 20.18.0
           cache: 'npm'
       - name: Create .env file
-        run: echo "${{secrets.ENV_PRODUCTION}}" &gt; .env
+        run: echo "${{ secrets.ENV_PRODUCTION }}" > .env
       - run: npm i --force
       - run: npm run build
