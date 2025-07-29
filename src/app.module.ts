@@ -25,6 +25,9 @@ import { CartModule } from './routes/cart/cart.module'
 import { OrderModule } from './routes/order/order.module'
 import { PaymentModule } from './routes/payment/payment.module'
 import { BullModule } from '@nestjs/bullmq'
+import { ReviewModule } from './routes/review/review.module'
+import { WebsocketModule } from './websockets/websocket.module'
+import { MessageModule } from './routes/message/message.module';
 
 @Module({
   imports: [
@@ -50,6 +53,7 @@ import { BullModule } from '@nestjs/bullmq'
         }
       },
     }),
+    WebsocketModule,
     SharedModule,
     AuthModule,
     LanguageModule,
@@ -64,6 +68,8 @@ import { BullModule } from '@nestjs/bullmq'
     CartModule,
     OrderModule,
     PaymentModule,
+    ReviewModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [

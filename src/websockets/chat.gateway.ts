@@ -5,7 +5,6 @@ import { Server } from 'socket.io'
 export class ChatGateway {
   @WebSocketServer()
   server: Server
-
   @SubscribeMessage('send-message')
   handleEvent(@MessageBody() data: string): string {
     this.server.emit('receive-message', {

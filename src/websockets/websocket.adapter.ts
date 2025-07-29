@@ -20,6 +20,9 @@ export class WebsocketAdapter extends IoAdapter {
     const pubClient = createClient({ url: envConfig.REDIS_URL })
     const subClient = pubClient.duplicate()
 
+    pubClient.on('error', (err) => console.error('Lỗi Redis PubClient:', err))
+    subClient.on('error', (err) => console.error('Lỗi Redis SubClient:', err))
+
     await Promise.all([pubClient.connect(), subClient.connect()])
 
     this.adapterConstructor = createAdapter(pubClient, subClient)
@@ -34,9 +37,6 @@ export class WebsocketAdapter extends IoAdapter {
       },
     })
 
-    server.use((socket, next) => {
-      this.authMiddleware(socket, next)
-    })
     server.of(/.*/).use((socket, next) => {
       this.authMiddleware(socket, next)
     })
@@ -60,11 +60,13 @@ export class WebsocketAdapter extends IoAdapter {
       // socket.on('disconnect', async () => {
       //   await this.sharedWebsocketRepository.delete(socket.id)
       // })
+
+      socket.data.userId = userId
+
       await socket.join(generateRoomUserId(userId))
       next()
     } catch (error) {
       next(error)
     }
-    next()
   }
 }
