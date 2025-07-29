@@ -64,8 +64,6 @@ jobs:
     steps:
       - name: Executing remote ssh commands using password
         uses: appleboy/ssh-action@v1.2.0
-        env: # <--- ĐÚNG: 'env' nằm cùng cấp với 'with'
-          ENV_FILE_CONTENT: ${{ secrets.ENV_PRODUCTION }}
         with:
           host: ${{ secrets.HOST_PRODUCTION }}
           username: ${{ secrets.USERNAME_PRODUCTION }}
@@ -77,7 +75,7 @@ jobs:
             cd ~/shop
             git fetch --all
             git reset --hard origin/main
-            echo "$ENV_FILE_CONTENT" > .env
+            echo "${{ secrets.ENV_PRODUCTION }}" > .env
             npm i --force
             npx prisma generate
             npm run build
