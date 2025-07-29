@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const http = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "https://api-pixcam.hacmieu.xyz",
   headers: {
     "Content-Type": "application/json",
   },
