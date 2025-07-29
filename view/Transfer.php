@@ -91,53 +91,54 @@ function tick() {
 const tmr = setInterval(tick, 1000);
 tick();
 
+// polling mỗi 3s
+async function poll() {
+    if (isSuccess || getRemaining() < 0) return;
 
-if (isSuccess || getRemaining() < 0) return;
+    const since = localStorage.getItem(KEY_LAST),
+        url = `${ENDPOINT}?since=${since}`;
+    try {
+        const res = await fetch(url, {
+            mode: 'cors'
+        });
+        if (!res.ok) throw new Error(res.status);
+        const {
+            data: recs
+        } = await res.json();
 
-const since = localStorage.getItem(KEY_LAST),
-    url = `${ENDPOINT}?since=${since}`;
-try {
-    const res = await fetch(url, {
-        mode: 'cors'
-    });
-    if (!res.ok) throw new Error(res.status);
-    const {
-        data: recs
-    } = await res.json();
-
-    // cập nhật last_check về mốc thực của bản ghi cuối
-    if (recs.length) {
-        const ts = new Date(recs[recs.length - 1]['Ngày diễn ra'].replace(' ', 'T')).getTime();
-        localStorage.setItem(KEY_LAST, ts);
-    }
-
-    for (let i = recs.length - 1; i >= 0; i--) {
-        const r = recs[i],
-            paid = parseFloat(r['Giá trị']),
-            desc = (r['Mô tả'] || '').toLowerCase(),
-            dtMs = new Date(r['Ngày diễn ra'].replace(' ', 'T')).getTime(),
-            elapsed = Date.now() - dtMs;
-
-        if (paid >= PRICE &&
-            desc.includes(ORDER_CODE) &&
-            elapsed <= WAIT_MS
-        ) {
-            isSuccess = true;
-            statusEl.style.color = 'green';
-            statusEl.textContent = '✅ Thanh toán thành công, đang xử lý...';
-            clearDeadline();
-            const save = await fetch('index.php?controller=pay&action=transferConfirm', {
-                method: 'POST'
-            });
-            const j = await save.json();
-            if (j.success) window.location = j.redirect;
-            break;
+        // cập nhật last_check về mốc thực của bản ghi cuối
+        if (recs.length) {
+            const ts = new Date(recs[recs.length - 1]['Ngày diễn ra'].replace(' ', 'T')).getTime();
+            localStorage.setItem(KEY_LAST, ts);
         }
+
+        for (let i = recs.length - 1; i >= 0; i--) {
+            const r = recs[i],
+                paid = parseFloat(r['Giá trị']),
+                desc = (r['Mô tả'] || '').toLowerCase(),
+                dtMs = new Date(r['Ngày diễn ra'].replace(' ', 'T')).getTime(),
+                elapsed = Date.now() - dtMs;
+
+            if (paid >= PRICE &&
+                desc.includes(ORDER_CODE) &&
+                elapsed <= WAIT_MS
+            ) {
+                isSuccess = true;
+                statusEl.style.color = 'green';
+                statusEl.textContent = '✅ Thanh toán thành công, đang xử lý...';
+                clearDeadline();
+                const save = await fetch('index.php?controller=pay&action=transferConfirm', {
+                    method: 'POST'
+                });
+                const j = await save.json();
+                if (j.success) window.location = j.redirect;
+                break;
+            }
+        }
+    } catch (e) {
+        console.error('Poll error:', e);
+        statusEl.textContent = '⚠️ Lỗi kiểm tra thanh toán.';
     }
-} catch (e) {
-    console.error('Poll error:', e);
-    statusEl.textContent = '⚠️ Lỗi kiểm tra thanh toán.';
-}
 }
 setInterval(poll, 3000);
 poll();
