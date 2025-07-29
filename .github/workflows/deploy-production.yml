@@ -75,7 +75,9 @@ jobs:
             cd ~/shop
             git fetch --all
             git reset --hard origin/main
-            echo "${{ secrets.ENV_PRODUCTION }}" > .env
+            cat <<'EOF' > .env
+            ${{ secrets.ENV_PRODUCTION }}
+            EOF
             npm i --force
             npx prisma generate
             npm run build
