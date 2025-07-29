@@ -64,13 +64,13 @@ jobs:
     steps:
       - name: Executing remote ssh commands using password
         uses: appleboy/ssh-action@v1.2.0
+        env: # <--- ĐÚNG: 'env' nằm cùng cấp với 'with'
+          ENV_FILE_CONTENT: ${{ secrets.ENV_PRODUCTION }}
         with:
           host: ${{ secrets.HOST_PRODUCTION }}
           username: ${{ secrets.USERNAME_PRODUCTION }}
           password: ${{ secrets.PASSWORD_PRODUCTION }}
           port: ${{ secrets.PORT_PRODUCTION }}
-          env:
-            ENV_FILE_CONTENT: ${{ secrets.ENV_PRODUCTION }}
           script: |
             export NVM_DIR=~/.nvm
             source ~/.nvm/nvm.sh
