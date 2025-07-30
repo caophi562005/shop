@@ -15,9 +15,9 @@ export class PaymentRepository {
     private readonly paymentProducer: PaymentProducer,
   ) {}
 
-  private getTotalPrice(orders: OrderInProductSKUSnapshotType) {
+  private getTotalPrice(order: OrderInProductSKUSnapshotType) {
     let totalPrice = 0
-    orders.items.map((item) => {
+    order.items.map((item) => {
       totalPrice += item.skuPrice * item.quantity
     })
     return totalPrice
