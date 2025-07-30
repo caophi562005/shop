@@ -109,7 +109,7 @@ export class PaymentRepository {
             status: PaymentStatus.SUCCESS,
           },
         }),
-        tx.order.updateMany({
+        tx.order.update({
           where: {
             id: order.id,
           },

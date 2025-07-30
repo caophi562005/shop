@@ -16,7 +16,6 @@ import {
   OrderNotFoundException,
   OutOfStockSKUException,
   ProductNotFoundException,
-  SKUNotBelongToShopException,
 } from './order.error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
@@ -253,7 +252,15 @@ export class OrderRepository {
             }),
           ),
         )
-        const [cancelOrder] = await Promise.all([cancelOrder$, sku$])
+        const payment$ = tx.payment.update({
+          where: {
+            id: order.paymentId,
+          },
+          data: {
+            status: PaymentStatus.FAILED,
+          },
+        })
+        const [cancelOrder] = await Promise.all([cancelOrder$, sku$, payment$])
         return [cancelOrder]
       })
 

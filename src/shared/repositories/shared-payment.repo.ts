@@ -24,14 +24,17 @@ export class SharedPaymentRepository {
     if (!payment) {
       throw Error('Payment not found')
     }
-
+    if (payment.status === PaymentStatus.FAILED) {
+      return
+    }
     const { order } = payment
     if (!order) {
       throw Error('Order not found')
     }
+
     const productSKUSnapshots = order.items
     await this.prismaService.$transaction(async (tx) => {
-      const updateOrder$ = tx.order.updateMany({
+      const updateOrder$ = tx.order.update({
         where: {
           id: order.id,
           status: OrderStatus.PENDING_PAYMENT,

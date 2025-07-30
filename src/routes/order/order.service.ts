@@ -13,12 +13,11 @@ export class OrderService {
     })
   }
 
-  async create({ userId, body }: { userId: number; body: CreateOrderBodyType }) {
-    const result = await this.orderRepository.create({
+  create({ userId, body }: { userId: number; body: CreateOrderBodyType }) {
+    return this.orderRepository.create({
       body,
       userId,
     })
-    return result
   }
 
   detail({ userId, orderId }: { userId: number; orderId: number }) {

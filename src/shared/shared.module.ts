@@ -10,6 +10,7 @@ import { AccessTokenGuard } from './guards/access-token.guard'
 import { PaymentAPIKeyGuard } from './guards/payment-api-key.guard'
 import { AuthenticationGuard } from './guards/authentication.guard'
 import { TwoFactorService } from './services/twoFactorService.service'
+import { SharedPaymentRepository } from './repositories/shared-payment.repo'
 
 const sharedServices = [
   PrismaService,
@@ -19,6 +20,7 @@ const sharedServices = [
   TwoFactorService,
   SharedUserRepository,
   SharedRoleRepository,
+  SharedPaymentRepository,
 ]
 
 @Global()
