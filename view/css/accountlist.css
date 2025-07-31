@@ -1,0 +1,170 @@
+:root {
+  --bg-light: #f9f9f6; /* sửa lỗi thiếu chữ 'f' */
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --accent: #ff9800;
+  --accent-light: rgba(255, 152, 0, 0.15);
+  --text-dark: #333;
+  --fade-time: 0.5s;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --font: "Quicksand", sans-serif;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-light) url("/PIXCAM/view/img/bg-light.jpg") center/cover
+    no-repeat;
+  color: var(--text-dark);
+  font-family: var(--font);
+}
+
+.cinema-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+.cinema-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px var(--shadow);
+  width: 100%;
+  max-width: 1000px;
+  padding: 32px;
+  margin-top: 85px;
+  color: var(--text-dark);
+  overflow-x: visible;
+}
+.cinema-card h2 {
+  font-size: 2.2rem;
+  text-align: center;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, var(--accent), #ffc107);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+  opacity: 1;
+  transition: opacity var(--fade-time);
+}
+.toast.success {
+  background: #dff0d8;
+  color: #3c763d;
+}
+.toast.error {
+  background: #f2dede;
+  color: #a94442;
+}
+.toast.fade {
+  opacity: 0;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+.cinema-table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.cinema-table th,
+.cinema-table td {
+  padding: 14px 12px;
+}
+.cinema-table thead {
+  background: rgba(0, 0, 0, 0.03);
+}
+.cinema-table th {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  text-align: left;
+}
+.cinema-table tbody tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.cinema-table td {
+  font-size: 0.9rem;
+}
+.na {
+  color: rgba(100, 100, 100, 0.5);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+.badge.admin {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.badge.user {
+  background: #455a64;
+  color: #eceff1;
+}
+
+.cinema-del {
+  color: #d32f2f;
+  font-weight: 500;
+  text-decoration: none;
+}
+.cinema-del:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .cinema-card {
+    padding: 24px;
+  }
+  .cinema-table th,
+  .cinema-table td {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Phân trang */
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+  user-select: none;
+}
+.page-btn {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-dark);
+  transition: background 0.2s;
+}
+.page-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.page-btn.current {
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+}
+.page-btn.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
