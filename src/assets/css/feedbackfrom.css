@@ -1,0 +1,136 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fef7ef;
+}
+
+footer {
+  margin-bottom: 0;
+}
+
+:root {
+  --pixcam-primary: #ff6600;
+  --pixcam-primary-hover: #e65500;
+  --pixcam-bg: #ffffff;
+  --pixcam-text: #333333;
+  --pixcam-radius: 8px;
+  --transition: 0.2s ease-in-out;
+}
+
+.feedback-section {
+  background: #fef7ef;
+  padding: 100px 0 40px;
+}
+
+.feedback-card {
+  background: var(--pixcam-bg);
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: var(--pixcam-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding-bottom: 2rem;
+  /* chỉ giữ padding dưới cùng */
+}
+
+.feedback-title {
+  background: var(--pixcam-primary);
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 1.5rem;
+  font-size: 1.5rem;
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+.feedback-message {
+  margin: 1.5rem auto;
+  padding: 0.75rem 1rem;
+  border-radius: calc(var(--pixcam-radius) / 2);
+  max-width: 450px;
+  font-size: 0.95rem;
+}
+
+.feedback-message.error {
+  background: #ffe6e6;
+  color: #a00;
+}
+
+.feedback-message.success {
+  background: #e6ffea;
+  color: #080;
+}
+
+.feedback-form {
+  max-width: 450px;
+  margin: auto;
+  color: var(--pixcam-text);
+}
+
+.field-group {
+  margin-bottom: 1.5rem;
+  /* tăng khoảng cách giữa các group */
+}
+
+.field-group:first-of-type {
+  margin-top: 1.5rem;
+  /* thêm khoảng cách đầu tiên dưới tiêu đề */
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.field-group p {
+  margin: 0 0 0.75rem 0;
+  /* khoảng cách dưới cho phần tên sản phẩm */
+}
+
+.field-group select,
+.field-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: var(--pixcam-radius);
+  font-size: 1rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.field-group select:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: var(--pixcam-primary);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.2);
+}
+
+.btn-feedback {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  background: var(--pixcam-primary);
+  border: none;
+  border-radius: var(--pixcam-radius);
+  cursor: pointer;
+  transition: background var(--transition);
+  margin: 1rem auto 0 auto;
+  /* thêm margin top */
+}
+
+.btn-feedback:hover {
+  background: var(--pixcam-primary-hover);
+}
+.product-thumbnail {
+  width: 120px;
+  height: auto;
+  border-radius: 10px;
+  margin: 10px 0;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

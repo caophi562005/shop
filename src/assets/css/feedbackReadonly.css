@@ -1,0 +1,82 @@
+/* Tái sử dụng biến màu và card từ FeedbackForm */
+:root {
+  --pixcam-primary: #ff6600;
+  --pixcam-primary-hover: #e65500;
+  --pixcam-bg: #ffffff;
+  --pixcam-text: #333333;
+  --pixcam-radius: 8px;
+  --transition: 0.2s ease-in-out;
+}
+
+.feedback-section {
+  background: #fef7ef;
+  padding: 100px 0 40px;
+}
+
+.feedback-card {
+  background: var(--pixcam-bg);
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: var(--pixcam-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding-bottom: 2rem;
+}
+
+.feedback-title {
+  background: var(--pixcam-primary);
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 1.25rem;
+  font-size: 1.5rem;
+}
+
+.feedback-content {
+  max-width: 450px;
+  margin: 1.5rem auto;
+  color: var(--pixcam-text);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.feedback-content .field-group {
+  margin-bottom: 1.5rem;
+}
+
+.feedback-content .field-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stars {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.stars span {
+  font-size: 1.2rem;
+  color: gold;
+  margin-right: 0.1rem;
+}
+
+.btn-feedback {
+  display: block;
+  width: 200px;
+  margin: 0 auto;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background: var(--pixcam-primary);
+  border: none;
+  border-radius: var(--pixcam-radius);
+  text-align: center;
+  text-decoration: none;
+  transition: background var(--transition);
+}
+
+.btn-feedback:hover {
+  background: var(--pixcam-primary-hover);
+}

@@ -1,0 +1,129 @@
+.inf_title_paycart{
+    margin-left:10%;
+    margin-top: 30px;
+}
+.contentPayCart {
+    display: flex;
+    flex-wrap: wrap;
+    width: 80%;
+    margin: 0 auto;
+    justify-content: space-between;
+    padding-top: 40px;
+}
+.detailPayCart,
+.infPay {
+    width: 50%;
+    min-width: 300px;
+}
+.box_sdt {
+    width: 90%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.input_box_sdt,
+.input_box_infPay {
+    width: 80%;
+    height: 45px;
+    padding-left: 10px;
+    margin-top: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+
+
+.item_infPays {
+    width: 50%;
+}
+
+.input_box_note {
+    min-height: 320px;
+    width: 80%;
+    margin-top: 5px;
+
+    border-radius: 10px;
+    padding: 10px;
+}
+.title_inf_pay{
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+}
+.box_infPay {
+    margin-top: 20px;
+}
+
+.title_detail_cart {
+    height: 70px;
+    width: 100%;
+    display: flex;
+    padding-left: 20px;
+    align-items: center;
+    border: 1px solid #000;
+
+}
+.name_detail_cart {
+    font-size: 25px;
+
+}
+.content_detailPayCart{
+    padding: 20px;
+    border:1px solid #000
+}
+
+.box_content_detailPayCart{
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 40px;
+    align-items: center;
+}
+.lable_detailPayCart{
+    font-size: 18px;
+    padding-bottom: 20px;
+}
+
+.lable_content{
+    color:#969696;
+}
+.price_title_box{
+    text-align: end;
+}
+.checked_detailPayCart{
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    font-size: 17.5px;
+    
+}
+/* nút */
+.btn_back_detailPayCart>a{
+    text-decoration: none;
+    color: #000;
+    font-weight: bold;
+
+}
+.btn_back_detailPayCart>a>i{
+    margin-right: 5px;
+}
+.btn_back_detailPayCart>a:hover{
+    color: #EC5021;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn_payOnline{
+    padding: 10px 50px;
+    border-radius: 5px;
+    background-color: #6666FF;
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.3s;  
+}
+.btn_payOnline:hover{
+    cursor: pointer;
+    transform: translateY(-3px); 
+    background-color: #EC5021;
+}
