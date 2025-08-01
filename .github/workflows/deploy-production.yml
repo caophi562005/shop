@@ -74,7 +74,7 @@ jobs:
             source ~/.nvm/nvm.sh
             cd ~/shop
             git fetch --all
-            git reset --hard origin/main
+            git reset --hard origin/back-end
             cat <<'EOF' > .env
             ${{ secrets.ENV_PRODUCTION }}
             EOF
