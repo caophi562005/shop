@@ -1,5 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { randomInt } from 'crypto'
+import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
 
 export function isUniqueConstraintPrismaError(error: any): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
@@ -23,4 +25,9 @@ export const generateCancelPaymentJobId = (paymentId: number) => {
 
 export const generateRoomUserId = (userId: number) => {
   return `userId-${userId}`
+}
+
+export const generateRandomFileName = (fileName: string) => {
+  const ext = path.extname(fileName)
+  return `${uuidv4()}${ext}`
 }
