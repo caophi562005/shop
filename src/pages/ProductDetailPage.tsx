@@ -63,7 +63,7 @@ const ProductDetailPage: React.FC = () => {
     }
 
     // Khởi tạo socket với header xác thực
-    socket = io("http://localhost:3003/product", {
+    socket = io("https://api-pixcam.hacmieu.xyz/product", {
       extraHeaders: {
         Authorization: `Bearer ${accessToken}`, // 🔑 Gửi token lên đây
       },
