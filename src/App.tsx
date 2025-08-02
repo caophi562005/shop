@@ -11,6 +11,9 @@ import CreateProductPage from "./pages/CreateProductPage";
 import CategoryListPage from "./pages/CategoryListPage";
 import { useAuthStore } from "./stores/authStore";
 import LoadingOverlay from "./components/LoadingOverlay";
+import RevenuePage from "./pages/RevenuePage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+import TransferPage from "./pages/TransferPage";
 
 const App: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -25,6 +28,9 @@ const App: React.FC = () => {
           <Route path="register" element={<RegisterPage />} />
           <Route path="profile" element={<ProfilePage />} />
 
+          <Route path="OrderSuccess" element={<OrderSuccessPage />} />
+          <Route path="Transfer" element={<TransferPage />} />
+
           {/* 1. Route cho trang chi tiết sản phẩm với ID động */}
           <Route path="product/:productId" element={<ProductDetailPage />} />
 
@@ -35,6 +41,7 @@ const App: React.FC = () => {
               path="product/edit/:productId"
               element={<EditProductPage />}
             />
+            <Route path="revenue" element={<RevenuePage />} />
 
             <Route path="category" element={<CategoryListPage />} />
           </Route>
