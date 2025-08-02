@@ -20,7 +20,6 @@ const CategoryListPage: React.FC = () => {
   );
   const [addModalParentId, setAddModalParentId] = useState<number | null>(null);
 
-  const parentCategories = categoryMap["null"] || [];
   const fetchCategories = async (parentId: string | null) => {
     const key = parentId ?? "null";
     if (categoryMap[key]) return; // Cache đã có thì bỏ qua

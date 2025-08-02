@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import "../assets/css/modal.css";
-import type { CategoryType } from "../models/shared/shared-category.model";
 
 interface AddCategoryModalProps {
   isOpen: boolean;

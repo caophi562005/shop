@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "../assets/css/editProduct.css";
 
@@ -22,12 +22,12 @@ const mockSubCategories = [
   { id: 1, name: "Áo Sơ Mi" },
   { id: 2, name: "Quần Jeans 30%" },
 ];
-const mockSizes = [
-  { id: 1, name: "S" },
-  { id: 2, name: "M" },
-  { id: 3, name: "L" },
-];
-const mockSales = [{ id: 1, name: "Sale 30%" }];
+// const mockSizes = [
+//   { id: 1, name: "S" },
+//   { id: 2, name: "M" },
+//   { id: 3, name: "L" },
+// ];
+// const mockSales = [{ id: 1, name: "Sale 30%" }];
 
 const EditProductPage: React.FC = () => {
   const [formData, setFormData] = useState(mockProductToEdit);

@@ -29,7 +29,7 @@ const App: React.FC = () => {
           <Route path="profile" element={<ProfilePage />} />
 
           <Route path="order-success" element={<OrderSuccessPage />} />
-          {/* <Route path="transfer" element={<TransferPage />} /> */}
+          <Route path="transfer" element={<TransferPage />} />
 
           {/* 1. Route cho trang chi tiết sản phẩm với ID động */}
           <Route path="product/:productId" element={<ProductDetailPage />} />

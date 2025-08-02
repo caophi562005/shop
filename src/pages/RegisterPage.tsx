@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../assets/css/Register2.css";
 import http from "../api/http";
-import type { RegisterBodyType, RegisterResType } from "../models/auth.model";
+import type { RegisterBodyType } from "../models/auth.model";
 import { useNavigate } from "react-router-dom";
 
 const RegisterPage: React.FC = () => {
@@ -15,7 +15,6 @@ const RegisterPage: React.FC = () => {
   });
 
   const [usernameError, setUsernameError] = useState("");
-  const [registerError, setRegisterError] = useState("");
 
   const navigate = useNavigate();
 
@@ -41,10 +40,7 @@ const RegisterPage: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); // Ngăn form gửi đi
     try {
-      const response: RegisterResType = await http.post(
-        "/auth/register",
-        formData
-      );
+      await http.post("/auth/register", formData);
 
       console.log("Đăng ký thành công.");
       navigate("/login");
@@ -132,12 +128,6 @@ const RegisterPage: React.FC = () => {
             value={formData.confirmPassword}
             onChange={handleChange}
           />
-
-          <div className="error-placeholder">
-            {registerError && (
-              <span className="error-message">{registerError}</span>
-            )}
-          </div>
 
           <button type="submit" className="submit-btn">
             Đăng ký

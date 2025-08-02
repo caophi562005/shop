@@ -74,18 +74,6 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-// Component Header (Bạn cần tạo tệp Header.tsx riêng)
-const Header = () => {
-  // Nội dung của header.php sẽ ở đây
-  return <header>{/* ... */} </header>;
-};
-
-// Component Footer (Bạn cần tạo tệp Footer.tsx riêng)
-const Footer = () => {
-  // Nội dung của footer.php sẽ ở đây
-  return <footer>{/* ... */}</footer>;
-};
-
 const HomePage: React.FC = () => {
   // GHI CHÚ: Logic cho slider và poster carousel cần được triển khai bằng React Hooks (useState, useEffect)
   // thay vì mã JavaScript cũ đã bị xóa.

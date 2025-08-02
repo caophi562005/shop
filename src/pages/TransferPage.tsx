@@ -169,34 +169,40 @@ const TransferPage: React.FC = () => {
   };
 
   return (
-    <div className="content">
-      <h1 className="inf_title_paycart">Chuyển khoản ngân hàng</h1>
-      <p>
-        Mã đơn hàng <strong>{orderCode}</strong>
-      </p>
-      <p>
-        Vui lòng chuyển{" "}
-        <strong>{new Intl.NumberFormat("vi-VN").format(AMOUNT)} VNĐ</strong>{" "}
-        trong <span id="timer">{timeLeft}</span>
-      </p>
+    <div className="transfer-page-container">
+      <div className="content">
+        <h1 className="inf_title_paycart">Chuyển khoản ngân hàng</h1>
+        <p>
+          Mã đơn hàng <strong>{orderCode}</strong>
+        </p>
+        <p>
+          Vui lòng chuyển{" "}
+          <strong>{new Intl.NumberFormat("vi-VN").format(AMOUNT)} VNĐ</strong>{" "}
+          trong <span id="timer">{timeLeft}</span>
+        </p>
 
-      <div className="qr-box">
-        <img src={qrUrl} alt="QR chuyển khoản" />
+        <div className="qr-box">
+          <img src={qrUrl} alt="QR chuyển khoản" />
+        </div>
+
+        <p
+          id="status"
+          style={{
+            color: isSuccessRef.current ? "green" : "red",
+            fontWeight: "bold",
+            minHeight: "24px",
+          }}
+        >
+          {statusMessage}
+        </p>
+        <button
+          id="cancel-btn"
+          className="btn_payOnline"
+          onClick={handleCancel}
+        >
+          ❌ Hủy giao dịch
+        </button>
       </div>
-
-      <p
-        id="status"
-        style={{
-          color: isSuccessRef.current ? "green" : "red",
-          fontWeight: "bold",
-          minHeight: "24px",
-        }}
-      >
-        {statusMessage}
-      </p>
-      <button id="cancel-btn" className="btn_payOnline" onClick={handleCancel}>
-        ❌ Hủy giao dịch
-      </button>
     </div>
   );
 };
