@@ -258,3 +258,61 @@
   flex: 1;
   text-align: right;
 }
+
+/*
+ * SỬA LỖI GIAO DIỆN BỊ CHỒNG LÊN NHAU
+ * Thêm đoạn code này vào file CSS của bạn
+*/
+
+.order-details {
+  /* Tạo khoảng cách 30px với phần tử bên trên */
+  margin-top: 30px;
+}
+
+.order-details h2 {
+  /* Canh lề và định dạng lại tiêu đề "Chi tiết đơn hàng" cho đồng bộ */
+  font-size: 26px;
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: left;
+  text-transform: uppercase;
+}
+.button-like {
+  /* --- Căn bản --- */
+  display: inline-block;
+  font-family: "Be Vietnam Pro", sans-serif; /* Đảm bảo font chữ đồng bộ */
+  font-size: 16px;
+  font-weight: 600; /* Dày hơn một chút cho cảm giác cao cấp */
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+
+  /* --- Giao diện --- */
+  padding: 14px 30px; /* Tăng padding cho nút trông "thoáng" hơn */
+  border: none;
+  border-radius: 50px; /* Bo tròn mạnh để tạo hình viên thuốc hiện đại */
+  background: linear-gradient(
+    45deg,
+    #ff7f32,
+    #ff5e00
+  ); /* Dùng gradient cho màu sắc sống động */
+
+  /* --- Hiệu ứng --- */
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3); /* Đổ bóng nhẹ với màu của nút */
+  transition: all 0.3s ease; /* Transition cho tất cả thuộc tính */
+}
+
+.button-like:hover {
+  /* Hiệu ứng khi di chuột vào */
+  background: linear-gradient(45deg, #ff8c4a, #ff7021);
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4); /* Tăng độ đậm của bóng */
+  transform: translateY(-3px); /* Nút sẽ "nhấc" lên một chút */
+}
+
+.button-like:active {
+  /* Hiệu ứng khi nhấn giữ nút */
+  transform: translateY(-1px); /* Nút lún xuống một chút */
+  box-shadow: 0 2px 10px rgba(255, 107, 0, 0.3); /* Giảm bóng */
+}
