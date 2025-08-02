@@ -101,6 +101,11 @@ const Header: React.FC = () => {
           <Link to="/admin/categories" style={linkStyle}>
             Quản lý danh mục
           </Link>
+
+          <Link to="/revenue" style={linkStyle}>
+            Thống kê doanh thu
+          </Link>
+
           <Link
             to="/"
             onClick={() => {
