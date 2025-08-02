@@ -27,6 +27,10 @@ export const generateRoomUserId = (userId: number) => {
   return `userId-${userId}`
 }
 
+export const generateRoomProductId = (productId: number) => {
+  return `productId-${productId}`
+}
+
 export const generateRandomFileName = (fileName: string) => {
   const ext = path.extname(fileName)
   return `${uuidv4()}${ext}`

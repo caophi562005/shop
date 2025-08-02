@@ -5,10 +5,14 @@ import { I18nContext } from 'nestjs-i18n'
 import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { RoleName } from 'src/shared/constants/role.constant'
+import { ProductGateway } from './product.gateway'
 
 @Injectable()
 export class ManageProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    private readonly productRepository: ProductRepository,
+    private readonly productGateway: ProductGateway,
+  ) {}
 
   validatePrivilege({
     userIdRequest,
@@ -106,6 +110,14 @@ export class ManageProductService {
         data,
         updatedById,
       })
+      const fullUpdatedProduct = await this.productRepository.getDetail({
+        productId: updatedProduct.id,
+        languageId: 'all',
+      })
+
+      if (fullUpdatedProduct) {
+        this.productGateway.handleProductUpdate(fullUpdatedProduct)
+      }
       return updatedProduct
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
@@ -136,6 +148,7 @@ export class ManageProductService {
     })
     try {
       await this.productRepository.delete({ productId, deletedById })
+      this.productGateway.handleProductDelete(productId)
       return {
         message: 'Message.DeleteProductSuccessFully',
       }
