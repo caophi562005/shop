@@ -1,21 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+// BEST PRACTICE: Import useNavigate để điều hướng trang thay vì tải lại toàn bộ trang
+import { useNavigate } from "react-router-dom";
 
 import "../assets/css/Transfer.css";
 
-// --- FAKE DATA (replaces data extracted from PHP controller) ---
+// --- FAKE DATA ---
 const mockOrderData = {
-  orderCode: "PX20250801",
-  name: "Nguyễn Văn An",
-  phone: "0987654321",
-  email: "nguyenvanan@email.com",
-  address: "123 Đường ABC, Q.1, TP.HCM",
-  note: "Giao hàng giờ hành chính",
-  items: [], // Assuming this would be an array of products
-  subtotal: 1500000,
-  discount: 0,
+  orderCode: "PX20250802",
   finalTotal: 1500000,
 };
-// --- END OF FAKE DATA ---
 
 const TransferPage: React.FC = () => {
   // --- Constants and Configuration ---
@@ -28,26 +21,26 @@ const TransferPage: React.FC = () => {
   const AMOUNT = finalTotal;
   const ADD_INFO = orderCode;
 
-  const WAIT_MS = 15 * 60 * 1000; // 15 minutes
+  const WAIT_MS = 15 * 60 * 1000;
   const KEY_DEADLINE = "qr_deadline";
   const KEY_LAST_CHECK = "last_check";
   const POLLING_ENDPOINT =
     "https://script.google.com/macros/s/AKfycby1HXIjwYi8TqwOIydkuyVVy-kyDH-vvlmqeaRB4XAKgUPOj1YD5yl8zWDKNS7kK_JX/exec";
 
-  // Construct the QR Code URL
   const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-${TEMPLATE}.png?amount=${AMOUNT}&addInfo=${encodeURIComponent(
     ADD_INFO
   )}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
   // --- State and Refs ---
   const [timeLeft, setTimeLeft] = useState("--:--");
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState("Đang chờ thanh toán...");
 
-  // Use refs for values that change but don't need to trigger a re-render
+  // BEST PRACTICE: Sử dụng hook useNavigate
+  const navigate = useNavigate();
   const isSuccessRef = useRef(false);
   const intervalsRef = useRef<NodeJS.Timeout[]>([]);
 
-  // --- Helper Functions ---
+  // --- Helper Functions (Không thay đổi) ---
   const getDeadline = (): number => {
     let dl = localStorage.getItem(KEY_DEADLINE);
     if (!dl) {
@@ -66,56 +59,55 @@ const TransferPage: React.FC = () => {
     return Math.floor((getDeadline() - Date.now()) / 1000);
   };
 
-  // --- Event Handlers ---
-  const handleCancel = () => {
-    clearDeadline();
-    // In a real React app, you would use React Router's navigate function
-    window.location.href = "/";
-  };
+  // --- Logic Functions (Refactored using useCallback) ---
 
-  // --- Side Effects using useEffect ---
-  useEffect(() => {
-    // Initialize last_check if it doesn't exist
-    if (!localStorage.getItem(KEY_LAST_CHECK)) {
-      localStorage.setItem(KEY_LAST_CHECK, Date.now().toString());
+  // REFACTORED: Định nghĩa hàm clearIntervals ở ngoài và bọc trong useCallback.
+  // Hàm này không có phụ thuộc nên mảng dependencies là rỗng.
+  const clearIntervals = useCallback(() => {
+    intervalsRef.current.forEach(clearInterval);
+    intervalsRef.current = []; // Xóa các ID đã lưu
+  }, []);
+
+  // REFACTORED: Đưa logic `tick` ra ngoài và dùng useCallback.
+  // Phụ thuộc vào `clearIntervals` và `Maps` để không bị stale closure.
+  const tick = useCallback(() => {
+    const seconds = getRemainingSeconds();
+    if (seconds <= 0) {
+      clearIntervals();
+      setStatusMessage("⏰ Hết thời gian – giao dịch đã bị hủy.");
+      setTimeout(() => {
+        clearDeadline();
+        // BEST PRACTICE: Dùng navigate để chuyển trang
+        navigate("/"); // Giả sử đây là route cho trang hủy
+      }, 2000);
+      return;
     }
+    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    setTimeLeft(`${m}:${s}`);
+  }, [clearIntervals, navigate]);
 
-    // Countdown Timer Logic
-    const tick = () => {
-      const seconds = getRemainingSeconds();
-      if (seconds <= 0) {
-        clearIntervals();
-        setStatusMessage("⏰ Hết thời gian – thất bại.");
-        setTimeout(() => {
-          clearDeadline();
-          window.location.href =
-            "index.php?controller=pay&action=cancelTransfer";
-        }, 2000);
-        return;
-      }
-      const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-      const s = String(seconds % 60).padStart(2, "0");
-      setTimeLeft(`${m}:${s}`);
-    };
+  // REFACTORED: Đưa logic `poll` ra ngoài và dùng useCallback.
+  const poll = useCallback(async () => {
+    if (isSuccessRef.current || getRemainingSeconds() < 0) return;
 
-    // Payment Polling Logic
-    const poll = async () => {
-      if (isSuccessRef.current || getRemainingSeconds() < 0) return;
+    const since = localStorage.getItem(KEY_LAST_CHECK);
+    const url = `${POLLING_ENDPOINT}?since=${since}`;
 
-      const since = localStorage.getItem(KEY_LAST_CHECK);
-      const url = `${POLLING_ENDPOINT}?since=${since}`;
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const { data: recs } = await res.json();
 
-      try {
-        const res = await fetch(url, { mode: "cors" });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const { data: recs } = await res.json();
-
-        if (recs.length > 0) {
-          const lastRecordTimestamp = new Date(
-            recs[recs.length - 1]["Ngày diễn ra"].replace(" ", "T")
-          ).getTime();
-          localStorage.setItem(KEY_LAST_CHECK, lastRecordTimestamp.toString());
-        }
+      if (recs && recs.length > 0) {
+        // Cập nhật last_check với bản ghi mới nhất
+        const lastRecordTimestamp = new Date(
+          recs[recs.length - 1]["Ngày diễn ra"].replace(" ", "T")
+        ).getTime();
+        localStorage.setItem(
+          KEY_LAST_CHECK,
+          (lastRecordTimestamp + 1).toString()
+        ); // +1ms để không lấy lại bản ghi cũ
 
         for (let i = recs.length - 1; i >= 0; i--) {
           const r = recs[i];
@@ -134,38 +126,47 @@ const TransferPage: React.FC = () => {
             clearDeadline();
             clearIntervals();
 
-            // Confirm payment with the server
-            const saveRes = await fetch(
-              "index.php?controller=pay&action=transferConfirm",
-              { method: "POST" }
-            );
-            const saveData = await saveRes.json();
-            if (saveData.success) {
-              window.location.href = saveData.redirect;
-            }
+            // Giả lập confirm với server và chuyển hướng
+            setTimeout(() => {
+              navigate(`/payment/success?orderCode=${orderCode}`);
+            }, 1500);
             break;
           }
         }
-      } catch (e) {
-        console.error("Poll error:", e);
-        setStatusMessage("⚠️ Lỗi kiểm tra thanh toán.");
       }
-    };
+    } catch (e) {
+      console.error("Poll error:", e);
+      // Không hiển thị lỗi mạng cho người dùng, chỉ log ra
+    }
+  }, [AMOUNT, orderCode, clearIntervals, navigate]);
 
-    // Start intervals
-    tick(); // Initial call
-    poll(); // Initial call
+  // --- Side Effects using useEffect ---
+  // REFACTORED: useEffect giờ chỉ còn nhiệm vụ thiết lập và dọn dẹp intervals.
+  useEffect(() => {
+    if (!localStorage.getItem(KEY_LAST_CHECK)) {
+      localStorage.setItem(KEY_LAST_CHECK, (Date.now() - WAIT_MS).toString());
+    }
+
+    // Chạy lần đầu ngay lập tức
+    tick();
+    poll();
+
+    // Thiết lập intervals
     const timerId = setInterval(tick, 1000);
     const pollId = setInterval(poll, 3000);
     intervalsRef.current = [timerId, pollId];
 
-    // Cleanup function to clear intervals when the component unmounts
-    const clearIntervals = () => {
-      intervalsRef.current.forEach(clearInterval);
+    // Cleanup function trả về sẽ được gọi khi component unmount
+    return () => {
+      clearIntervals();
     };
+  }, [tick, poll, clearIntervals]); // Phụ thuộc vào các hàm đã được memoize
 
-    return clearIntervals;
-  }, []); // Empty dependency array ensures this effect runs only once on mount
+  const handleCancel = () => {
+    clearDeadline();
+    clearIntervals();
+    navigate("/"); // Chuyển về trang chủ hoặc trang giỏ hàng
+  };
 
   return (
     <div className="content">
@@ -183,12 +184,19 @@ const TransferPage: React.FC = () => {
         <img src={qrUrl} alt="QR chuyển khoản" />
       </div>
 
+      <p
+        id="status"
+        style={{
+          color: isSuccessRef.current ? "green" : "red",
+          fontWeight: "bold",
+          minHeight: "24px",
+        }}
+      >
+        {statusMessage}
+      </p>
       <button id="cancel-btn" className="btn_payOnline" onClick={handleCancel}>
         ❌ Hủy giao dịch
       </button>
-      <p id="status" style={{ color: isSuccessRef.current ? "green" : "red" }}>
-        {statusMessage}
-      </p>
     </div>
   );
 };
