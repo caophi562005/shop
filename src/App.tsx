@@ -14,6 +14,11 @@ import LoadingOverlay from "./components/LoadingOverlay";
 import RevenuePage from "./pages/RevenuePage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import TransferPage from "./pages/TransferPage";
+import MenPage from "./pages/MenPage";
+import WomanPage from "./pages/WomenPage";
+import AccessoriesPage from "./pages/AccessoriesPage";
+import FindProductPage from "./pages/FindProductPage";
+import SalePage from "./pages/SalePage";
 
 const App: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -30,7 +35,11 @@ const App: React.FC = () => {
 
           <Route path="order-success" element={<OrderSuccessPage />} />
           <Route path="transfer" element={<TransferPage />} />
-
+          <Route path="/products/men" element={<MenPage />} />
+          <Route path="/products/women" element={<WomanPage />} />
+          <Route path="/products/accessories" element={<AccessoriesPage />} />
+          <Route path="/products/find-products" element={<FindProductPage />} />
+          <Route path="/sale" element={<SalePage />} />
           {/* 1. Route cho trang chi tiết sản phẩm với ID động */}
           <Route path="product/:productId" element={<ProductDetailPage />} />
 
