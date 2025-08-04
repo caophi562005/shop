@@ -21,43 +21,47 @@ export class CategoryRepository {
     query: GetCategoriesQueryType
     languageId: string
   }): Promise<GetCategoriesResType> {
-    const skip = (query.page - 1) * query.limit
-    const take = query.limit
-    const [totalItems, data] = await Promise.all([
-      this.prismaService.category.count({
-        where: {
-          parentCategoryId: query.parentCategoryId ?? null,
-          deletedAt: null,
+    const data = await this.prismaService.category.findMany({
+      where: {
+        parentCategoryId: query.parentCategoryId ?? null,
+        deletedAt: null,
+      },
+      include: {
+        categoryTranslations: {
+          where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
         },
-      }),
-      this.prismaService.category.findMany({
-        where: {
-          parentCategoryId: query.parentCategoryId ?? null,
-          deletedAt: null,
-        },
-        include: {
-          categoryTranslations: {
-            where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take,
-      }),
-    ])
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
 
     return {
       data,
-      page: query.page,
-      limit: query.limit,
-      totalItems,
-      totalPages: Math.ceil(totalItems / query.limit),
     }
   }
 
   findById({
+    categoryId,
+    languageId,
+  }: {
+    categoryId: number
+    languageId: string
+  }): Promise<GetCategoryDetailResType | null> {
+    return this.prismaService.category.findUnique({
+      where: {
+        id: categoryId,
+        deletedAt: null,
+      },
+      include: {
+        categoryTranslations: {
+          where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { deletedAt: null, languageId },
+        },
+      },
+    })
+  }
+
+  findByParentId({
     categoryId,
     languageId,
   }: {
