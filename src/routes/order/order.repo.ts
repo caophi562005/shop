@@ -20,6 +20,7 @@ import {
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
 import { OrderProducer } from './order.producer'
+import { OrderInProductSKUSnapshotType } from 'src/shared/models/shared-order.model'
 
 @Injectable()
 export class OrderRepository {
@@ -27,6 +28,39 @@ export class OrderRepository {
     private readonly prismaService: PrismaService,
     private readonly orderProducer: OrderProducer,
   ) {}
+
+  private getTotalPrice(order: OrderInProductSKUSnapshotType) {
+    let totalPrice = 0
+    order.items.map((item) => {
+      totalPrice += item.skuPrice * item.quantity
+    })
+    return totalPrice
+  }
+
+  async getAll() {
+    const orders = await this.prismaService.order.findMany({
+      where: {
+        status: {
+          notIn: [OrderStatus.CANCELLED, OrderStatus.PENDING_PAYMENT],
+        },
+      },
+      include: {
+        items: true,
+      },
+    })
+
+    const revenueWithTotal = orders.map((order) => ({
+      id: order.id,
+      status: order.status,
+      totalPrice: this.getTotalPrice(order),
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    }))
+
+    return {
+      revenue: revenueWithTotal,
+    }
+  }
 
   async list({ userId, query }: { userId: number; query: GetOrderListQueryType }): Promise<GetOrderListResType> {
     const skip = (query.page - 1) * query.limit
