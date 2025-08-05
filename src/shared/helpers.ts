@@ -31,6 +31,10 @@ export const generateRoomProductId = (productId: number) => {
   return `productId-${productId}`
 }
 
+export const generateRoomPaymentId = (paymentId: number) => {
+  return `paymentId-${paymentId}`
+}
+
 export const generateRandomFileName = (fileName: string) => {
   const ext = path.extname(fileName)
   return `${uuidv4()}${ext}`

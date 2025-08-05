@@ -26,7 +26,6 @@ import { OrderModule } from './routes/order/order.module'
 import { PaymentModule } from './routes/payment/payment.module'
 import { BullModule } from '@nestjs/bullmq'
 import { ReviewModule } from './routes/review/review.module'
-import { WebsocketModule } from './websockets/websocket.module'
 import { MessageModule } from './routes/message/message.module'
 import { PaymentConsumer } from './queues/payment.consumer'
 
@@ -54,7 +53,6 @@ import { PaymentConsumer } from './queues/payment.consumer'
         }
       },
     }),
-    WebsocketModule,
     SharedModule,
     AuthModule,
     LanguageModule,

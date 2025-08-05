@@ -17,6 +17,8 @@ const configSchema = z.object({
 
   DATABASE_URL: z.string(),
 
+  PAYMENT_PREFIX: z.string(),
+
   ACCESS_TOKEN_EXPIRES_IN: z.string(),
   REFRESH_TOKEN_EXPIRES_IN: z.string(),
   ACCESS_TOKEN_SECRET: z.string(),

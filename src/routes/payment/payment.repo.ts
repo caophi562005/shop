@@ -7,6 +7,7 @@ import { OrderInProductSKUSnapshotType } from 'src/shared/models/shared-order.mo
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
 import { OrderStatus } from 'src/shared/constants/order.constant'
 import { PaymentProducer } from './payment.producer'
+import envConfig from 'src/shared/envConfig'
 
 @Injectable()
 export class PaymentRepository {
@@ -42,7 +43,7 @@ export class PaymentRepository {
     if (paymentTransaction) {
       throw new BadRequestException('Payment transaction already exists')
     }
-    const userId = await this.prismaService.$transaction(async (tx) => {
+    const paymentId = await this.prismaService.$transaction(async (tx) => {
       await tx.paymentTransaction.create({
         data: {
           id: body.id,
@@ -91,8 +92,6 @@ export class PaymentRepository {
         throw new BadRequestException(`Cannot find order`)
       }
 
-      const userId = payment.order!.userId
-
       const totalPrice = this.getTotalPrice(order)
       if (totalPrice !== body.transferAmount) {
         throw new BadRequestException(`Total price ${totalPrice} does not match transfer amount ${body.transferAmount}`)
@@ -119,9 +118,9 @@ export class PaymentRepository {
         }),
         this.paymentProducer.removeJob(paymentId),
       ])
-      return userId
+      return paymentId
     })
 
-    return userId
+    return paymentId
   }
 }
