@@ -9,6 +9,8 @@ declare global {
       name: string
       phone: string
       address: string
+      email: string
+      note: string
     }
   }
 }

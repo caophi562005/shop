@@ -33,6 +33,8 @@ export const CreateOrderBodySchema = z.object({
     name: z.string(),
     phone: z.string(),
     address: z.string(),
+    email: z.string().email(),
+    note: z.string().default(''),
   }),
   cartItemIds: z.array(z.number()).min(1),
 })

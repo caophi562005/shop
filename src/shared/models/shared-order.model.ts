@@ -18,6 +18,8 @@ export const OrderSchema = z.object({
     name: z.string(),
     phone: z.string(),
     address: z.string(),
+    email: z.string().email(),
+    note: z.string().default(''),
   }),
   paymentId: z.number(),
   createdById: z.number().nullable(),
