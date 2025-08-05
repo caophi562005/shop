@@ -1,5 +1,28 @@
 /* detailProduct.css */
 
+.color-item label {
+  display: inline-flex; /* Giúp căn chỉnh vòng tròn và chữ */
+  align-items: center;
+  cursor: pointer;
+}
+
+.color-item label::before {
+  content: ""; /* Bắt buộc phải có để pseudo-element hiển thị */
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%; /* Tạo hình tròn */
+  border: 2px solid #eee;
+  margin-right: 8px; /* Khoảng cách giữa vòng tròn và tên màu */
+  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: #ccc; /* Màu mặc định */
+}
+
+.color-item input[type="radio"]:checked + label::before {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ff7f00; /* Hiệu ứng viền cam */
+}
+
 /* ---- Phần layout chính ---- */
 .content_detailProduct {
   display: flex;
@@ -52,10 +75,37 @@
   margin-bottom: 16px;
 }
 
+/* ✅ THÊM: Styles cho giá giảm */
 .price_inf_products {
   font-size: 22px;
   font-weight: 500;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.price_inf_products .price-original {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.price_inf_products .price-sale {
+  color: #ff0000;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.price_inf_products .discount-badge {
+  background-color: #ff0000;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .status_inf_products {
