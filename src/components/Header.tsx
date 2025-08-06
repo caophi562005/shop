@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { RoleName } from "../constants/role.constant";
 import logoImg from "../assets/img/home/logo.png";
@@ -38,9 +38,11 @@ const mockCategories = [
 
 const Header: React.FC = () => {
   const { isLoggedIn, logout, checkAuthStatus, user } = useAuthStore();
+  const navigate = useNavigate();
 
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<number | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState<string>("");
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +64,21 @@ const Header: React.FC = () => {
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
+
+  // Xử lý submit form tìm kiếm
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmedKeyword = searchKeyword.trim();
+    if (trimmedKeyword) {
+      navigate(`/products/find-products/${encodeURIComponent(trimmedKeyword)}`);
+      setSearchKeyword(""); // Clear input sau khi tìm kiếm
+    }
+  };
+
+  // Xử lý thay đổi input
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchKeyword(e.target.value);
+  };
 
   const renderAccountMenuItems = () => {
     if (!isLoggedIn) {
@@ -227,13 +244,15 @@ const Header: React.FC = () => {
         </li>
 
         <li className="header_search_wrapper">
-          <form className="header_search_form">
+          <form className="header_search_form" onSubmit={handleSearchSubmit}>
             <input
               type="text"
               name="q"
               className="header_search_input"
               placeholder="Tìm sản phẩm..."
               autoComplete="off"
+              value={searchKeyword}
+              onChange={handleSearchInputChange}
             />
             <button type="submit" className="header_search_btn">
               <i className="fa-solid fa-magnifying-glass"></i>
