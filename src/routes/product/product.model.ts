@@ -53,6 +53,11 @@ export const GetProductsResSchema = z.object({
   data: z.array(
     ProductSchema.extend({
       productTranslations: z.array(ProductTranslationSchema),
+      categories: z.array(
+        z.object({
+          id: z.number(),
+        }),
+      ),
     }),
   ),
   page: z.number(),

@@ -94,6 +94,14 @@ export class ProductRepository {
           productTranslations: {
             where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId: languageId, deletedAt: null },
           },
+          categories: {
+            where: {
+              deletedAt: null,
+            },
+            select: {
+              id: true,
+            },
+          },
         },
         orderBy: calculatedOrderBy,
         skip,
