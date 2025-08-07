@@ -101,7 +101,7 @@ jobs:
 
             # Tạo file .env mới từ GitHub Secrets
             echo "⚙️ Creating .env file..."
-            cat <<'EOF' > .env
+            cat <<EOF > .env
             ${{ secrets.ENV_PRODUCTION }}
             EOF
 
