@@ -5,6 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN npm i --force
+RUN npx prisma generate
 RUN npm run build
 
 CMD ["node", "dist/src/main"]

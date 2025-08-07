@@ -79,6 +79,9 @@ jobs:
             echo "📦 Pulling latest Docker image..."
             docker pull caophi562005/pixcam-server:v1
 
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f
+
             # Stop và remove container cũ nếu tồn tại
             echo "🔄 Stopping old container..."
             docker stop pixcam-server 2>/dev/null || echo "No container to stop"
