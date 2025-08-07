@@ -3,7 +3,10 @@ import { z } from "zod";
 
 // Chỉ lấy các biến môi trường cần thiết ra
 const configSchema = z.object({
-  VITE_API_END_POINT: z.string().url(), // hoặc z.string() nếu không chắc là URL
+  VITE_API_END_POINT: z.string().url(),
+  VITE_BANK_CODE: z.string(),
+  VITE_BANK_ACCOUNT: z.string(),
+  VITE_ORDER_PREFIX: z.string(),
 });
 
 const parsed = configSchema.safeParse(import.meta.env);
