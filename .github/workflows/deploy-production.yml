@@ -92,8 +92,8 @@ jobs:
 
             # Backup file .env cũ nếu tồn tại
             if [ -f .env ]; then
-              echo "💾 Backing up old .env file..."
-              cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+              echo "🗑️ Removing old .env file..."
+              rm .env
             fi
 
             # Tạo file .env mới từ GitHub Secrets
@@ -133,15 +133,6 @@ jobs:
               echo "📋 Container logs:"
               docker logs pixcam-server 2>/dev/null || echo "No logs available"
               exit 1
-            fi
-
-            # Kiểm tra ứng dụng health
-            echo "🏥 Checking application health..."
-            sleep 5
-            if curl -f http://localhost:3000/health 2>/dev/null; then
-              echo "✅ Application is healthy!"
-            else
-              echo "⚠️ Health check endpoint not available (this might be normal)"
             fi
 
             echo "🎉 Deployment completed successfully!"

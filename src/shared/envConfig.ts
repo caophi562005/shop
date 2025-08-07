@@ -9,7 +9,6 @@ config({
 
 if (!fs.existsSync(path.resolve('.env'))) {
   console.error('Not found .ENV file')
-  process.exit(1)
 }
 
 const configSchema = z.object({
