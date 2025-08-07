@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import io, { Socket } from "socket.io-client";
 import "../assets/css/detailProduct.css";
-import type { GetProductDetailResType } from "../models/product.model"; // Đảm bảo bạn đã định nghĩa các type này
+import type { GetProductDetailResType } from "../models/product.model";
 import http from "../api/http";
 import type { SKUType } from "../models/shared/shared-sku.model";
 
@@ -128,6 +128,15 @@ const ProductDetailPage: React.FC = () => {
       currency: "VND",
     }).format(amount);
 
+  // ✅ THÊM: Hàm tính phần trăm giảm giá (giống SalePage)
+  const calculateDiscountPercentage = (
+    basePrice: number,
+    virtualPrice: number
+  ): number => {
+    if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
+    return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+  };
+
   // Hàm xử lý tăng/giảm số lượng, kiểm tra với stock của SKU đã chọn
   const handleQuantityChange = (amount: number) => {
     const newQuantity = quantity + amount;
@@ -166,6 +175,13 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
+  // ✅ THÊM: Tính toán giảm giá
+  const discountPercentage = calculateDiscountPercentage(
+    product.basePrice,
+    product.virtualPrice
+  );
+  const hasDiscount = discountPercentage > 0;
+
   return (
     <div className="content">
       <div className="content_detailProduct">
@@ -192,9 +208,23 @@ const ProductDetailPage: React.FC = () => {
 
         <div className="inf_product">
           <h2 className="title_inf_products">{product.name}</h2>
-          <p className="price_inf_products">
-            <span>{formatCurrency(product.virtualPrice)}</span>
-          </p>
+
+          {/* ✅ THAY ĐỔI: Hiển thị giá với logic giảm giá */}
+          <div className="price_inf_products">
+            {hasDiscount ? (
+              <>
+                <span className="price-original">
+                  {formatCurrency(product.basePrice)}
+                </span>
+                <span className="price-sale">
+                  {formatCurrency(product.virtualPrice)}
+                </span>
+                <span className="discount-badge">-{discountPercentage}%</span>
+              </>
+            ) : (
+              <span>{formatCurrency(product.virtualPrice)}</span>
+            )}
+          </div>
 
           <p className="status_inf_products">
             Tình trạng:{" "}
