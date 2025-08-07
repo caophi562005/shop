@@ -1,228 +1,208 @@
-// SalePage.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "../assets/css/home.css";
 import "../assets/css/Top.css";
 import "../assets/css/style.css";
 import "../assets/css/Sale.css";
 import "../assets/css/Product.css";
+import type { ProductType } from "../models/shared/shared-product.model";
+import { Link } from "react-router-dom";
+import http from "../api/http";
+import { OrderBy, SortBy } from "../constants/other.constant";
 
-// --- TYPE DEFINITIONS ---
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  imgURL_1: string;
-  sale_name: string | null;
-  createdAt: Date;
-};
-
-type PaginationProps = {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-};
-
-// --- FAKE DATA ---
-const createMockProducts = (): Product[] => {
-  const products: Product[] = [];
-  const productNames = [
-    "AstroCam Pro",
-    "GalaxyHunter Z1",
-    "NightSky Observer",
-    "Comet Seeker",
-    "Orion's View",
-    "Starlight Express",
-    "PixelNova 5000",
-    "DeepSpace Imager",
-    "Solaris Scope",
-    "LunarLens XT",
-    "Nebula Navigator",
-    "CosmoCapture",
-  ];
-  for (let i = 1; i <= 30; i++) {
-    const hasSale = Math.random() > 0.5;
-    products.push({
-      id: i,
-      name: `${productNames[i % productNames.length]} #${i}`,
-      price: Math.floor(Math.random() * (2000 - 500 + 1) + 500) * 10000,
-      imgURL_1: `https://picsum.photos/seed/${i}/400/400`,
-      sale_name: hasSale ? `${Math.floor(Math.random() * 5 + 1) * 10}%` : null,
-      createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
-    });
-  }
-  return products;
-};
-const allProducts: Product[] = createMockProducts();
-
-// --- HELPER FUNCTIONS ---
 const formatCurrency = (price: number): string => {
   return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
 };
-const getDiscountedPrice = (price: number, saleBadge: string): number => {
-  const percentage = parseFloat(saleBadge.replace("%", ""));
-  if (isNaN(percentage)) return price;
-  return price * (1 - percentage / 100);
+
+const calculateDiscountPercentage = (
+  basePrice: number,
+  virtualPrice: number
+): number => {
+  if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
+  return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
 };
 
-const chunkArray = <T,>(array: T[], size: number): T[][] => {
-  const chunkedArr: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunkedArr.push(array.slice(i, i + size));
-  }
-  return chunkedArr;
-};
+const SortChooseType = {
+  DEFAULT: "DEFAULT",
+  PRICE_ASC: "PRICE_ASC",
+  PRICE_DESC: "PRICE_DESC",
+  LATEST: "LATEST",
+} as const;
 
-// --- COMPONENT: Pagination ---
-const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-}) => {
-  if (totalPages <= 1) return null;
-
-  const range = 2;
-  const pages: React.ReactNode[] = [];
-
-  // Prev
-  pages.push(
-    currentPage > 1 ? (
-      <a key="prev" onClick={() => onPageChange(currentPage - 1)}>
-        <i className="fas fa-angle-left"></i>
-      </a>
-    ) : (
-      <span key="prev" className="disabled">
-        <i className="fas fa-angle-left"></i>
-      </span>
-    )
-  );
-
-  // First + ellipsis
-  if (currentPage > range + 2) {
-    pages.push(
-      <a key={1} onClick={() => onPageChange(1)}>
-        1
-      </a>
-    );
-    pages.push(
-      <span key="start-ellipsis" className="disabled">
-        ...
-      </span>
-    );
-  }
-
-  // Middle pages
-  for (
-    let i = Math.max(1, currentPage - range);
-    i <= Math.min(totalPages, currentPage + range);
-    i++
-  ) {
-    pages.push(
-      i === currentPage ? (
-        <span key={i} className="active">
-          {i}
-        </span>
-      ) : (
-        <a key={i} onClick={() => onPageChange(i)}>
-          {i}
-        </a>
-      )
-    );
-  }
-
-  // Last + ellipsis
-  if (currentPage < totalPages - (range + 1)) {
-    pages.push(
-      <span key="end-ellipsis" className="disabled">
-        ...
-      </span>
-    );
-    pages.push(
-      <a key={totalPages} onClick={() => onPageChange(totalPages)}>
-        {totalPages}
-      </a>
-    );
-  }
-
-  // Next
-  pages.push(
-    currentPage < totalPages ? (
-      <a key="next" onClick={() => onPageChange(currentPage + 1)}>
-        <i className="fas fa-angle-right"></i>
-      </a>
-    ) : (
-      <span key="next" className="disabled">
-        <i className="fas fa-angle-right"></i>
-      </span>
-    )
-  );
-
-  return <div className="pagination">{pages}</div>;
-};
-
-// --- COMPONENT: SalePage ---
 const SalePage: React.FC = () => {
-  const [sortOption, setSortOption] = useState<string>("");
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOption, setSortOption] = useState<keyof typeof SortChooseType>(
+    SortChooseType.LATEST
+  );
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
+
   const productsPerPage = 12;
 
-  const sortOptions: Record<string, string> = {
-    "": "Thứ tự mặc định",
-    price_asc: "Giá: thấp → cao",
-    price_desc: "Giá: cao → thấp",
-    latest: "Mới nhất",
-  };
+  useEffect(() => {
+    const fetchProducts = async () => {
+      let sortBy = "";
+      let order = "";
 
-  const sortedProducts = useMemo(() => {
-    const arr = [...allProducts];
-    switch (sortOption) {
-      case "price_asc":
-        arr.sort((a, b) => {
-          const pa = a.sale_name
-            ? getDiscountedPrice(a.price, a.sale_name)
-            : a.price;
-          const pb = b.sale_name
-            ? getDiscountedPrice(b.price, b.sale_name)
-            : b.price;
-          return pa - pb;
-        });
-        break;
-      case "price_desc":
-        arr.sort((a, b) => {
-          const pa = a.sale_name
-            ? getDiscountedPrice(a.price, a.sale_name)
-            : a.price;
-          const pb = b.sale_name
-            ? getDiscountedPrice(b.price, b.sale_name)
-            : b.price;
-          return pb - pa;
-        });
-        break;
-      case "latest":
-        arr.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        break;
-      default:
-        arr.sort((a, b) => a.id - b.id);
+      if (sortOption === SortChooseType.PRICE_ASC) {
+        sortBy = SortBy.Price;
+        order = OrderBy.Asc;
+      } else if (sortOption === SortChooseType.PRICE_DESC) {
+        sortBy = SortBy.Price;
+        order = OrderBy.Desc;
+      } else if (sortOption === SortChooseType.LATEST) {
+        sortBy = SortBy.CreatedAt;
+        order = OrderBy.Desc;
+      }
+
+      try {
+        const response = await http.get(
+          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}`
+        );
+        const data = response.data;
+
+        const saleProducts = (data.data || []).filter(
+          (product: ProductType) => product.virtualPrice < product.basePrice
+        );
+
+        setProducts(saleProducts);
+        setTotalPages(data.totalPages || 0);
+        setTotalItems(saleProducts.length);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        setProducts([]);
+      }
+    };
+
+    fetchProducts();
+  }, [currentPage, sortOption]);
+
+  const getSortLabel = (sortValue: keyof typeof SortChooseType) => {
+    switch (sortValue) {
+      case SortChooseType.PRICE_ASC:
+        return "Giá: thấp → cao";
+      case SortChooseType.PRICE_DESC:
+        return "Giá: cao → thấp";
+      case SortChooseType.LATEST:
+        return "Mới nhất";
     }
-    return arr;
-  }, [sortOption]);
-
-  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
-  const currentProducts = sortedProducts.slice(
-    (currentPage - 1) * productsPerPage,
-    currentPage * productsPerPage
-  );
-  const chunkedProducts = chunkArray(currentProducts, 4);
-
-  const handleSortChange = (
-    value: string,
-    e: React.MouseEvent<HTMLLIElement>
-  ) => {
-    e.stopPropagation();
-    setSortOption(value);
-    setCurrentPage(1);
-    setDropdownOpen(false);
   };
+
+  const handleSortChange = (value: keyof typeof SortChooseType) => {
+    setSortOption(value);
+    setIsDropdownOpen(false);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isDropdownOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    const range = 2;
+    const pages: (number | string)[] = [];
+    pages.push("prev");
+    if (currentPage > range + 1) {
+      pages.push(1);
+      if (currentPage > range + 2) pages.push("...");
+    }
+    for (
+      let i = Math.max(1, currentPage - range);
+      i <= Math.min(totalPages, currentPage + range);
+      i++
+    ) {
+      pages.push(i);
+    }
+    if (currentPage < totalPages - range) {
+      if (currentPage < totalPages - (range + 1)) pages.push("...");
+      pages.push(totalPages);
+    }
+    pages.push("next");
+    return (
+      <div className="pagination">
+        {pages.map((p, index) => {
+          if (p === "prev") {
+            return currentPage > 1 ? (
+              <a
+                key={index}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage - 1);
+                }}
+              >
+                <i className="fas fa-angle-left"></i>
+              </a>
+            ) : (
+              <span key={index} className="disabled">
+                <i className="fas fa-angle-left"></i>
+              </span>
+            );
+          }
+          if (p === "next") {
+            return currentPage < totalPages ? (
+              <a
+                key={index}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage + 1);
+                }}
+              >
+                <i className="fas fa-angle-right"></i>
+              </a>
+            ) : (
+              <span key={index} className="disabled">
+                <i className="fas fa-angle-right"></i>
+              </span>
+            );
+          }
+          if (p === "...") {
+            return (
+              <span key={index} className="disabled">
+                ...
+              </span>
+            );
+          }
+          return p === currentPage ? (
+            <span key={index} className="active">
+              {p}
+            </span>
+          ) : (
+            <a
+              key={index}
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage(p as number);
+              }}
+            >
+              {p}
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Calculate start and end indices for display
+  const startIndex =
+    products.length === 0 ? 0 : (currentPage - 1) * productsPerPage + 1;
+  const endIndex = Math.min(currentPage * productsPerPage, totalItems);
 
   return (
     <main>
@@ -231,108 +211,118 @@ const SalePage: React.FC = () => {
           <div className="contentProducts_navigate">
             <div className="navigate_shopAll">
               <p className="title_navigate">
-                <span className="home_navigate">TRANG CHỦ</span> / DANH MỤC SALE
+                <Link to="/" className="home_navigate">
+                  TRANG CHỦ
+                </Link>
+                / DANH MỤC SALE
               </p>
             </div>
             <div className="filter_shopAlll">
               <p>
-                Hiển thị{" "}
-                {currentProducts.length === 0
-                  ? 0
-                  : (currentPage - 1) * productsPerPage + 1}
-                –{(currentPage - 1) * productsPerPage + currentProducts.length}{" "}
-                của {sortedProducts.length} kết quả
+                Hiển thị {startIndex}–{endIndex} của {totalItems} kết quả
               </p>
-              <div className="custom-dropdown">
+              <div
+                className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
+                ref={dropdownRef}
+              >
                 <div
                   className="selected"
-                  onClick={() => setDropdownOpen((o) => !o)}
+                  onClick={() => setIsDropdownOpen((o) => !o)}
                 >
-                  {sortOptions[sortOption]} &#9662;
+                  {getSortLabel(sortOption)} &#9662;
                 </div>
                 {isDropdownOpen && (
-                  <ul className="options">
-                    {Object.entries(sortOptions).map(([value, label]) => (
-                      <li
-                        key={value}
-                        onClick={(e) => handleSortChange(value, e)}
-                      >
-                        {label}
-                      </li>
-                    ))}
+                  <ul className="options" onClick={(e) => e.stopPropagation()}>
+                    <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                      Mới nhất
+                    </li>
+                    <li
+                      onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
+                    >
+                      Giá: thấp → cao
+                    </li>
+                    <li
+                      onClick={() =>
+                        handleSortChange(SortChooseType.PRICE_DESC)
+                      }
+                    >
+                      Giá: cao → thấp
+                    </li>
                   </ul>
                 )}
               </div>
             </div>
           </div>
 
-          {currentProducts.length === 0 ? (
+          {products.length === 0 ? (
             <p style={{ textAlign: "center", padding: "20px" }}>
-              Chưa có sản phẩm nào.
+              Chưa có sản phẩm giảm giá nào.
             </p>
           ) : (
             <div className="product_top">
-              {chunkedProducts.map((row, rowIndex) => (
-                <div className="products_home" key={rowIndex}>
-                  {row.map((product) => {
-                    const priceDisplay = formatCurrency(product.price);
-                    let priceSaleDisplay: string | null = null;
-                    if (product.sale_name) {
-                      const discounted = getDiscountedPrice(
-                        product.price,
-                        product.sale_name
-                      );
-                      priceSaleDisplay = formatCurrency(discounted);
-                    }
-                    return (
-                      <div className="item_products_home" key={product.id}>
-                        <div className="image_home_item">
-                          {product.sale_name && (
-                            <div className="product_sale">
-                              <p className="text_products_sale">
-                                -{product.sale_name}
-                              </p>
-                            </div>
-                          )}
-                          <a href={`/products/${product.id}`}>
-                            <img
-                              src={product.imgURL_1}
-                              alt={product.name}
-                              className="image_products_home"
-                            />
-                          </a>
-                        </div>
-                        <h4 className="infProducts_home">{product.name}</h4>
-                        <p className="infProducts_home">
-                          {priceSaleDisplay ? (
-                            <>
-                              <span className="price-original">
-                                {priceDisplay}
-                              </span>
-                              &nbsp;
-                              <span className="price-sale">
-                                {priceSaleDisplay}
-                              </span>
-                            </>
-                          ) : (
-                            <span>{priceDisplay}</span>
-                          )}
-                        </p>
+              <div className="products_home">
+                {products.map((product) => {
+                  const discountPercentage = calculateDiscountPercentage(
+                    product.basePrice,
+                    product.virtualPrice
+                  );
+                  const hasDiscount = discountPercentage > 0;
+
+                  return (
+                    <div className="item_products_home" key={product.id}>
+                      <div className="image_home_item">
+                        {hasDiscount && (
+                          <div className="product_sale">
+                            <p className="text_products_sale">
+                              -{discountPercentage}%
+                            </p>
+                          </div>
+                        )}
+                        <a href={`/product/${product.id}`}>
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="image_products_home"
+                          />
+                        </a>
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
+                      <h4 className="infProducts_home">{product.name}</h4>
+                      <p className="infProducts_home">
+                        {hasDiscount ? (
+                          <>
+                            <span
+                              className="price-original"
+                              style={{
+                                textDecoration: "line-through",
+                                color: "#999",
+                                marginRight: "8px",
+                              }}
+                            >
+                              {formatCurrency(product.basePrice)}
+                            </span>
+                            <span
+                              className="price-sale"
+                              style={{
+                                color: "#ff0000",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {formatCurrency(product.virtualPrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <span>{formatCurrency(product.virtualPrice)}</span>
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {renderPagination()}
     </main>
   );
 };
