@@ -28,7 +28,7 @@ jobs:
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.HOST_PRODUCTION_2 }}
+          host: ${{ secrets.HOST_PRODUCTION }}
           username: ${{ secrets.USERNAME_PRODUCTION }}
           password: ${{ secrets.PASSWORD_PRODUCTION }}
           port: ${{ secrets.PORT_PRODUCTION }}
@@ -53,6 +53,10 @@ jobs:
             # Dọn dẹp các image cũ không dùng đến
             echo "🧹 Dọn dẹp image cũ..."
             docker image prune -f
+
+            echo "🔄 Dừng container cũ..."
+            docker stop pixcam-server 2>/dev/null || echo "No container to stop"
+            docker rm pixcam-server 2>/dev/null || echo "No container to remove"
 
             # Tạo tệp .env mới từ GitHub Secrets
             echo "⚙️ Tạo tệp .env..."
