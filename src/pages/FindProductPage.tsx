@@ -1,282 +1,108 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import "../assets/css/home.css";
 import "../assets/css/Top.css";
 import "../assets/css/style.css";
 import "../assets/css/Product.css";
+import type { ProductType } from "../models/shared/shared-product.model";
+import { Link } from "react-router-dom";
+import http from "../api/http";
+import { OrderBy, SortBy } from "../constants/other.constant";
 
-// Khai báo kiểu dữ liệu cho sản phẩm
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  imgURL_1: string;
-  createdAt: string; // Dùng để sort "Mới nhất"
-  price_sale?: number; // Giá sale (có thể có hoặc không)
-  discount_percent?: number; // % giảm giá (có thể có hoặc không)
-}
-
-// Hàm định dạng tiền tệ
 const formatCurrency = (price: number): string => {
   return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
 };
 
-// --- DỮ LIỆU GIẢ (FAKE DATA) ---
-// Tạo một mảng sản phẩm giả để hiển thị
-const allFakeProducts: Product[] = Array.from({ length: 35 }, (_, i) => {
-  const originalPrice = Math.floor(Math.random() * (2000000 - 300000) + 300000);
-  const hasSale = Math.random() > 0.6; // 40% sản phẩm sẽ có sale
-  let price_sale, discount_percent;
-
-  if (hasSale) {
-    discount_percent = Math.floor(Math.random() * (50 - 10) + 10);
-    price_sale = originalPrice * (1 - discount_percent / 100);
-  }
-
-  return {
-    id: i + 1,
-    name: `Máy ảnh mẫu ${i + 1}`,
-    price: originalPrice,
-    imgURL_1: `https://via.placeholder.com/400x400.png?text=Sản+phẩm+${i + 1}`,
-    createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-    price_sale: price_sale,
-    discount_percent: discount_percent,
-  };
-});
-// Thêm một vài sản phẩm có tên cụ thể để tìm kiếm dễ dàng
-allFakeProducts.push({
-  id: 99,
-  name: "Canon EOS R5 siêu nét",
-  price: 85000000,
-  imgURL_1: `https://via.placeholder.com/400x400.png?text=Canon+R5`,
-  createdAt: new Date().toISOString(),
-});
-allFakeProducts.push({
-  id: 100,
-  name: "Sony Alpha A7 IV",
-  price: 58000000,
-  imgURL_1: `https://via.placeholder.com/400x400.png?text=Sony+A7IV`,
-  createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  price_sale: 55000000,
-  discount_percent: 5,
-});
-
-// --- COMPONENT CON: ProductCard ---
-const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
-  const hasSale = product.price_sale && product.price_sale > 0;
-  return (
-    <div className="item_products_home">
-      <div className="image_home_item">
-        {hasSale && (
-          <div className="product_sale">
-            <p className="text_products_sale">−{product.discount_percent}%</p>
-          </div>
-        )}
-        <a href={`#`}>
-          <img
-            src={product.imgURL_1}
-            alt={product.name}
-            className="image_products_home"
-          />
-        </a>
-      </div>
-      <h4 className="infProducts_home">{product.name}</h4>
-      <p className="infProducts_home">
-        {hasSale ? (
-          <>
-            <span className="price-original">
-              {formatCurrency(product.price)}
-            </span>
-            &nbsp;
-            <span className="price-sale">
-              {formatCurrency(product.price_sale!)}
-            </span>
-          </>
-        ) : (
-          formatCurrency(product.price)
-        )}
-      </p>
-    </div>
-  );
+const calculateDiscountPercentage = (
+  basePrice: number,
+  virtualPrice: number
+): number => {
+  if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
+  return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
 };
 
-// --- COMPONENT CON: Pagination ---
-const Pagination: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}> = ({ currentPage, totalPages, onPageChange }) => {
-  const range = 2;
-  const pages: (number | string)[] = [];
+const SortChooseType = {
+  PRICE_ASC: "PRICE_ASC",
+  PRICE_DESC: "PRICE_DESC",
+  LATEST: "LATEST",
+} as const;
 
-  // Nút "Prev"
-  pages.push("prev");
-
-  // Trang đầu và "..."
-  if (currentPage > range + 1) {
-    pages.push(1);
-    if (currentPage > range + 2) {
-      pages.push("...");
-    }
-  }
-
-  // Các trang ở giữa
-  for (
-    let i = Math.max(1, currentPage - range);
-    i <= Math.min(totalPages, currentPage + range);
-    i++
-  ) {
-    pages.push(i);
-  }
-
-  // Trang cuối và "..."
-  if (currentPage < totalPages - range) {
-    if (currentPage < totalPages - range - 1) {
-      pages.push("...");
-    }
-    pages.push(totalPages);
-  }
-
-  // Nút "Next"
-  pages.push("next");
-
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="pagination">
-      {pages.map((p, index) => {
-        if (p === "prev") {
-          return (
-            <a
-              key={index}
-              href="#"
-              className={currentPage === 1 ? "disabled" : ""}
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage > 1) onPageChange(currentPage - 1);
-              }}
-            >
-              <i className="fas fa-angle-left"></i>
-            </a>
-          );
-        }
-        if (p === "next") {
-          return (
-            <a
-              key={index}
-              href="#"
-              className={currentPage === totalPages ? "disabled" : ""}
-              onClick={(e) => {
-                e.preventDefault();
-                if (currentPage < totalPages) onPageChange(currentPage + 1);
-              }}
-            >
-              <i className="fas fa-angle-right"></i>
-            </a>
-          );
-        }
-        if (p === "...") {
-          return (
-            <span key={index} className="disabled">
-              ...
-            </span>
-          );
-        }
-        return (
-          <a
-            key={index}
-            href="#"
-            className={p === currentPage ? "active" : ""}
-            onClick={(e) => {
-              e.preventDefault();
-              onPageChange(p as number);
-            }}
-          >
-            {p}
-          </a>
-        );
-      })}
-    </div>
-  );
-};
-
-// --- COMPONENT CHÍNH: FindProductPage ---
 const FindProductPage: React.FC = () => {
-  // Giả lập lấy params từ URL, bạn có thể tích hợp với react-router-dom
-  const [keyword, setKeyword] = useState<string>("sony"); // Giả sử người dùng tìm "sony"
-  const [sortOption, setSortOption] = useState<string>("");
+  const { name } = useParams<{ name: string }>();
+  const [sortOption, setSortOption] = useState<keyof typeof SortChooseType>(
+    SortChooseType.LATEST
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const productsPerPage = 12;
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
 
-  // Lọc và sắp xếp sản phẩm
-  const sortedAndFilteredProducts = useMemo(() => {
-    let products = [...allFakeProducts];
+  const productsPerPage = 1;
 
-    // 1. Lọc theo từ khóa
-    if (keyword) {
-      products = products.filter((p) =>
-        p.name.toLowerCase().includes(keyword.toLowerCase())
-      );
-    }
+  useEffect(() => {
+    if (!name) return;
 
-    // 2. Sắp xếp
-    switch (sortOption) {
-      case "price_asc":
-        return products.sort(
-          (a, b) => (a.price_sale || a.price) - (b.price_sale || b.price)
+    const fetchProducts = async () => {
+      let sortBy = "";
+      let order = "";
+
+      if (sortOption === SortChooseType.PRICE_ASC) {
+        sortBy = SortBy.Price;
+        order = OrderBy.Asc;
+      } else if (sortOption === SortChooseType.PRICE_DESC) {
+        sortBy = SortBy.Price;
+        order = OrderBy.Desc;
+      } else if (sortOption === SortChooseType.LATEST) {
+        sortBy = SortBy.CreatedAt;
+        order = OrderBy.Desc;
+      }
+
+      try {
+        const response = await http.get(
+          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&name=${encodeURIComponent(
+            name
+          )}`
         );
-      case "price_desc":
-        return products.sort(
-          (a, b) => (b.price_sale || b.price) - (a.price_sale || a.price)
-        );
-      case "latest":
-        return products.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      default:
-        return products;
-    }
-  }, [sortOption, keyword]);
+        const data = response.data;
 
-  // Phân trang sản phẩm
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * productsPerPage;
-    const endIndex = startIndex + productsPerPage;
-    return sortedAndFilteredProducts.slice(startIndex, endIndex);
-  }, [currentPage, sortedAndFilteredProducts]);
+        setProducts(data.data || []);
+        setTotalPages(data.totalPages || 0);
+        setTotalItems(data.totalItems || 0);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        setProducts([]);
+        setTotalPages(0);
+        setTotalItems(0);
+      }
+    };
 
-  const totalPages = Math.ceil(
-    sortedAndFilteredProducts.length / productsPerPage
-  );
+    fetchProducts();
+  }, [currentPage, sortOption, name]);
 
-  // Lấy nhãn cho tùy chọn sort
-  const getSortLabel = (sortValue: string) => {
+  const getSortLabel = (sortValue: keyof typeof SortChooseType) => {
     switch (sortValue) {
-      case "price_asc":
+      case SortChooseType.PRICE_ASC:
         return "Giá: thấp → cao";
-      case "price_desc":
+      case SortChooseType.PRICE_DESC:
         return "Giá: cao → thấp";
-      case "latest":
+      case SortChooseType.LATEST:
         return "Mới nhất";
-      default:
-        return "Thứ tự mặc định";
     }
   };
 
-  // Xử lý khi thay đổi sort
-  const handleSortChange = (value: string) => {
+  const handleSortChange = (value: keyof typeof SortChooseType) => {
     setSortOption(value);
     setIsDropdownOpen(false);
-    setCurrentPage(1); // Quay về trang 1 khi sort
+    setCurrentPage(1);
   };
 
-  // Xử lý đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
+        isDropdownOpen &&
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
@@ -285,11 +111,99 @@ const FindProductPage: React.FC = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isDropdownOpen]);
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    const range = 2;
+    const pages: (number | string)[] = [];
+    pages.push("prev");
+    if (currentPage > range + 1) {
+      pages.push(1);
+      if (currentPage > range + 2) pages.push("...");
+    }
+    for (
+      let i = Math.max(1, currentPage - range);
+      i <= Math.min(totalPages, currentPage + range);
+      i++
+    ) {
+      pages.push(i);
+    }
+    if (currentPage < totalPages - range) {
+      if (currentPage < totalPages - (range + 1)) pages.push("...");
+      pages.push(totalPages);
+    }
+    pages.push("next");
+    return (
+      <div className="pagination">
+        {pages.map((p, index) => {
+          if (p === "prev") {
+            return currentPage > 1 ? (
+              <a
+                key={index}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage - 1);
+                }}
+              >
+                <i className="fas fa-angle-left"></i>
+              </a>
+            ) : (
+              <span key={index} className="disabled">
+                <i className="fas fa-angle-left"></i>
+              </span>
+            );
+          }
+          if (p === "next") {
+            return currentPage < totalPages ? (
+              <a
+                key={index}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage + 1);
+                }}
+              >
+                <i className="fas fa-angle-right"></i>
+              </a>
+            ) : (
+              <span key={index} className="disabled">
+                <i className="fas fa-angle-right"></i>
+              </span>
+            );
+          }
+          if (p === "...") {
+            return (
+              <span key={index} className="disabled">
+                ...
+              </span>
+            );
+          }
+          return p === currentPage ? (
+            <span key={index} className="active">
+              {p}
+            </span>
+          ) : (
+            <a
+              key={index}
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage(p as number);
+              }}
+            >
+              {p}
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
 
   // Render nội dung chính dựa trên điều kiện
   const renderContent = () => {
-    if (keyword === "") {
+    if (!name) {
       return (
         <>
           <p style={{ textAlign: "center", padding: "20px" }}>
@@ -299,11 +213,11 @@ const FindProductPage: React.FC = () => {
         </>
       );
     }
-    if (sortedAndFilteredProducts.length === 0) {
+    if (products.length === 0) {
       return (
         <>
           <p style={{ textAlign: "center", padding: "20px" }}>
-            Không tìm thấy sản phẩm nào chứa “<strong>{keyword}</strong>”.
+            Không tìm thấy sản phẩm nào chứa "<strong>{name}</strong>".
           </p>
           <div style={{ height: "300px" }}></div>
         </>
@@ -312,9 +226,62 @@ const FindProductPage: React.FC = () => {
     return (
       <div className="product_top">
         <div className="products_home">
-          {paginatedProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {products.map((product) => {
+            const discountPercentage = calculateDiscountPercentage(
+              product.basePrice,
+              product.virtualPrice
+            );
+            const hasDiscount = discountPercentage > 0;
+
+            return (
+              <div className="item_products_home" key={product.id}>
+                <div className="image_home_item">
+                  {hasDiscount && (
+                    <div className="product_sale">
+                      <p className="text_products_sale">
+                        -{discountPercentage}%
+                      </p>
+                    </div>
+                  )}
+                  <a href={`/product/${product.id}`}>
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="image_products_home"
+                    />
+                  </a>
+                </div>
+                <h4 className="infProducts_home">{product.name}</h4>
+                <p className="infProducts_home">
+                  {hasDiscount ? (
+                    <>
+                      <span
+                        className="price-original"
+                        style={{
+                          textDecoration: "line-through",
+                          color: "#999",
+                          marginRight: "8px",
+                        }}
+                      >
+                        {formatCurrency(product.basePrice)}
+                      </span>
+                      <span
+                        className="price-sale"
+                        style={{
+                          color: "#ff0000",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {formatCurrency(product.virtualPrice)}
+                      </span>
+                    </>
+                  ) : (
+                    <span>{formatCurrency(product.virtualPrice)}</span>
+                  )}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -327,17 +294,23 @@ const FindProductPage: React.FC = () => {
           <div className="contentProducts_navigate">
             <div className="navigate_shopAll">
               <p className="title_navigate">
-                <span className="home_navigate">TRANG CHỦ</span> / TÌM KIẾM
+                <Link to="/" className="home_navigate">
+                  TRANG CHỦ
+                </Link>
+                / TÌM KIẾM
+                {name && `: "${name}"`}
               </p>
             </div>
 
             <div className="filter_shopAlll">
               <p>
-                Hiển thị {paginatedProducts.length} của{" "}
-                {sortedAndFilteredProducts.length} kết quả
+                Hiển thị {products.length} của {totalItems} kết quả
               </p>
 
-              <div className="custom-dropdown" ref={dropdownRef}>
+              <div
+                className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
+                ref={dropdownRef}
+              >
                 <div
                   className="selected"
                   onClick={() => setIsDropdownOpen((o) => !o)}
@@ -345,17 +318,22 @@ const FindProductPage: React.FC = () => {
                   {getSortLabel(sortOption)} &#9662;
                 </div>
                 {isDropdownOpen && (
-                  <ul className="options">
-                    <li onClick={() => handleSortChange("")}>
-                      Thứ tự mặc định
+                  <ul className="options" onClick={(e) => e.stopPropagation()}>
+                    <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                      Mới nhất
                     </li>
-                    <li onClick={() => handleSortChange("price_asc")}>
+                    <li
+                      onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
+                    >
                       Giá: thấp → cao
                     </li>
-                    <li onClick={() => handleSortChange("price_desc")}>
+                    <li
+                      onClick={() =>
+                        handleSortChange(SortChooseType.PRICE_DESC)
+                      }
+                    >
                       Giá: cao → thấp
                     </li>
-                    <li onClick={() => handleSortChange("latest")}>Mới nhất</li>
                   </ul>
                 )}
               </div>
@@ -366,11 +344,7 @@ const FindProductPage: React.FC = () => {
         </div>
       </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {renderPagination()}
     </main>
   );
 };
