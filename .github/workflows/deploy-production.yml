@@ -11,15 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.18.0
-          cache: 'npm'
       - name: Create .env file
         run: echo "${{ secrets.ENV_PRODUCTION }}" > .env
-      - run: npm i --force
-      - run: npm run build
+
+      - name: Build docker image
+        run: docker build --platform linux/amd64 -t caophi562005/pixcam-server:v1 .
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Push docker image to DockerHub
+        run: docker push caophi562005/pixcam-server:v1
+
       - name: send telegram message after build
         if: success()
         uses: appleboy/telegram-action@master
@@ -30,9 +33,9 @@ jobs:
             ✅ Build thành công!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-            
+
             📝 Commit: ${{ github.event.commits[0].message }}
-            
+
             📦 Repository: ${{ github.repository }}
 
             🔗 Xem chi tiết:  
@@ -47,15 +50,15 @@ jobs:
             ❌ Build thất bại!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-            
+
             📝 Nội dung commit:
             ${{ github.event.commits[0].message }}
-            
+
             📦 Repository:  
             ${{ github.repository }}
 
             ⚠️ Vui lòng kiểm tra lại mã nguồn.
-            
+
             🔗 Xem thay đổi chi tiết:  
             [🛠️ Nhấn để xem](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
   deploy:
@@ -65,23 +68,16 @@ jobs:
       - name: Executing remote ssh commands using password
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.HOST_PRODUCTION }}
+          host: ${{ secrets.HOST_PRODUCTION_2 }}
           username: ${{ secrets.USERNAME_PRODUCTION }}
           password: ${{ secrets.PASSWORD_PRODUCTION }}
           port: ${{ secrets.PORT_PRODUCTION }}
           script: |
-            export NVM_DIR=~/.nvm
-            source ~/.nvm/nvm.sh
-            cd ~/shop
-            git fetch --all
-            git reset --hard origin/back-end
-            cat <<'EOF' > .env
-            ${{ secrets.ENV_PRODUCTION }}
-            EOF
-            npm i --force
-            npx prisma generate
-            npm run build
-            pm2 restart shop-backend
+            echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            docker pull caophi562005/pixcam-server:v1
+            docker stop pixcam-server
+            docker rm pixcam-server
+            docker run -dp 3000:3000 --name pixcam-server caophi562005/pixcam-server:v1
       - name: send telegram message after deploy
         if: success()
         uses: appleboy/telegram-action@master
@@ -92,9 +88,9 @@ jobs:
             ✅ Deploy thành công!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-            
+
             📝 Commit: ${{ github.event.commits[0].message }}
-            
+
             📦 Repository: ${{ github.repository }}
 
             🔗 Xem chi tiết:  
@@ -109,14 +105,14 @@ jobs:
             ❌ Deploy thất bại!!!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-            
+
             📝 Nội dung commit:
             ${{ github.event.commits[0].message }}
-            
+
             📦 Repository:  
             ${{ github.repository }}
-            
+
             ⚠️ Vui lòng kiểm tra lại mã nguồn.
-            
+
             🔗 Xem thay đổi chi tiết:  
             [🛠️ Nhấn để xem](https://github.com/${{ github.repository }}/commit/${{ github.sha }})

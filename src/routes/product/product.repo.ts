@@ -291,7 +291,7 @@ export class ProductRepository {
           ...productData,
           updatedById,
           categories: {
-            connect: categories.map((category) => ({ id: category })),
+            set: categories.map((id) => ({ id })), // Ghi đè toàn bộ
           },
         },
       }),

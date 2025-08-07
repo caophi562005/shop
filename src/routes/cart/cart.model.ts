@@ -29,6 +29,7 @@ export const CartItemDetailResSchema = z.array(
       product: ProductSchema.pick({
         id: true,
         name: true,
+        images: true,
       }).extend({
         productTranslations: z.array(ProductTranslationSchema),
       }),
