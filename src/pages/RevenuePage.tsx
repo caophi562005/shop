@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,6 +15,7 @@ import {
 import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
 import * as XLSX from "xlsx";
 import "../assets/css/revenue.css";
+import http from "../api/http";
 
 // Đăng ký các thành phần của Chart.js
 ChartJS.register(
@@ -34,26 +35,18 @@ ChartJS.register(
 type ChartMode = "daily" | "monthly" | "yearly";
 type ChartType = "line" | "bar" | "pie" | "doughnut";
 
-// --- DỮ LIỆU GIẢ (thay thế cho dữ liệu từ PHP) ---
-const mockDailyData = {
-  labels: [
-    "2025-07-28",
-    "2025-07-29",
-    "2025-07-30",
-    "2025-07-31",
-    "2025-08-01",
-  ],
-  data: [1200000, 1900000, 3000000, 2500000, 4200000],
-};
-const mockMonthlyData = {
-  labels: ["2025/06", "2025/07", "2025/08"],
-  data: [45000000, 78000000, 92000000],
-};
-const mockYearlyData = {
-  labels: ["2023", "2024", "2025"],
-  data: [850000000, 1100000000, 1500000000],
-};
-// --- HẾT DỮ LIỆU GIẢ ---
+// Định nghĩa kiểu dữ liệu cho API response
+interface OrderData {
+  id: number;
+  status: string;
+  totalPrice: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiResponse {
+  revenue: OrderData[];
+}
 
 // Hàm định dạng tiền tệ VNĐ
 const formatVNCurrency = (value: number): string => {
@@ -63,66 +56,134 @@ const formatVNCurrency = (value: number): string => {
   }).format(value);
 };
 
+// Hàm xử lý dữ liệu API thành format phù hợp cho biểu đồ
+const processRevenueData = (orders: OrderData[], mode: ChartMode) => {
+  const processedData: { [key: string]: number } = {};
+
+  orders.forEach((order) => {
+    const date = new Date(order.createdAt);
+    let key = "";
+
+    switch (mode) {
+      case "daily":
+        key = date.toISOString().slice(0, 10); // YYYY-MM-DD
+        break;
+      case "monthly":
+        key = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}`; // YYYY/MM
+        break;
+      case "yearly":
+        key = `${date.getFullYear()}`; // YYYY
+        break;
+    }
+
+    if (!processedData[key]) {
+      processedData[key] = 0;
+    }
+    processedData[key] += order.totalPrice;
+  });
+
+  // Sắp xếp theo thời gian
+  const sortedKeys = Object.keys(processedData).sort();
+  const labels = sortedKeys;
+  const data = sortedKeys.map((key) => processedData[key]);
+
+  return { labels, data };
+};
+
 const RevenuePage: React.FC = () => {
   const [mode, setMode] = useState<ChartMode>("daily");
   const [type, setType] = useState<ChartType>("line");
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Dùng useMemo để tính toán dữ liệu một cách hiệu quả khi 'mode' thay đổi
+  // Fetch dữ liệu từ API
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await http.get("/order-revenue");
+
+        const data: ApiResponse = await response.data;
+        setOrders(data.revenue);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Có lỗi xảy ra khi tải dữ liệu"
+        );
+        console.error("Error fetching revenue data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, []);
+
+  // Dùng useMemo để tính toán dữ liệu một cách hiệu quả khi 'mode' hoặc 'orders' thay đổi
   const { labels, data, periodLabel, totalRevenue, periodValue } =
     useMemo(() => {
-      // Vì hôm nay là ngày 1 tháng 8 năm 2025, ta sẽ dùng ngày này làm ngày hiện tại
-      const now = new Date("2025-08-01T10:00:00");
-      let currentLabels: string[] = [],
-        currentData: number[] = [],
-        currentPeriodLabel = "",
-        currentTotalRevenue = 0,
-        currentPeriodValue = "";
+      if (orders.length === 0) {
+        return {
+          labels: [],
+          data: [],
+          periodLabel: "Ngày",
+          totalRevenue: 0,
+          periodValue: "",
+        };
+      }
+
+      const now = new Date();
+      const processedData = processRevenueData(orders, mode);
+
+      let currentPeriodLabel = "";
+      let currentTotalRevenue = 0;
+      let currentPeriodValue = "";
 
       switch (mode) {
         case "monthly":
-          currentLabels = mockMonthlyData.labels;
-          currentData = mockMonthlyData.data;
           currentPeriodLabel = "Tháng";
           const monthKey = `${now.getFullYear()}/${String(
             now.getMonth() + 1
           ).padStart(2, "0")}`;
-          const monthIndex = currentLabels.indexOf(monthKey);
-          currentTotalRevenue = monthIndex >= 0 ? currentData[monthIndex] : 0;
+          const monthIndex = processedData.labels.indexOf(monthKey);
+          currentTotalRevenue =
+            monthIndex >= 0 ? processedData.data[monthIndex] : 0;
           currentPeriodValue = `${now.getMonth() + 1}/${now.getFullYear()}`;
           break;
         case "yearly":
-          currentLabels = mockYearlyData.labels;
-          currentData = mockYearlyData.data;
           currentPeriodLabel = "Năm";
           const yearKey = `${now.getFullYear()}`;
-          const yearIndex = currentLabels.indexOf(yearKey);
-          currentTotalRevenue = yearIndex >= 0 ? currentData[yearIndex] : 0;
+          const yearIndex = processedData.labels.indexOf(yearKey);
+          currentTotalRevenue =
+            yearIndex >= 0 ? processedData.data[yearIndex] : 0;
           currentPeriodValue = yearKey;
           break;
         case "daily":
         default:
-          currentLabels = mockDailyData.labels;
-          currentData = mockDailyData.data;
           currentPeriodLabel = "Ngày";
-          const dayKey = now.toISOString().slice(0, 10); // Định dạng: YYYY-MM-DD
-          const dayIndex = currentLabels.indexOf(dayKey);
-          currentTotalRevenue = dayIndex >= 0 ? currentData[dayIndex] : 0;
+          const dayKey = now.toISOString().slice(0, 10);
+          const dayIndex = processedData.labels.indexOf(dayKey);
+          currentTotalRevenue =
+            dayIndex >= 0 ? processedData.data[dayIndex] : 0;
           currentPeriodValue = now.toLocaleDateString("vi-VN");
           break;
       }
+
       return {
-        labels: currentLabels,
-        data: currentData,
+        labels: processedData.labels,
+        data: processedData.data,
         periodLabel: currentPeriodLabel,
         totalRevenue: currentTotalRevenue,
         periodValue: currentPeriodValue,
       };
-    }, [mode]);
+    }, [mode, orders]);
 
   // Ghi nhớ các tùy chọn biểu đồ để không phải tạo lại mỗi lần render
   const chartOptions = useMemo(() => {
-    // **SỬA LỖI 1:** Tạo một đối tượng options cơ bản
-    // Dùng 'any' để TypeScript cho phép thêm thuộc tính 'scales' một cách linh động
     const options: any = {
       responsive: true,
       maintainAspectRatio: false,
@@ -141,15 +202,13 @@ const RevenuePage: React.FC = () => {
       animation: { duration: 800, easing: "easeOutQuart" },
     };
 
-    // **SỬA LỖI 1 (tiếp):** Chỉ thêm 'scales' khi cần thiết
     if (type === "line" || type === "bar") {
       options.scales = {
         x: {
           ticks: {
             color: "#333",
-            // **SỬA LỖI 2:** Dùng index thay vì 'this'
             callback: function (value: number) {
-              const label = labels[value]; // Lấy nhãn trực tiếp từ mảng 'labels'
+              const label = labels[value];
               if (!label) return "";
               if (/^\d{4}-\d{2}-\d{2}$/.test(label)) {
                 // Ngày
@@ -177,7 +236,7 @@ const RevenuePage: React.FC = () => {
       };
     }
     return options;
-  }, [type, labels]); // Thêm 'labels' vào dependency array vì callback cần nó
+  }, [type, labels]);
 
   // Ghi nhớ đối tượng dữ liệu biểu đồ
   const chartData = useMemo(() => {
@@ -205,6 +264,12 @@ const RevenuePage: React.FC = () => {
       [periodLabel, "Doanh thu"],
       [periodValue, totalRevenue],
     ];
+
+    // Thêm tất cả dữ liệu vào Excel
+    labels.forEach((label, index) => {
+      aoa.push([label, data[index]]);
+    });
+
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws["!cols"] = [{ wch: 20 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
@@ -218,6 +283,74 @@ const RevenuePage: React.FC = () => {
   };
 
   const renderChart = () => {
+    if (loading) {
+      return (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "300px",
+            fontSize: "1.2rem",
+            color: "#666",
+          }}
+        >
+          Đang tải dữ liệu...
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "300px",
+            fontSize: "1.1rem",
+            color: "#ff5252",
+            textAlign: "center",
+          }}
+        >
+          <div>
+            <p>Lỗi tải dữ liệu: {error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                marginTop: "10px",
+                padding: "8px 16px",
+                backgroundColor: "#ff6f00",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Thử lại
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (labels.length === 0) {
+      return (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "300px",
+            fontSize: "1.1rem",
+            color: "#666",
+          }}
+        >
+          Không có dữ liệu để hiển thị
+        </div>
+      );
+    }
+
     switch (type) {
       case "bar":
         return <Bar options={chartOptions} data={chartData} />;
@@ -256,6 +389,7 @@ const RevenuePage: React.FC = () => {
               id="chartType"
               value={type}
               onChange={(e) => setType(e.target.value as ChartType)}
+              disabled={loading}
             >
               <option value="line">Đường</option>
               <option value="bar">Cột</option>
@@ -269,6 +403,7 @@ const RevenuePage: React.FC = () => {
               id="chartSelect"
               value={mode}
               onChange={(e) => setMode(e.target.value as ChartMode)}
+              disabled={loading}
             >
               <option value="daily">Ngày</option>
               <option value="monthly">Tháng</option>
@@ -276,7 +411,11 @@ const RevenuePage: React.FC = () => {
             </select>
           </div>
           <div className="btn-group">
-            <button className="btn btn-export" onClick={handleExportExcel}>
+            <button
+              className="btn btn-export"
+              onClick={handleExportExcel}
+              disabled={loading || labels.length === 0}
+            >
               <span className="icon">📊</span>
               <span>Xuất Excel</span>
             </button>
