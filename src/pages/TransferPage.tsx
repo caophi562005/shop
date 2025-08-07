@@ -1,184 +1,115 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-// BEST PRACTICE: Import useNavigate để điều hướng trang thay vì tải lại toàn bộ trang
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import envConfig from "../envConfig";
+import { useParams } from "react-router-dom";
 import "../assets/css/Transfer.css";
+import http from "../api/http";
+import type { OrderInProductSKUSnapshotType } from "../models/shared/shared-order.model";
+import { toast } from "react-toastify";
+import io, { Socket } from "socket.io-client";
 
-// --- FAKE DATA ---
-const mockOrderData = {
-  orderCode: "PX20250802",
-  finalTotal: 1500000,
-};
+let socket: Socket;
 
 const TransferPage: React.FC = () => {
-  // --- Constants and Configuration ---
-  const { orderCode, finalTotal } = mockOrderData;
+  const [paymentId, setPaymentId] = useState<number>(0);
+  const [amount, setAmount] = useState(0);
+  const { orderId } = useParams<{ orderId: string }>();
 
-  const BANK_ID = "MB";
-  const ACCOUNT_NO = "0336673836";
-  const ACCOUNT_NAME = "Hồ Phát Đạt";
-  const TEMPLATE = "compact2";
-  const AMOUNT = finalTotal;
-  const ADD_INFO = orderCode;
-
-  const WAIT_MS = 15 * 60 * 1000;
-  const KEY_DEADLINE = "qr_deadline";
-  const KEY_LAST_CHECK = "last_check";
-  const POLLING_ENDPOINT =
-    "https://script.google.com/macros/s/AKfycby1HXIjwYi8TqwOIydkuyVVy-kyDH-vvlmqeaRB4XAKgUPOj1YD5yl8zWDKNS7kK_JX/exec";
-
-  const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-${TEMPLATE}.png?amount=${AMOUNT}&addInfo=${encodeURIComponent(
-    ADD_INFO
-  )}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-
-  // --- State and Refs ---
-  const [timeLeft, setTimeLeft] = useState("--:--");
+  const qrUrl = `https://qr.sepay.vn/img?acc=${envConfig.VITE_BANK_ACCOUNT}&bank=${envConfig.VITE_BANK_CODE}&amount=${amount}&des=${envConfig.VITE_ORDER_PREFIX}${paymentId}`;
   const [statusMessage, setStatusMessage] = useState("Đang chờ thanh toán...");
 
-  // BEST PRACTICE: Sử dụng hook useNavigate
   const navigate = useNavigate();
-  const isSuccessRef = useRef(false);
-  const intervalsRef = useRef<NodeJS.Timeout[]>([]);
-
-  // --- Helper Functions (Không thay đổi) ---
-  const getDeadline = (): number => {
-    let dl = localStorage.getItem(KEY_DEADLINE);
-    if (!dl) {
-      dl = (Date.now() + WAIT_MS).toString();
-      localStorage.setItem(KEY_DEADLINE, dl);
-    }
-    return +dl;
-  };
-
-  const clearDeadline = () => {
-    localStorage.removeItem(KEY_DEADLINE);
-    localStorage.removeItem(KEY_LAST_CHECK);
-  };
-
-  const getRemainingSeconds = (): number => {
-    return Math.floor((getDeadline() - Date.now()) / 1000);
-  };
-
-  // --- Logic Functions (Refactored using useCallback) ---
-
-  // REFACTORED: Định nghĩa hàm clearIntervals ở ngoài và bọc trong useCallback.
-  // Hàm này không có phụ thuộc nên mảng dependencies là rỗng.
-  const clearIntervals = useCallback(() => {
-    intervalsRef.current.forEach(clearInterval);
-    intervalsRef.current = []; // Xóa các ID đã lưu
-  }, []);
-
-  // REFACTORED: Đưa logic `tick` ra ngoài và dùng useCallback.
-  // Phụ thuộc vào `clearIntervals` và `Maps` để không bị stale closure.
-  const tick = useCallback(() => {
-    const seconds = getRemainingSeconds();
-    if (seconds <= 0) {
-      clearIntervals();
-      setStatusMessage("⏰ Hết thời gian – giao dịch đã bị hủy.");
-      setTimeout(() => {
-        clearDeadline();
-        // BEST PRACTICE: Dùng navigate để chuyển trang
-        navigate("/"); // Giả sử đây là route cho trang hủy
-      }, 2000);
-      return;
-    }
-    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    setTimeLeft(`${m}:${s}`);
-  }, [clearIntervals, navigate]);
-
-  // REFACTORED: Đưa logic `poll` ra ngoài và dùng useCallback.
-  const poll = useCallback(async () => {
-    if (isSuccessRef.current || getRemainingSeconds() < 0) return;
-
-    const since = localStorage.getItem(KEY_LAST_CHECK);
-    const url = `${POLLING_ENDPOINT}?since=${since}`;
-
-    try {
-      const res = await fetch(url, { mode: "cors" });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const { data: recs } = await res.json();
-
-      if (recs && recs.length > 0) {
-        // Cập nhật last_check với bản ghi mới nhất
-        const lastRecordTimestamp = new Date(
-          recs[recs.length - 1]["Ngày diễn ra"].replace(" ", "T")
-        ).getTime();
-        localStorage.setItem(
-          KEY_LAST_CHECK,
-          (lastRecordTimestamp + 1).toString()
-        ); // +1ms để không lấy lại bản ghi cũ
-
-        for (let i = recs.length - 1; i >= 0; i--) {
-          const r = recs[i];
-          const paid = parseFloat(r["Giá trị"]);
-          const desc = (r["Mô tả"] || "").toLowerCase();
-          const dtMs = new Date(r["Ngày diễn ra"].replace(" ", "T")).getTime();
-          const elapsed = Date.now() - dtMs;
-
-          if (
-            paid >= AMOUNT &&
-            desc.includes(orderCode.toLowerCase()) &&
-            elapsed <= WAIT_MS
-          ) {
-            isSuccessRef.current = true;
-            setStatusMessage("✅ Thanh toán thành công, đang xử lý...");
-            clearDeadline();
-            clearIntervals();
-
-            // Giả lập confirm với server và chuyển hướng
-            setTimeout(() => {
-              navigate(`/payment/success?orderCode=${orderCode}`);
-            }, 1500);
-            break;
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Poll error:", e);
-      // Không hiển thị lỗi mạng cho người dùng, chỉ log ra
-    }
-  }, [AMOUNT, orderCode, clearIntervals, navigate]);
-
-  // --- Side Effects using useEffect ---
-  // REFACTORED: useEffect giờ chỉ còn nhiệm vụ thiết lập và dọn dẹp intervals.
-  useEffect(() => {
-    if (!localStorage.getItem(KEY_LAST_CHECK)) {
-      localStorage.setItem(KEY_LAST_CHECK, (Date.now() - WAIT_MS).toString());
-    }
-
-    // Chạy lần đầu ngay lập tức
-    tick();
-    poll();
-
-    // Thiết lập intervals
-    const timerId = setInterval(tick, 1000);
-    const pollId = setInterval(poll, 3000);
-    intervalsRef.current = [timerId, pollId];
-
-    // Cleanup function trả về sẽ được gọi khi component unmount
-    return () => {
-      clearIntervals();
-    };
-  }, [tick, poll, clearIntervals]); // Phụ thuộc vào các hàm đã được memoize
 
   const handleCancel = () => {
-    clearDeadline();
-    clearIntervals();
-    navigate("/"); // Chuyển về trang chủ hoặc trang giỏ hàng
+    navigate("/");
   };
+
+  const getTotalPrice = (order: OrderInProductSKUSnapshotType) => {
+    let totalPrice = 0;
+    order.items.map((item) => {
+      totalPrice += item.skuPrice * item.quantity;
+    });
+    return totalPrice;
+  };
+
+  // Fetch order data
+  useEffect(() => {
+    const takeOrder = async () => {
+      try {
+        const order = await http.get(`/orders/${Number(orderId)}`);
+        const orderData: OrderInProductSKUSnapshotType = order.data;
+        setPaymentId(orderData.paymentId);
+        setAmount(getTotalPrice(orderData));
+      } catch (error) {
+        navigate("/");
+        toast.error("Đơn hàng không tồn tại hoặc không phải của bạn");
+      }
+    };
+    takeOrder();
+  }, [orderId, navigate]);
+
+  // WebSocket connection - chỉ chạy khi có paymentId
+  useEffect(() => {
+    if (!paymentId || paymentId === 0) {
+      console.log("PaymentId not ready yet:", paymentId);
+      return; // Không khởi tạo socket nếu chưa có paymentId
+    }
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      toast.error("Người dùng chưa đăng nhập, không khởi tạo WebSocket");
+      return;
+    }
+
+    socket = io(`${envConfig.VITE_API_END_POINT}/payment`, {
+      extraHeaders: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    socket.on("connect", () => {
+      socket.emit("joinPaymentRoom", paymentId);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ WebSocket connection error:", err.message);
+      if (err.message.includes("Authentication")) {
+        // Tại đây bạn có thể xử lý việc đăng xuất người dùng hoặc refresh token
+      }
+    });
+
+    socket.on("successPaymentId", (receivedPaymentId: number) => {
+      if (receivedPaymentId === paymentId) {
+        setStatusMessage("Thanh toán thành công");
+        setTimeout(() => {
+          navigate("/order-success/" + orderId); // hoặc trang nào đó
+        }, 2000);
+      }
+    });
+
+    // Cleanup function
+    return () => {
+      if (socket) {
+        socket.emit("leavePaymentRoom", paymentId);
+        socket.disconnect();
+      }
+    };
+  }, [paymentId, navigate]); // Dependency array bao gồm paymentId
 
   return (
     <div className="transfer-page-container">
       <div className="content">
         <h1 className="inf_title_paycart">Chuyển khoản ngân hàng</h1>
         <p>
-          Mã đơn hàng <strong>{orderCode}</strong>
+          Mã đơn hàng{" "}
+          <strong>
+            {envConfig.VITE_ORDER_PREFIX}
+            {paymentId}
+          </strong>
         </p>
         <p>
           Vui lòng chuyển{" "}
-          <strong>{new Intl.NumberFormat("vi-VN").format(AMOUNT)} VNĐ</strong>{" "}
-          trong <span id="timer">{timeLeft}</span>
+          <strong>{new Intl.NumberFormat("vi-VN").format(amount)} VNĐ</strong>
         </p>
 
         <div className="qr-box">
@@ -188,7 +119,7 @@ const TransferPage: React.FC = () => {
         <p
           id="status"
           style={{
-            color: isSuccessRef.current ? "green" : "red",
+            color: statusMessage === "Thanh toán thành công" ? "green" : "red",
             fontWeight: "bold",
             minHeight: "24px",
           }}
