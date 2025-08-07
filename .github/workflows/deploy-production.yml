@@ -77,7 +77,7 @@ jobs:
             docker pull caophi562005/pixcam-server:v1
             docker stop pixcam-server
             docker rm pixcam-server
-            docker run -dp 3000:3000 --name pixcam-server caophi562005/pixcam-server:v1
+            docker container run -dp 3000:3000 --name pixcam-server caophi562005/pixcam-server:v1
       - name: send telegram message after deploy
         if: success()
         uses: appleboy/telegram-action@master
