@@ -1,76 +1,106 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "../assets/css/home.css";
 import "../assets/css/Top.css";
 import "../assets/css/style.css";
 import "../assets/css/Product.css";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  imgURL_1: string;
-  createdAt: string;
-}
+import type { ProductType } from "../models/shared/shared-product.model";
+import { Link } from "react-router-dom";
+import http from "../api/http";
+import { OrderBy, SortBy } from "../constants/other.constant";
+import type { CategoryType } from "../models/shared/shared-category.model";
 
 const formatCurrency = (price: number): string => {
   return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
 };
 
-const fakeProducts: Product[] = Array.from({ length: 26 }, (_, i) => ({
-  id: i + 1,
-  name: `Sản phẩm mẫu ${i + 1}`,
-  price: Math.floor(Math.random() * (2000000 - 300000) + 300000),
-  imgURL_1: `https://via.placeholder.com/400x400.png?text=Sản+phẩm+${i + 1}`,
-  createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-}));
+const SortChooseType = {
+  PRICE_ASC: "PRICE_ASC",
+  PRICE_DESC: "PRICE_DESC",
+  LATEST: "LATEST",
+} as const;
 
 const MenPage: React.FC = () => {
-  const [sortOption, setSortOption] = useState<string>("");
+  const [sortOption, setSortOption] = useState<keyof typeof SortChooseType>(
+    SortChooseType.LATEST
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const productsPerPage = 12;
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [categoryParams, setCategoryParams] = useState<string | null>(null);
 
-  const sortedProducts = useMemo(() => {
-    const products = [...fakeProducts];
-    switch (sortOption) {
-      case "price_asc":
-        return products.sort((a, b) => a.price - b.price);
-      case "price_desc":
-        return products.sort((a, b) => b.price - a.price);
-      case "latest":
-        return products.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const productsPerPage = 1;
+  const parentCategoryId = 1;
+
+  useEffect(() => {
+    const takeCategories = async () => {
+      try {
+        const response = await http.get(
+          `/categories?parentCategoryId=${parentCategoryId}`
         );
-      default:
-        return products;
-    }
-  }, [sortOption]);
+        const data: CategoryType[] = response.data.data;
+        const params = data.map((item) => `categories=${item.id}`).join("&");
+        setCategoryParams(params);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        setCategoryParams("");
+      }
+    };
 
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * productsPerPage;
-    const endIndex = startIndex + productsPerPage;
-    return sortedProducts.slice(startIndex, endIndex);
-  }, [currentPage, sortedProducts]);
+    takeCategories();
+  }, []);
 
-  const totalPages = Math.ceil(sortedProducts.length / productsPerPage);
+  useEffect(() => {
+    if (categoryParams === null) return;
 
-  const getSortLabel = (sortValue: string) => {
+    const fetchProducts = async () => {
+      let sortBy = "";
+      let order = "";
+
+      if (sortOption === SortChooseType.PRICE_ASC) {
+        sortBy = SortBy.Price;
+        order = OrderBy.Asc;
+      } else if (sortOption === SortChooseType.PRICE_DESC) {
+        sortBy = SortBy.Price;
+        order = OrderBy.Desc;
+      } else if (sortOption === SortChooseType.LATEST) {
+        sortBy = SortBy.CreatedAt;
+        order = OrderBy.Desc;
+      }
+
+      try {
+        const response = await http.get(
+          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoryParams}`
+        );
+        const data = response.data;
+
+        setProducts(data.data || []);
+        setTotalPages(data.totalPages || 0);
+        setTotalItems(data.totalItems || 0);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        setProducts([]);
+      }
+    };
+
+    fetchProducts();
+  }, [currentPage, sortOption, categoryParams]);
+
+  const getSortLabel = (sortValue: keyof typeof SortChooseType) => {
     switch (sortValue) {
-      case "price_asc":
+      case SortChooseType.PRICE_ASC:
         return "Giá: thấp → cao";
-      case "price_desc":
+      case SortChooseType.PRICE_DESC:
         return "Giá: cao → thấp";
-      case "latest":
+      case SortChooseType.LATEST:
         return "Mới nhất";
-      default:
-        return "Thứ tự mặc định";
     }
   };
 
-  const handleSortChange = (value: string) => {
+  const handleSortChange = (value: keyof typeof SortChooseType) => {
     setSortOption(value);
     setIsDropdownOpen(false);
     setCurrentPage(1);
@@ -185,13 +215,15 @@ const MenPage: React.FC = () => {
           <div className="contentProducts_navigate">
             <div className="navigate_shopAll">
               <p className="title_navigate">
-                <span className="home_navigate">TRANG CHỦ</span> / DANH MỤC NAM
+                <Link to="/" className="home_navigate">
+                  TRANG CHỦ
+                </Link>
+                / DANH MỤC NAM
               </p>
             </div>
             <div className="filter_shopAlll">
               <p>
-                Hiển thị {paginatedProducts.length} của {sortedProducts.length}{" "}
-                kết quả
+                Hiển thị {products.length} của {totalItems} kết quả
               </p>
               <div
                 className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
@@ -205,35 +237,40 @@ const MenPage: React.FC = () => {
                 </div>
                 {isDropdownOpen && (
                   <ul className="options" onClick={(e) => e.stopPropagation()}>
-                    <li onClick={() => handleSortChange("")}>
-                      Thứ tự mặc định
+                    <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                      Mới nhất
                     </li>
-                    <li onClick={() => handleSortChange("price_asc")}>
+                    <li
+                      onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
+                    >
                       Giá: thấp → cao
                     </li>
-                    <li onClick={() => handleSortChange("price_desc")}>
+                    <li
+                      onClick={() =>
+                        handleSortChange(SortChooseType.PRICE_DESC)
+                      }
+                    >
                       Giá: cao → thấp
                     </li>
-                    <li onClick={() => handleSortChange("latest")}>Mới nhất</li>
                   </ul>
                 )}
               </div>
             </div>
           </div>
 
-          {paginatedProducts.length === 0 ? (
+          {products.length === 0 ? (
             <p style={{ textAlign: "center", padding: "20px" }}>
               Chưa có sản phẩm nào cho danh mục này.
             </p>
           ) : (
             <div className="product_top">
               <div className="products_home">
-                {paginatedProducts.map((product) => (
+                {products.map((product) => (
                   <div className="item_products_home" key={product.id}>
                     <div className="image_home_item">
-                      <a href={`/products/${product.id}`}>
+                      <a href={`/product/${product.id}`}>
                         <img
-                          src={product.imgURL_1}
+                          src={product.images[0]}
                           alt={product.name}
                           className="image_products_home"
                         />
@@ -241,7 +278,7 @@ const MenPage: React.FC = () => {
                     </div>
                     <h4 className="infProducts_home">{product.name}</h4>
                     <p className="infProducts_home">
-                      {formatCurrency(product.price)}
+                      {formatCurrency(product.virtualPrice)}
                     </p>
                   </div>
                 ))}
