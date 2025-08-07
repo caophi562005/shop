@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create .env file
-        run: echo "${{ secrets.ENV_PRODUCTION }}" > .env
 
       - name: Build docker image
         run: docker build --platform linux/amd64 -t caophi562005/pixcam-server:v1 .
@@ -23,7 +21,7 @@ jobs:
       - name: Push docker image to DockerHub
         run: docker push caophi562005/pixcam-server:v1
 
-      - name: send telegram message after build
+      - name: Send telegram message after build success
         if: success()
         uses: appleboy/telegram-action@master
         with:
@@ -33,14 +31,13 @@ jobs:
             ✅ Build thành công!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-
             📝 Commit: ${{ github.event.commits[0].message }}
-
             📦 Repository: ${{ github.repository }}
 
             🔗 Xem chi tiết:  
             [🔍 Commit tại đây](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-      - name: send telegram message after build
+
+      - name: Send telegram message after build failure
         if: failure()
         uses: appleboy/telegram-action@master
         with:
@@ -50,22 +47,19 @@ jobs:
             ❌ Build thất bại!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-
-            📝 Nội dung commit:
-            ${{ github.event.commits[0].message }}
-
-            📦 Repository:  
-            ${{ github.repository }}
+            📝 Nội dung commit: ${{ github.event.commits[0].message }}
+            📦 Repository: ${{ github.repository }}
 
             ⚠️ Vui lòng kiểm tra lại mã nguồn.
 
             🔗 Xem thay đổi chi tiết:  
             [🛠️ Nhấn để xem](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Executing remote ssh commands using password
+      - name: Deploy to production server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST_PRODUCTION_2 }}
@@ -73,46 +67,119 @@ jobs:
           password: ${{ secrets.PASSWORD_PRODUCTION }}
           port: ${{ secrets.PORT_PRODUCTION }}
           script: |
+            set -e  # Exit on error
+
+            echo "🚀 Starting deployment process..."
+
+            # Login to DockerHub
+            echo "📥 Logging into DockerHub..."
             echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+            # Pull latest image
+            echo "📦 Pulling latest Docker image..."
             docker pull caophi562005/pixcam-server:v1
-            docker stop pixcam-server
-            docker rm pixcam-server
-            docker container run -dp 3000:3000 --name pixcam-server caophi562005/pixcam-server:v1
-      - name: send telegram message after deploy
+
+            # Stop và remove container cũ nếu tồn tại
+            echo "🔄 Stopping old container..."
+            docker stop pixcam-server 2>/dev/null || echo "No container to stop"
+            docker rm pixcam-server 2>/dev/null || echo "No container to remove"
+
+            # Tạo thư mục riêng cho project
+            echo "📁 Setting up project directory..."
+            PROJECT_DIR="$HOME/pixcam-project"
+            mkdir -p $PROJECT_DIR
+            cd $PROJECT_DIR
+
+            # Backup file .env cũ nếu tồn tại
+            if [ -f .env ]; then
+              echo "💾 Backing up old .env file..."
+              cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+            fi
+
+            # Tạo file .env mới từ GitHub Secrets
+            echo "⚙️ Creating .env file..."
+            cat <<'EOF' > .env
+            ${{ secrets.ENV_PRODUCTION }}
+            EOF
+
+            # Verify .env file created
+            if [ ! -f .env ]; then
+              echo "❌ Failed to create .env file"
+              exit 1
+            fi
+
+            echo "📋 Environment file created successfully"
+            echo "🔍 Environment variables count: $(wc -l < .env)"
+
+            # Tạo và chạy container mới
+            echo "🚀 Starting new container..."
+            docker run -dp 3000:3000 \
+              --name pixcam-server \
+              --restart unless-stopped \
+              --env-file $PROJECT_DIR/.env \
+              caophi562005/pixcam-server:v1
+
+            # Chờ container khởi động
+            echo "⏳ Waiting for container to start..."
+            sleep 10
+
+            # Kiểm tra container status
+            if docker ps | grep -q pixcam-server; then
+              echo "✅ Container is running successfully!"
+              echo "📊 Container info:"
+              docker ps | grep pixcam-server
+            else
+              echo "❌ Container failed to start!"
+              echo "📋 Container logs:"
+              docker logs pixcam-server 2>/dev/null || echo "No logs available"
+              exit 1
+            fi
+
+            # Kiểm tra ứng dụng health
+            echo "🏥 Checking application health..."
+            sleep 5
+            if curl -f http://localhost:3000/health 2>/dev/null; then
+              echo "✅ Application is healthy!"
+            else
+              echo "⚠️ Health check endpoint not available (this might be normal)"
+            fi
+
+            echo "🎉 Deployment completed successfully!"
+
+      - name: Send telegram message after deploy success
         if: success()
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            ✅ Deploy thành công!
+            🎉 Deploy thành công!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
-
             📝 Commit: ${{ github.event.commits[0].message }}
-
             📦 Repository: ${{ github.repository }}
+            🕐 Thời gian: $(date '+%Y-%m-%d %H:%M:%S')
+
+            ✅ Server đang chạy tại: http://your-domain:3000
 
             🔗 Xem chi tiết:  
             [🔍 Commit tại đây](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-      - name: send telegram message after deploy
+
+      - name: Send telegram message after deploy failure
         if: failure()
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            ❌ Deploy thất bại!!!
+            💥 Deploy thất bại!!!
 
             🧑‍💻 Thực hiện bởi: ${{ github.actor }}
+            📝 Nội dung commit: ${{ github.event.commits[0].message }}
+            📦 Repository: ${{ github.repository }}
+            🕐 Thời gian: $(date '+%Y-%m-%d %H:%M:%S')
 
-            📝 Nội dung commit:
-            ${{ github.event.commits[0].message }}
-
-            📦 Repository:  
-            ${{ github.repository }}
-
-            ⚠️ Vui lòng kiểm tra lại mã nguồn.
+            ⚠️ Vui lòng kiểm tra lại mã nguồn và server.
 
             🔗 Xem thay đổi chi tiết:  
             [🛠️ Nhấn để xem](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
