@@ -19,10 +19,16 @@ import { UserAgent } from 'src/shared/decorators/user-agent.decorator'
 import { MessageResDTO } from 'src/shared/dtos/response.dto'
 import { IsPublic } from 'src/shared/decorators/auth.decorator'
 import { GoogleService } from './google.service'
-import { Response } from 'express'
+import { CookieOptions, Response } from 'express'
 import envConfig from 'src/shared/envConfig'
 import { EmptyBodyDTO } from 'src/shared/dtos/request.dto'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
+
+const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+}
 
 @Controller('auth')
 export class AuthController {
@@ -48,28 +54,50 @@ export class AuthController {
   @Post('login')
   @IsPublic()
   @ZodSerializerDto(LoginResDTO)
-  login(@Body() body: LoginBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
-    return this.authService.login({
+  async login(
+    @Body() body: LoginBodyDTO,
+    @UserAgent() userAgent: string,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const tokens = await this.authService.login({
       ...body,
       userAgent,
       ip,
     })
+
+    res.cookie('accessToken', tokens.accessToken, cookieOptions)
+    res.cookie('refreshToken', tokens.refreshToken, cookieOptions)
+
+    return tokens
   }
 
   @Post('refresh-token')
   @IsPublic()
   @ZodSerializerDto(RefreshTokenResDTO)
-  refreshToken(@Body() body: RefreshTokenBodyDTO, @UserAgent() userAgent: string, @Ip() ip: string) {
-    return this.authService.refreshToken({
+  async refreshToken(
+    @Body() body: RefreshTokenBodyDTO,
+    @UserAgent() userAgent: string,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const tokens = await this.authService.refreshToken({
       refreshToken: body.refreshToken,
       userAgent,
       ip,
     })
+
+    res.cookie('accessToken', tokens.accessToken, cookieOptions)
+    res.cookie('refreshToken', tokens.refreshToken, cookieOptions)
+
+    return tokens
   }
 
   @Post('logout')
   @ZodSerializerDto(MessageResDTO)
-  logout(@Body() body: LogoutBodyDTO) {
+  logout(@Body() body: LogoutBodyDTO, @Res({ passthrough: true }) res: Response) {
+    res.clearCookie('accessToken', cookieOptions)
+    res.clearCookie('refreshToken', cookieOptions)
     return this.authService.logout(body.refreshToken)
   }
 
