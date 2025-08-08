@@ -6,10 +6,12 @@ import { ServerOptions, Server, Socket } from 'socket.io'
 import envConfig from 'src/shared/envConfig'
 import { generateRoomUserId } from 'src/shared/helpers'
 import { TokenService } from 'src/shared/services/token.service'
+import { parse } from 'cookie'
 
 export class WebsocketAdapter extends IoAdapter {
   private readonly tokenService: TokenService
   private adapterConstructor: ReturnType<typeof createAdapter>
+  private server: Server
 
   constructor(app: INestApplicationContext) {
     super(app)
@@ -37,29 +39,38 @@ export class WebsocketAdapter extends IoAdapter {
       },
     })
 
+    this.server = server
+
     server.of(/.*/).use((socket, next) => {
       this.authMiddleware(socket, next)
     })
     return server
   }
 
+  emitToUser(userId: number, event: string, data: unknown) {
+    if (!this.server) return
+    const room = generateRoomUserId(userId)
+    this.server.to(room).emit(event, data)
+  }
+
   async authMiddleware(socket: Socket, next: (err?: any) => void) {
-    const { authorization } = socket.handshake.headers
-    if (!authorization) {
+    const { authorization, cookie: cookieHeader } = socket.handshake.headers
+
+    let accessToken: string | undefined
+
+    if (authorization?.startsWith('Bearer ')) {
+      accessToken = authorization.split(' ')[1]
+    } else if (typeof cookieHeader === 'string') {
+      const cookies = parse(cookieHeader)
+      accessToken = cookies['accessToken']
+    }
+
+    if (!accessToken) {
       return next(new Error('Thiếu Authentication'))
     }
 
-    const accessToken = authorization.split(' ')[1]
-
     try {
       const { userId } = await this.tokenService.verifyAccessToken(accessToken)
-      // await this.sharedWebsocketRepository.create({
-      //   id: socket.id,
-      //   userId,
-      // })
-      // socket.on('disconnect', async () => {
-      //   await this.sharedWebsocketRepository.delete(socket.id)
-      // })
 
       socket.data.userId = userId
 

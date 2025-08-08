@@ -28,6 +28,7 @@ import { BullModule } from '@nestjs/bullmq'
 import { ReviewModule } from './routes/review/review.module'
 import { MessageModule } from './routes/message/message.module'
 import { PaymentConsumer } from './queues/payment.consumer'
+import { NotificationModule } from './routes/notification/notification.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { PaymentConsumer } from './queues/payment.consumer'
     PaymentModule,
     ReviewModule,
     MessageModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
