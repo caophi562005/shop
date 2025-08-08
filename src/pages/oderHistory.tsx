@@ -1,0 +1,116 @@
+
+import './orderHistory.css';
+
+// Type definitions
+type Feedback = { has: boolean; edited: boolean };
+type Feedbacks = { [productId: string]: Feedback };
+type Product = { product_id: number };
+type Order = {
+    payment_id: number;
+    createAt: string;
+    finalTotal: number;
+    paymentMethod: string;
+    products: Product[];
+    feedbacks: Feedbacks;
+};
+
+// Fake data thay cho $orders PHP
+const orders: Order[] = [
+    {
+        payment_id: 1001,
+        createAt: '2025-08-01',
+        finalTotal: 250000,
+        paymentMethod: 'COD',
+        products: [
+            { product_id: 1 },
+            { product_id: 2 },
+        ],
+        feedbacks: {
+            "1": { has: true, edited: true },
+            "2": { has: true, edited: false },
+        }
+    },
+    {
+        payment_id: 1002,
+        createAt: '2025-08-02',
+        finalTotal: 150000,
+        paymentMethod: 'VNPAY',
+        products: [
+            { product_id: 3 }
+        ],
+        feedbacks: {
+            "3": { has: false, edited: false }
+        }
+    }
+];
+
+const OrderHistory = () => {
+    const page = 1;
+    const totalPages = 3;
+
+    return (
+        <div className="wrapper">
+            <h1>Lịch sử đơn hàng</h1>
+            {orders.length > 0 ? (
+                <>
+                    <table className="order-history-table">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn hàng</th>
+                                <th>Ngày đặt hàng</th>
+                                <th>Tổng cộng</th>
+                                <th>Phương thức</th>
+                                <th>Xem chi tiết</th>
+                                <th>Đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {orders.map((order, idx) => {
+                                const rowspan = order.products.length;
+                                return order.products.map((product, index) => {
+                                    const feedback = order.feedbacks[String(product.product_id)] || {};
+                                    return (
+                                        <tr key={`order-${idx}-product-${index}`}>
+                                            {index === 0 && (
+                                                <>
+                                                    <td rowSpan={rowspan}>{order.payment_id}</td>
+                                                    <td rowSpan={rowspan}>{new Date(order.createAt).toLocaleDateString('vi-VN')}</td>
+                                                    <td rowSpan={rowspan}>{order.finalTotal.toLocaleString('vi-VN')} VNĐ</td>
+                                                    <td rowSpan={rowspan}>{order.paymentMethod}</td>
+                                                    <td rowSpan={rowspan}>
+                                                        <a href={`#detail/${order.payment_id}`}>Xem chi tiết</a>
+                                                    </td>
+                                                </>
+                                            )}
+                                            <td>
+                                                {(!feedback.has) ? (
+                                                    <a className="btn-rate" href={`#feedback/${order.payment_id}/${product.product_id}`}>Đánh giá</a>
+                                                ) : (!feedback.edited) ? (
+                                                    <a className="btn-rate" href={`#feedback/${order.payment_id}/${product.product_id}`}>Sửa đánh giá</a>
+                                                ) : (
+                                                    <span className="btn-rate disabled" title="Bạn đã sửa đánh giá">Đã sửa</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                });
+                            })}
+                        </tbody>
+                    </table>
+
+                    <div className="pagination">
+                        {page > 1 && <a href={`#page=${page - 1}`}>« Trang trước</a>}
+                        <span>Trang {page} / {totalPages}</span>
+                        {page < totalPages && <a href={`#page=${page + 1}`}>Trang sau »</a>}
+                    </div>
+                </>
+            ) : (
+                <div className="empty-message">
+                    <p>Không có đơn hàng nào trong lịch sử của bạn.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default OrderHistory;
