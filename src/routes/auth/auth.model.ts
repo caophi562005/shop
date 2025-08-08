@@ -37,11 +37,6 @@ export const LoginBodySchema = UserSchema.pick({
   })
   .strict()
 
-export const LoginResSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
-})
-
 export const VerificationCodeSchema = z.object({
   id: z.number(),
   email: z.string().email(),
@@ -82,10 +77,6 @@ export const RefreshTokenSchema = z.object({
 export const RefreshTokenBodySchema = z.object({
   refreshToken: z.string(),
 })
-
-export const RefreshTokenResSchema = LoginResSchema
-
-export const LogoutBodySchema = RefreshTokenBodySchema
 
 export const ForgotPasswordBodySchema = z
   .object({
@@ -143,14 +134,11 @@ export const GoogleAuthResSchema = z.object({
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 export type RegisterResType = z.infer<typeof RegisterResSchema>
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
-export type LoginResType = z.infer<typeof LoginResSchema>
 export type VerificationCodeType = z.infer<typeof VerificationCodeSchema>
 export type SendOTPBodyType = z.infer<typeof SendOTPBodySchema>
 export type DeviceType = z.infer<typeof DeviceSchema>
 export type RefreshTokenType = z.infer<typeof RefreshTokenSchema>
 export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBodySchema>
-export type RefreshTokenResType = z.infer<typeof RefreshTokenResSchema>
-export type LogoutBodyType = z.infer<typeof LogoutBodySchema>
 export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>
 export type TwoFactorSetupType = z.infer<typeof TwoFactorSetupSchema>
 export type DisableTwoFactorBodyType = z.infer<typeof DisableTwoFactorBodySchema>

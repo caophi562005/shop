@@ -4,10 +4,7 @@ import {
   ForgotPasswordBodySchema,
   GoogleAuthResSchema,
   LoginBodySchema,
-  LoginResSchema,
-  LogoutBodySchema,
   RefreshTokenBodySchema,
-  RefreshTokenResSchema,
   RegisterBodySchema,
   RegisterResSchema,
   SendOTPBodySchema,
@@ -20,15 +17,9 @@ export class RegisterResDTO extends createZodDto(RegisterResSchema) {}
 
 export class LoginBodyDTO extends createZodDto(LoginBodySchema) {}
 
-export class LoginResDTO extends createZodDto(LoginResSchema) {}
-
 export class RefreshTokenBodyDTO extends createZodDto(RefreshTokenBodySchema) {}
 
-export class RefreshTokenResDTO extends createZodDto(RefreshTokenResSchema) {}
-
 export class SendOTPBodyDTO extends createZodDto(SendOTPBodySchema) {}
-
-export class LogoutBodyDTO extends createZodDto(LogoutBodySchema) {}
 
 export class GoogleAuthResDTO extends createZodDto(GoogleAuthResSchema) {}
 

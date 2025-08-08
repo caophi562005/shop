@@ -14,6 +14,7 @@ import { TokenService } from '../services/token.service'
 import { REQUEST_ROLE_PERMISSION, REQUEST_USER_KEY } from '../constants/auth.constant'
 import { RoleWithPermissionsType } from '../models/shared-role.model'
 import { keyBy } from 'lodash'
+import { parse } from 'cookie'
 
 type Permission = RoleWithPermissionsType['permissions'][number]
 type CachedRole = RoleWithPermissionsType & {
@@ -30,7 +31,15 @@ export class AccessTokenGuard implements CanActivate {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  private extractAccessTokenFromHeader(request: any): string {
+  private extractAccessToken(request: any): string {
+    const cookieHeader = request.headers.cookie
+    if (cookieHeader) {
+      const cookies = parse(cookieHeader)
+      if (cookies.accessToken) {
+        return cookies.accessToken
+      }
+    }
+
     const accessToken = request.headers.authorization?.split(' ')[1]
     if (!accessToken) {
       throw new UnauthorizedException('Error.MissingAccessToken')
@@ -39,7 +48,7 @@ export class AccessTokenGuard implements CanActivate {
   }
 
   private async extractAndValidateToken(request: any): Promise<AccessTokenPayload> {
-    const accessToken = this.extractAccessTokenFromHeader(request)
+    const accessToken = this.extractAccessToken(request)
     try {
       const decodedAccessToken = await this.tokenService.verifyAccessToken(accessToken)
       request[REQUEST_USER_KEY] = decodedAccessToken
