@@ -19,6 +19,9 @@ import WomanPage from "./pages/WomenPage";
 import AccessoriesPage from "./pages/AccessoriesPage";
 import FindProductPage from "./pages/FindProductPage";
 import SalePage from "./pages/SalePage";
+import FeedbackForm from "./pages/FeedbackForm";
+import FeedbackReadonly from "./pages/FeedbackReadonly";
+import OrderHistory from "./pages/oderHistory";
 
 const App: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -72,3 +75,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
