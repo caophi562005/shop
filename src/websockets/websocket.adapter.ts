@@ -31,18 +31,18 @@ export class WebsocketAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: ServerOptions) {
-    const server: Server = super.createIOServer(3003, {
+    const server = super.createIOServer(3003, {
       ...options,
       cors: {
-        origin: '*',
+        origin: true,
         credentials: true,
       },
-    })
+    }) as unknown as Server
 
     this.server = server
 
     server.of(/.*/).use((socket, next) => {
-      this.authMiddleware(socket, next)
+      void this.authMiddleware(socket, next)
     })
     return server
   }
@@ -72,7 +72,7 @@ export class WebsocketAdapter extends IoAdapter {
     try {
       const { userId } = await this.tokenService.verifyAccessToken(accessToken)
 
-      socket.data.userId = userId
+      ;(socket.data as Record<string, unknown>).userId = userId
 
       await socket.join(generateRoomUserId(userId))
       next()
