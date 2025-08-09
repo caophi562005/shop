@@ -151,4 +151,20 @@ body {
   .login-box {
     padding: 20px;
   }
+
+  .login-box h2 {
+    font-size: 20px;
+  }
+
+  .login-box input,
+  .login-box button {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .login-box {
+    max-width: 420px;
+  }
 }
