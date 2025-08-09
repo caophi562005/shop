@@ -1,0 +1,183 @@
+/* Biến CSS để dễ dàng thay đổi màu sắc và kiểu */
+:root {
+  --primary-color: #ff7f32; /* Cam */
+  --secondary-color: #333; /* Đen */
+  --tertiary-color: #e66a2f; /* Cam đậm */
+  --background-color: #f9f9f9; /* Màu nền nhẹ */
+  --link-hover-color: #e66a2f; /* Màu hover cho các liên kết */
+  --font-family: "Roboto", sans-serif; /* Font chữ */
+  --border-radius: 12px; /* Bán kính bo góc */
+}
+
+/* Wrapper cho bảng đơn hàng */
+.order-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 30px 0;
+  background: linear-gradient(145deg, var(--background-color), #fff);
+  border-radius: var(--border-radius);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Cải thiện thẻ tiêu đề và dữ liệu */
+.order-history-table th,
+.order-history-table td {
+  padding: 20px;
+  text-align: left;
+  font-size: 16px;
+  border-bottom: 1px solid #e1e1e1;
+  color: var(--secondary-color);
+  font-family: var(--font-family);
+  transition: all 0.3s ease;
+}
+
+.order-history-table th {
+  background: linear-gradient(
+    145deg,
+    var(--primary-color),
+    var(--tertiary-color)
+  ); /* Tạo hiệu ứng gradient */
+  color: white;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.order-history-table td {
+  background-color: var(--background-color);
+  color: var(--secondary-color);
+}
+
+/* Hiệu ứng hover cho các dòng bảng */
+.order-history-table tr:hover {
+  background-color: #fff7f0; /* Màu nền nhẹ khi hover */
+  cursor: pointer;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Cải thiện thẻ a (liên kết "Xem chi tiết" + btn-rate) */
+.order-history-table a,
+.btn-rate {
+  display: inline-block;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 8px 14px;
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.order-history-table a:hover,
+.btn-rate:hover {
+  color: white;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px); /* dịch nhẹ lên trên */
+  transition: all 0.2s ease;
+}
+
+/* Disabled button style */
+.btn-rate.disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Phân trang */
+.pagination {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.pagination a {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 12px 30px;
+  text-decoration: none;
+  margin: 0 10px;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pagination a:hover {
+  background-color: var(--tertiary-color);
+  transform: translateY(-2px);
+}
+
+.pagination span {
+  font-size: 18px;
+  color: var(--secondary-color);
+  margin: 0 15px;
+}
+
+/* Cải tiến bố cục và phong cách cho phần header */
+h1 {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--secondary-color);
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: var(--font-family);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  animation: slideIn 1s ease-out;
+}
+
+/* Hiệu ứng slide cho tiêu đề */
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design cho thiết bị di động */
+@media (max-width: 768px) {
+  .order-history-table {
+    font-size: 14px;
+  }
+
+  .order-history-table th,
+  .order-history-table td {
+    padding: 12px;
+  }
+
+  .pagination a {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .order-history-table td {
+    display: block;
+    width: 100%;
+    text-align: right;
+    margin-bottom: 15px;
+  }
+
+  .order-history-table th {
+    display: none;
+  }
+
+  .order-history-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+    color: var(--primary-color);
+  }
+}
+.empty-message {
+  text-align: center;
+  padding: 40px 0;
+  color: #888;
+  font-size: 1.2rem;
+}

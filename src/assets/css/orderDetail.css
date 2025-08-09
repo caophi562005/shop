@@ -1,0 +1,203 @@
+/* orderDetail.css */
+
+/* Toàn bộ container của chi tiết đơn hàng */
+.order-detail-container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Tiêu đề chính của chi tiết đơn hàng */
+h1 {
+  font-size: 40px;
+  font-weight: 800;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: "Roboto", sans-serif;
+}
+
+/* Tiêu đề nhỏ cho thông tin đơn hàng */
+h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ff7f32; /* Màu cam cho tiêu đề */
+  margin-bottom: 15px;
+}
+
+/* Thông tin chung của đơn hàng (Ngày, phương thức thanh toán, tổng cộng) */
+.order-detail-container p {
+  font-size: 18px;
+  color: #555;
+  margin: 10px 0;
+}
+
+/* Phần thông tin giao hàng */
+.shipping-info {
+  margin-top: 30px;
+  padding: 20px;
+  padding-left: 0;
+  background-color: #fafafa;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.shipping-info h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ff7f32;
+  margin-bottom: 15px;
+}
+
+/* Định dạng các thông tin giao hàng */
+.shipping-info p {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* Bảng ghi chú */
+.note-table {
+  width: 100%;
+  margin-top: 30px;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.note-table th {
+  background-color: #ff7f32;
+  color: white;
+  font-size: 18px;
+  padding: 15px;
+  text-align: left;
+}
+
+.note-table td {
+  padding: 15px;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+.note-table .note-cell {
+  font-style: italic;
+  color: #777;
+}
+
+/* Phần chi tiết sản phẩm */
+.order-detail-table {
+  width: 100%;
+  margin-top: 30px;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.order-detail-table th {
+  background-color: #ff7f32;
+  color: white;
+  padding: 15px;
+  text-align: left;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.order-detail-table td {
+  padding: 15px;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+.order-detail-table td:last-child {
+  text-align: right;
+}
+
+.order-detail-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Nút quay lại lịch sử đơn hàng */
+.return-home {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.return-home button {
+  background-color: #ff7f32;
+  color: white;
+  padding: 15px 30px;
+  font-size: 18px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.return-home button:hover {
+  background-color: #e66a2f;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design cho di động */
+@media (max-width: 768px) {
+  .order-detail-container {
+    padding: 20px;
+  }
+
+  .order-detail-container h1 {
+    font-size: 32px;
+  }
+
+  .order-detail-container p {
+    font-size: 16px;
+  }
+
+  .shipping-info p {
+    font-size: 14px;
+  }
+
+  .order-detail-table th,
+  .order-detail-table td {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .note-table th,
+  .note-table td {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+.btn-rate {
+  display: inline-block;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #757575, #616161); /* xám đen */
+  color: #fff;
+  text-decoration: none;
+  border-radius: 25px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-rate:hover {
+  background: linear-gradient(135deg, #616161, #424242);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.btn-rate:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
