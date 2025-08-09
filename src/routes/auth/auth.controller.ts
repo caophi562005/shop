@@ -23,7 +23,7 @@ import { parse } from 'cookie'
 
 const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: true,
   sameSite: 'none',
 }
 
