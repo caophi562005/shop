@@ -57,7 +57,7 @@ jobs:
             # Tạo .env (nếu bạn muốn biến cấu hình, không bắt buộc cho FE static)
             echo "⚙️ Tạo tệp .env..."
             cat <<'EOF' > .env
-            ${{ secrets.ENV_PRODUCTION }}
+            ${{ secrets.ENV_CLIENT }}
             EOF
             echo "✅ Đã tạo tệp .env."
 
