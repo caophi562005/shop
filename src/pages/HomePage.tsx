@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../assets/css/home.css";
 
 import banner3 from "../assets/img/home/banner3.jpg";
@@ -75,49 +75,62 @@ const formatCurrency = (amount: number) => {
 };
 
 const HomePage: React.FC = () => {
-  // GHI CHÚ: Logic cho slider và poster carousel cần được triển khai bằng React Hooks (useState, useEffect)
-  // thay vì mã JavaScript cũ đã bị xóa.
+  // --- Slider images ---
+  const sliderImages = [
+    banner3,
+    banner1,
+    banner2,
+    layout1,
+    layout2,
+    layout4,
+    layout5,
+    layout6,
+    layout7,
+    layout8,
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const handlePrevSlide = () => {
+    setCurrentSlide(
+      (prevIndex) => (prevIndex - 1 + sliderImages.length) % sliderImages.length,
+    );
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prevIndex) => (prevIndex + 1) % sliderImages.length);
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide(
+        (prevIndex) => (prevIndex + 1) % sliderImages.length,
+      );
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [sliderImages.length]);
 
   return (
     <>
       {/* <Header /> */} {/* Bỏ comment khi bạn đã tạo component Header */}
       <main className="content">
         <div className="slider-container">
-          {/* GHI CHÚ: Slider này cần được làm lại bằng thư viện React (vd: Swiper.js) hoặc custom hook */}
-          <div className="slides" id="slides">
-            <div className="slide">
-              <img src={banner3} alt="Banner 3" />
-            </div>
-            <div className="slide">
-              <img src={banner1} alt="Banner 1" />
-            </div>
-            <div className="slide">
-              <img src={banner2} alt="Banner 2" />
-            </div>
-            <div className="slide">
-              <img src={layout1} alt="Layout 1" />
-            </div>
-            <div className="slide">
-              <img src={layout2} alt="Layout 2" />
-            </div>
-            <div className="slide">
-              <img src={layout4} alt="Layout 4" />
-            </div>
-            <div className="slide">
-              <img src={layout5} alt="Layout 5" />
-            </div>
-            <div className="slide">
-              <img src={layout6} alt="Layout 6" />
-            </div>
-            <div className="slide">
-              <img src={layout7} alt="Layout 7" />
-            </div>
-            <div className="slide">
-              <img src={layout8} alt="Layout 8" />
-            </div>
+          <div
+            className="slides"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {sliderImages.map((img, index) => (
+              <div className="slide" key={index}>
+                <img src={img} alt={`Banner ${index + 1}`} />
+              </div>
+            ))}
           </div>
-          <button className="arrow left">❮</button>
-          <button className="arrow right">❯</button>
+          <button className="arrow left" onClick={handlePrevSlide}>
+            ❮
+          </button>
+          <button className="arrow right" onClick={handleNextSlide}>
+            ❯
+          </button>
         </div>
 
         <div className="review_home">
