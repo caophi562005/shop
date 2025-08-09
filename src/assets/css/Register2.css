@@ -116,13 +116,13 @@ body {
 
 /* Button OTP fixed width */
 .otp-btn {
-  flex: 0 0 120px;
-  padding: 12px 0;
+  flex: 0 0 100px;
+  padding: 10px 0;
   background-color: #ff5722;
   color: #fff;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -182,5 +182,21 @@ body {
   .otp-btn {
     width: 100%;
     margin-top: 8px;
+  }
+
+  .register-box h2 {
+    font-size: 20px;
+  }
+
+  .register-box input,
+  .register-box button {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .register-box {
+    max-width: 460px;
   }
 }
