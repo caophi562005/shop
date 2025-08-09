@@ -39,3 +39,7 @@ export const generateRandomFileName = (fileName: string) => {
   const ext = path.extname(fileName)
   return `${uuidv4()}${ext}`
 }
+
+export const generateStaffRoom = () => {
+  return 'staff-room'
+}

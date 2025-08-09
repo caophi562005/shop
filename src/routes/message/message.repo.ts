@@ -47,4 +47,51 @@ export class MessageRepository {
       },
     })
   }
+
+  // Lấy danh sách client có tin nhắn trong 24h gần đây
+  async getRecentClientChats() {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const recentMessages = await this.prismaService.$queryRaw`
+      SELECT DISTINCT ON (m.fromUserId) 
+        m.fromUserId as clientId,
+        u.name as clientName,
+        m.content as lastMessage,
+        m.createdAt as lastMessageTime,
+        (SELECT COUNT(*) FROM messages m2 WHERE m2.fromUserId = m.fromUserId AND m2.createdAt > ${twentyFourHoursAgo}) as messageCount
+      FROM messages m
+      JOIN users u ON u.id = m.fromUserId
+      WHERE m.createdAt > ${twentyFourHoursAgo}
+        AND m.toUserId = 0  -- Giả sử 0 là support ID
+      ORDER BY m.fromUserId, m.createdAt DESC
+    `
+
+    return recentMessages
+  }
+
+  async getClientSupportMessages(clientUserId: number) {
+    return this.prismaService.message.findMany({
+      where: {
+        OR: [
+          // Tin nhắn từ client gửi cho support
+          {
+            fromUserId: clientUserId,
+            toUserId: 0, // Support ID
+          },
+          // Tin nhắn từ support (bất kỳ staff nào) gửi cho client
+          {
+            fromUserId: { not: clientUserId },
+            toUserId: clientUserId,
+          },
+        ],
+      },
+      include: {
+        fromUser: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+  }
 }

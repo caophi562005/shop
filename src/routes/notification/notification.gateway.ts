@@ -9,10 +9,10 @@ export class NotificationGateway implements OnGatewayConnection {
   server: Server
 
   handleConnection(client: Socket) {
-    const userId = client.data.userId
+    const { userId } = client.data as { userId?: number }
     if (userId) {
       const room = generateRoomUserId(userId)
-      client.join(room)
+      void client.join(room)
     }
   }
 

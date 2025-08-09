@@ -13,4 +13,14 @@ export class MessageService {
   createMessage(message: CreateMessageType, fromUserId: number) {
     return this.messageRepository.create({ message, fromUserId })
   }
+
+  // Lấy danh sách client có tin nhắn gần đây (cho staff dashboard)
+  async getRecentClientChats() {
+    return this.messageRepository.getRecentClientChats()
+  }
+
+  // Lấy lịch sử chat giữa client và support
+  async getClientSupportHistory(clientUserId: number) {
+    return this.messageRepository.getClientSupportMessages(clientUserId)
+  }
 }

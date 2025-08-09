@@ -4,8 +4,9 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { createClient } from 'redis'
 import { ServerOptions, Server, Socket } from 'socket.io'
 import envConfig from 'src/shared/envConfig'
-import { generateRoomUserId } from 'src/shared/helpers'
+import { generateRoomUserId, generateStaffRoom } from 'src/shared/helpers'
 import { TokenService } from 'src/shared/services/token.service'
+import { RoleName } from 'src/shared/constants/role.constant'
 import { parse } from 'cookie'
 
 export class WebsocketAdapter extends IoAdapter {
@@ -44,13 +45,49 @@ export class WebsocketAdapter extends IoAdapter {
     server.of(/.*/).use((socket, next) => {
       void this.authMiddleware(socket, next)
     })
+
+    // Sử dụng Redis adapter nếu có
+    if (this.adapterConstructor) {
+      server.adapter(this.adapterConstructor)
+    }
+
     return server
   }
 
+  // Gửi tin nhắn đến user cụ thể
   emitToUser(userId: number, event: string, data: unknown) {
     if (!this.server) return
     const room = generateRoomUserId(userId)
     this.server.to(room).emit(event, data)
+  }
+
+  // Gửi tin nhắn đến tất cả staff
+  emitToStaff(event: string, data: unknown) {
+    if (!this.server) return
+    this.server.to(generateStaffRoom()).emit(event, data)
+  }
+
+  // Gửi tin nhắn đến client và thông báo staff
+  emitSupportMessage(clientUserId: number, message: any, fromStaffId?: number) {
+    if (!this.server) return
+
+    const clientRoom = generateRoomUserId(clientUserId)
+
+    // Gửi đến client với tên "Support"
+    const clientMessage = {
+      ...message,
+      fromUser: { id: 0, name: 'Support' },
+    }
+    this.server.to(clientRoom).emit('newMessage', clientMessage)
+
+    // Thông báo cho staff (nếu có)
+    if (fromStaffId) {
+      this.server.to(generateStaffRoom()).emit('staff-replied', {
+        staffId: fromStaffId,
+        clientUserId,
+        message: message.content,
+      })
+    }
   }
 
   async authMiddleware(socket: Socket, next: (err?: any) => void) {
@@ -70,11 +107,20 @@ export class WebsocketAdapter extends IoAdapter {
     }
 
     try {
-      const { userId } = await this.tokenService.verifyAccessToken(accessToken)
+      const { userId, roleName } = await this.tokenService.verifyAccessToken(accessToken)
 
       ;(socket.data as Record<string, unknown>).userId = userId
+      ;(socket.data as Record<string, unknown>).roleName = roleName
 
-      await socket.join(generateRoomUserId(userId))
+      // Tự động join room dựa trên role
+      if (roleName === RoleName.CLIENT) {
+        // Client join vào room của chính họ
+        await socket.join(generateRoomUserId(userId))
+      } else if (roleName === RoleName.SELLER || roleName === RoleName.ADMIN) {
+        // Staff join vào room staff chung
+        await socket.join(generateStaffRoom())
+      }
+
       next()
     } catch (error) {
       next(error)
