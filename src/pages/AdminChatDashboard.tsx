@@ -82,6 +82,9 @@ const AdminChatDashboard: React.FC = () => {
 
           // Cập nhật danh sách client
           setClientList((prev) => {
+            const existing = prev.find(
+              (c) => c.clientId === data.clientUserId
+            );
             const updated = prev.filter(
               (c) => c.clientId !== data.clientUserId
             );
@@ -91,7 +94,7 @@ const AdminChatDashboard: React.FC = () => {
                 clientName: data.clientName,
                 lastMessage: data.message,
                 lastMessageTime: data.timestamp,
-                messageCount: 1,
+                messageCount: (existing?.messageCount || 0) + 1,
               },
               ...updated,
             ];
@@ -163,6 +166,27 @@ const AdminChatDashboard: React.FC = () => {
         }
       );
 
+      // Lắng nghe tin nhắn realtime từ client hoặc staff
+      socket.on("newMessage", (message: Message) => {
+        const clientId =
+          message.fromUserId === user?.id
+            ? message.toUserId
+            : message.fromUserId;
+
+        setActiveChats((prev) => {
+          if (prev[clientId]) {
+            return {
+              ...prev,
+              [clientId]: {
+                ...prev[clientId],
+                messages: [...prev[clientId].messages, message],
+              },
+            };
+          }
+          return prev;
+        });
+      });
+
       // Lấy danh sách client ban đầu
       socket.emit("get-client-list");
       socket.on("client-list", (clients: ClientChat[]) => {
@@ -180,7 +204,7 @@ const AdminChatDashboard: React.FC = () => {
         socketRef.current = null;
       }
     };
-  }, [isLoggedIn, isStaffOrAdmin]);
+  }, [isLoggedIn, isStaffOrAdmin, user?.id]);
 
   // Mở chat với client
   const openClientChat = async (clientId: number, clientName: string) => {
@@ -205,21 +229,6 @@ const AdminChatDashboard: React.FC = () => {
           isTyping: false,
         },
       }));
-
-      // Lắng nghe tin nhắn realtime cho chat này
-      const messageHandler = (message: Message) => {
-        if (message.fromUserId === clientId || message.toUserId === clientId) {
-          setActiveChats((prev) => ({
-            ...prev,
-            [clientId]: {
-              ...prev[clientId],
-              messages: [...(prev[clientId]?.messages || []), message],
-            },
-          }));
-        }
-      };
-
-      socketRef.current.on("newMessage", messageHandler);
     } catch (error) {
       console.error("Không thể tải lịch sử chat:", error);
     } finally {
@@ -243,12 +252,34 @@ const AdminChatDashboard: React.FC = () => {
 
   // Gửi tin nhắn đến client
   const sendMessageToClient = (clientId: number) => {
-    if (!socketRef.current || !newMessages[clientId]?.trim()) return;
+    if (!socketRef.current || !newMessages[clientId]?.trim() || !user) return;
+
+    const content = newMessages[clientId];
 
     socketRef.current.emit("send-message", {
       toUserId: clientId,
-      content: newMessages[clientId],
+      content,
     });
+
+    // Hiển thị tạm thời tin nhắn của staff
+    setActiveChats((prev) => ({
+      ...prev,
+      [clientId]: {
+        ...prev[clientId],
+        messages: [
+          ...prev[clientId].messages,
+          {
+            id: Date.now(),
+            content,
+            fromUserId: user.id,
+            toUserId: clientId,
+            createdAt: new Date().toISOString(),
+            fromUser: { id: user.id, name: user.name },
+          },
+        ],
+        hasNewMessage: false,
+      },
+    }));
 
     setNewMessages((prev) => ({ ...prev, [clientId]: "" }));
   };
