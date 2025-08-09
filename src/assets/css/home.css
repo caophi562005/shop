@@ -1,3 +1,7 @@
+.home-page {
+  width: 100%;
+}
+
 .review_home {
   display: flex;
   flex-wrap: wrap;
@@ -694,17 +698,32 @@ body {
     min-width: unset;
   }
 
-  .image_poster {
-    width: 220px;
-    height: 300px;
+    .image_poster {
+      width: 220px;
+      height: 300px;
+    }
+
+    .about-us {
+      padding: 40px 5%;
+    }
+
+    .poster-carousel-wrapper .btn-scroll {
+      height: 40px;
+      font-size: 20px;
+    }
+
+    .charity-banner {
+      flex-direction: column;
+    }
+
+    .charity-text,
+    .charity-image {
+      flex: 1 1 auto;
+      padding: 20px;
+    }
   }
 
-  .about-us {
-    padding: 40px 5%;
-  }
-}
-
-@media (max-width: 480px) {
+  @media (max-width: 480px) {
   .slider-container {
     height: 200px;
   }
@@ -722,12 +741,24 @@ body {
     justify-content: center;
   }
 
-  .item_products_home {
-    width: 100%;
-  }
+    .item_products_home {
+      width: 100%;
+    }
 
-  .image_poster {
-    width: 160px;
-    height: 240px;
+    .image_poster {
+      width: 160px;
+      height: 240px;
+    }
+
+    .poster-carousel-wrapper .btn-scroll {
+      display: none;
+    }
+
+    .about-content h2 {
+      font-size: 1.8rem;
+    }
+
+    .about-content p {
+      font-size: 1rem;
+    }
   }
-}

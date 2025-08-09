@@ -98,7 +98,12 @@ const Footer: React.FC = () => {
         </li>
       </ul>
       {showBackToTop && (
-        <button id="backToTop" title="Lên đầu trang" onClick={scrollToTop}>
+        <button
+          id="backToTop"
+          title="Lên đầu trang"
+          aria-label="Back to top"
+          onClick={scrollToTop}
+        >
           <i className="fas fa-arrow-up"></i>
         </button>
       )}

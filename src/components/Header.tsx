@@ -67,6 +67,17 @@ const Header: React.FC = () => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
+  // Đóng menu khi chuyển từ mobile sang desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 769) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Xử lý submit form tìm kiếm
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -178,9 +189,13 @@ const Header: React.FC = () => {
         <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
           <img src={logoImg} alt="Logo" />
         </Link>
-        <div className="menu_toggle" onClick={() => setMenuOpen(!isMenuOpen)}>
+        <button
+          className="menu_toggle"
+          onClick={() => setMenuOpen(!isMenuOpen)}
+          aria-label="Toggle navigation"
+        >
           <i className="fa-solid fa-bars icon_while"></i>
-        </div>
+        </button>
       </div>
 
       <ul className={`navigate_header ${isMenuOpen ? "open" : ""}`}>
