@@ -23,6 +23,7 @@ import Cart from "./pages/Cart";
 import CSDT from "./pages/CSDT";
 import CSTV from "./pages/CSTV";
 import CSVC from "./pages/CSVC";
+import AdminChatDashboard from "./pages/AdminChatDashboard";
 
 const App: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -62,6 +63,7 @@ const App: React.FC = () => {
 
             <Route path="category" element={<CategoryListPage />} />
             <Route path="account" element={<AccountList />} />
+            <Route path="chat" element={<AdminChatDashboard />} />
           </Route>
 
           {/* 3. Route cho trang 404 Not Found */}

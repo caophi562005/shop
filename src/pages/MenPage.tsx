@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import "../assets/css/home.css";
-import "../assets/css/Top.css";
 import "../assets/css/style.css";
-import "../assets/css/Product.css";
+import "../assets/css/CategoryPage.css";
 import type { ProductType } from "../models/shared/shared-product.model";
 import { Link } from "react-router-dom";
 import http from "../api/http";
@@ -32,7 +30,7 @@ const MenPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [categoryParams, setCategoryParams] = useState<string | null>(null);
 
-  const productsPerPage = 1;
+  const productsPerPage = 12;
   const parentCategoryId = 1;
 
   useEffect(() => {
@@ -49,17 +47,14 @@ const MenPage: React.FC = () => {
         setCategoryParams("");
       }
     };
-
     takeCategories();
   }, []);
 
   useEffect(() => {
     if (categoryParams === null) return;
-
     const fetchProducts = async () => {
       let sortBy = "";
       let order = "";
-
       if (sortOption === SortChooseType.PRICE_ASC) {
         sortBy = SortBy.Price;
         order = OrderBy.Asc;
@@ -70,13 +65,11 @@ const MenPage: React.FC = () => {
         sortBy = SortBy.CreatedAt;
         order = OrderBy.Desc;
       }
-
       try {
         const response = await http.get(
           `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoryParams}`
         );
         const data = response.data;
-
         setProducts(data.data || []);
         setTotalPages(data.totalPages || 0);
         setTotalItems(data.totalItems || 0);
@@ -85,7 +78,6 @@ const MenPage: React.FC = () => {
         setProducts([]);
       }
     };
-
     fetchProducts();
   }, [currentPage, sortOption, categoryParams]);
 
@@ -95,7 +87,7 @@ const MenPage: React.FC = () => {
         return "Giá: thấp → cao";
       case SortChooseType.PRICE_DESC:
         return "Giá: cao → thấp";
-      case SortChooseType.LATEST:
+      default:
         return "Mới nhất";
     }
   };
@@ -208,86 +200,113 @@ const MenPage: React.FC = () => {
     );
   };
 
+  const calculateDiscountPercentage = (
+    basePrice: number,
+    virtualPrice: number
+  ): number => {
+    if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
+    return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+  };
+
   return (
-    <main>
-      <div className="content">
-        <div className="content_top">
-          <div className="contentProducts_navigate">
-            <div className="navigate_shopAll">
-              <p className="title_navigate">
-                <Link to="/" className="home_navigate">
-                  TRANG CHỦ
-                </Link>
-                / DANH MỤC NAM
-              </p>
-            </div>
-            <div className="filter_shopAlll">
-              <p>
-                Hiển thị {products.length} của {totalItems} kết quả
-              </p>
+    <main className="content">
+      <div className="content_top">
+        <div className="contentProducts_navigate">
+          <div className="navigate_shopAll">
+            <p className="title_navigate">
+              <Link to="/" className="home_navigate">
+                TRANG CHỦ
+              </Link>{" "}
+              / DANH MỤC NAM
+            </p>
+          </div>
+          <div className="filter_shopAlll">
+            <p>
+              Hiển thị {products.length} của {totalItems} kết quả
+            </p>
+            <div
+              className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
+              ref={dropdownRef}
+            >
               <div
-                className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
-                ref={dropdownRef}
+                className="selected"
+                onClick={() => setIsDropdownOpen((o) => !o)}
               >
-                <div
-                  className="selected"
-                  onClick={() => setIsDropdownOpen((o) => !o)}
-                >
-                  {getSortLabel(sortOption)} &#9662;
-                </div>
-                {isDropdownOpen && (
-                  <ul className="options" onClick={(e) => e.stopPropagation()}>
-                    <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
-                      Mới nhất
-                    </li>
-                    <li
-                      onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
-                    >
-                      Giá: thấp → cao
-                    </li>
-                    <li
-                      onClick={() =>
-                        handleSortChange(SortChooseType.PRICE_DESC)
-                      }
-                    >
-                      Giá: cao → thấp
-                    </li>
-                  </ul>
-                )}
+                <span>{getSortLabel(sortOption)}</span>
+                <span>&#9662;</span>
               </div>
+              <ul className="options" onClick={(e) => e.stopPropagation()}>
+                <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                  Mới nhất
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}>
+                  Giá: thấp → cao
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}>
+                  Giá: cao → thấp
+                </li>
+              </ul>
             </div>
           </div>
-
-          {products.length === 0 ? (
-            <p style={{ textAlign: "center", padding: "20px" }}>
-              Chưa có sản phẩm nào cho danh mục này.
-            </p>
-          ) : (
-            <div className="product_top">
-              <div className="products_home">
-                {products.map((product) => (
-                  <div className="item_products_home" key={product.id}>
-                    <div className="image_home_item">
-                      <a href={`/product/${product.id}`}>
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="image_products_home"
-                        />
-                      </a>
-                    </div>
-                    <h4 className="infProducts_home">{product.name}</h4>
-                    <p className="infProducts_home">
-                      {formatCurrency(product.virtualPrice)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {products.length === 0 ? (
+          <p style={{ textAlign: "center", padding: "40px 0" }}>
+            Chưa có sản phẩm nào cho danh mục này.
+          </p>
+        ) : (
+          <div className="product_top">
+            <div className="products_home">
+              {products.map((product) => {
+                const discountPercentage = calculateDiscountPercentage(
+                  product.basePrice,
+                  product.virtualPrice
+                );
+                const hasDiscount = discountPercentage > 0;
+                return (
+                  <div className="item_products_home" key={product.id}>
+                    <a
+                      href={`/product/${product.id}`}
+                      className="image_home_item"
+                    >
+                      {hasDiscount && (
+                        <div className="product_sale">
+                          <p className="text_products_sale">
+                            -{discountPercentage}%
+                          </p>
+                        </div>
+                      )}
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="image_products_home"
+                      />
+                    </a>
+                    <div className="product-info-container">
+                      <h4 className="product-name">{product.name}</h4>
+                      <p className="product-price">
+                        {hasDiscount ? (
+                          <>
+                            <span className="price-original">
+                              {formatCurrency(product.basePrice)}
+                            </span>
+                            <span className="price-sale">
+                              {formatCurrency(product.virtualPrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <span>{formatCurrency(product.virtualPrice)}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {renderPagination()}
       </div>
-      {renderPagination()}
     </main>
   );
 };

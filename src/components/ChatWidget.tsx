@@ -13,16 +13,21 @@ interface Message {
   fromUserId: number;
   toUserId: number;
   createdAt: string;
+  fromUser: {
+    id: number;
+    name: string;
+  };
 }
 
-// ID của admin
-const ADMIN_USER_ID = 1;
+// ID của support (giả sử 0 là support)
+const SUPPORT_USER_ID = 0;
 
 const ChatWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,16 +51,49 @@ const ChatWidget: React.FC = () => {
         withCredentials: true,
       });
 
-      // Lắng nghe tin nhắn mới từ admin
+      // Lắng nghe tin nhắn mới từ support
       socketRef.current.on("newMessage", (message: Message) => {
+        console.log("Received message:", message);
+
+        // Chỉ hiển thị tin nhắn liên quan đến user hiện tại
         if (
-          (message.fromUserId === ADMIN_USER_ID &&
-            message.toUserId === myUserId) ||
           (message.fromUserId === myUserId &&
-            message.toUserId === ADMIN_USER_ID)
+            message.toUserId === SUPPORT_USER_ID) ||
+          (message.fromUser.id === SUPPORT_USER_ID &&
+            message.toUserId === myUserId) ||
+          (message.fromUser.name === "Support" && message.toUserId === myUserId)
         ) {
-          setMessages((prevMessages) => [...prevMessages, message]);
+          setMessages((prevMessages) => {
+            // Tránh duplicate tin nhắn
+            const exists = prevMessages.find(
+              (m) =>
+                m.id === message.id ||
+                (m.content === message.content &&
+                  Math.abs(
+                    new Date(m.createdAt).getTime() -
+                      new Date(message.createdAt).getTime()
+                  ) < 1000)
+            );
+
+            if (exists) return prevMessages;
+
+            return [...prevMessages, message];
+          });
         }
+      });
+
+      // Lắng nghe typing indicator từ support
+      socketRef.current.on("support-typing", (data: { typing: boolean }) => {
+        setIsTyping(data.typing);
+      });
+
+      // Xử lý khi connect thành công
+      socketRef.current.on("connect", () => {
+        console.log("Connected to message namespace");
+      });
+
+      socketRef.current.on("disconnect", () => {
+        console.log("Disconnected from message namespace");
       });
     }
 
@@ -75,7 +113,7 @@ const ChatWidget: React.FC = () => {
       setIsLoading(true);
       try {
         const response = await http.get<Message[]>(
-          `/messages/${ADMIN_USER_ID}`
+          `/messages/${SUPPORT_USER_ID}`
         );
         setMessages(response.data);
       } catch (error) {
@@ -96,20 +134,10 @@ const ChatWidget: React.FC = () => {
 
     // Gửi tin nhắn qua socket
     socketRef.current.emit("send-message", {
-      toUserId: ADMIN_USER_ID,
+      toUserId: SUPPORT_USER_ID,
       content: newMessage,
     });
 
-    // Thêm tin nhắn vào UI ngay lập tức (optimistic update)
-    const tempMessage: Message = {
-      id: Date.now(),
-      content: newMessage,
-      fromUserId: myUserId,
-      toUserId: ADMIN_USER_ID,
-      createdAt: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
   };
 
@@ -123,7 +151,12 @@ const ChatWidget: React.FC = () => {
       {isOpen && (
         <div className="chat-window">
           <div className="chat-header">
-            <h3>Hỗ trợ trực tuyến</h3>
+            <div>
+              <h3>Hỗ trợ trực tuyến</h3>
+              {isTyping && (
+                <div className="typing-indicator">Support đang nhập...</div>
+              )}
+            </div>
             <button onClick={() => setIsOpen(false)} className="close-btn">
               <FiX />
             </button>
@@ -137,22 +170,32 @@ const ChatWidget: React.FC = () => {
                 Chào bạn! Chúng tôi có thể giúp gì cho bạn?
               </div>
             ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`message-bubble ${
-                    msg.fromUserId === myUserId ? "sent" : "received"
-                  }`}
-                >
-                  <p className="message-content">{msg.content}</p>
-                  <span className="message-time">
-                    {new Date(msg.createdAt).toLocaleTimeString("vi-VN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              ))
+              messages.map((msg) => {
+                const isMyMessage = msg.fromUserId === myUserId;
+                const isFromSupport =
+                  msg.fromUser.name === "Support" ||
+                  msg.fromUser.id === SUPPORT_USER_ID;
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={`message-bubble ${
+                      isMyMessage ? "sent" : "received"
+                    }`}
+                  >
+                    {!isMyMessage && (
+                      <div className="sender-name">{msg.fromUser.name}</div>
+                    )}
+                    <p className="message-content">{msg.content}</p>
+                    <span className="message-time">
+                      {new Date(msg.createdAt).toLocaleTimeString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>

@@ -1,43 +1,30 @@
-import React, { useEffect, useState } from "react";
+// src/pages/HomePage.tsx
+
+import React, { useEffect, useState, useRef } from "react";
 import "../assets/css/home.css";
 
+// --- Import ảnh (giữ nguyên) ---
 import banner3 from "../assets/img/home/banner3.jpg";
 import banner1 from "../assets/img/home/banner1.jpg";
 import banner2 from "../assets/img/home/banner2.jpg";
-import layout1 from "../assets/img/home/layout1.jpg";
-import layout2 from "../assets/img/home/layout2.jpg";
-import layout4 from "../assets/img/home/layout4.jpg";
-import layout5 from "../assets/img/home/layout5.jpg";
-import layout6 from "../assets/img/home/layout6.jpg";
-import layout7 from "../assets/img/home/layout7.jpg";
-import layout8 from "../assets/img/home/layout8.jpg";
-
-// --- Ảnh cho Review Home ---
 import review1 from "../assets/img/home/review1.jpg";
 import review2 from "../assets/img/home/review2.jpg";
 import review3 from "../assets/img/home/review_3.jpg";
-
-// --- Ảnh cho sản phẩm mẫu ---
 import product1Img from "../assets/img/products/products_1.jpg";
 import product2Img from "../assets/img/products/products_2.jpg";
 import product3Img from "../assets/img/products/products_3.jpg";
-
-// --- Ảnh cho Poster Carousel ---
 import poster1 from "../assets/img/poster/hinh1.jpg";
 import poster2 from "../assets/img/poster/hinh2.jpg";
 import poster3 from "../assets/img/poster/hinh3.jpg";
 import poster4 from "../assets/img/poster/hinh4.jpg";
 import poster5 from "../assets/img/poster/hinh5.jpg";
-// (bạn có thể import thêm các ảnh poster khác nếu cần)
-
-// --- Ảnh cho các section khác ---
 import aboutImg from "../assets/img/home/about.jpg";
 import fashion1Img from "../assets/img/poster/fashion1.jpg";
 import fashion2Img from "../assets/img/poster/fashion2.jpg";
 import fashion3Img from "../assets/img/poster/fashion3.jpg";
 import thienNguyenImg from "../assets/img/poster/thiennguyen2.jpg";
 
-// Giả lập dữ liệu sản phẩm. Sau này, bạn sẽ lấy dữ liệu này từ API.
+// Giả lập dữ liệu sản phẩm
 const mockProducts = [
   {
     id: 1,
@@ -63,125 +50,110 @@ const mockProducts = [
     price_sale: 690000,
     sale_name: "22%",
   },
-  // Thêm các sản phẩm khác nếu cần
 ];
 
-// Hàm format tiền tệ (tương đương với $fm->formatCurrency)
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
-};
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    amount
+  );
 
 const HomePage: React.FC = () => {
-  // --- Slider images ---
-  const sliderImages = [
-    banner3,
-    banner1,
-    banner2,
-    layout1,
-    layout2,
-    layout4,
-    layout5,
-    layout6,
-    layout7,
-    layout8,
-  ];
-
+  const sliderImages = [banner3, banner1, banner2];
+  const posterImages = [poster1, poster2, poster3, poster4, poster5];
   const [currentSlide, setCurrentSlide] = useState(0);
+  const posterCarouselRef = useRef<HTMLDivElement>(null);
 
-  const handlePrevSlide = () => {
+  const handlePrevSlide = () =>
     setCurrentSlide(
-      (prevIndex) => (prevIndex - 1 + sliderImages.length) % sliderImages.length,
+      (prev) => (prev - 1 + sliderImages.length) % sliderImages.length
     );
-  };
-
-  const handleNextSlide = () => {
-    setCurrentSlide((prevIndex) => (prevIndex + 1) % sliderImages.length);
-  };
+  const handleNextSlide = () =>
+    setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide(
-        (prevIndex) => (prevIndex + 1) % sliderImages.length,
-      );
-    }, 3000);
+    const timer = setInterval(handleNextSlide, 4000);
     return () => clearInterval(timer);
   }, [sliderImages.length]);
 
+  const scrollPoster = (direction: "left" | "right") => {
+    if (posterCarouselRef.current) {
+      const scrollAmount = direction === "left" ? -300 : 300;
+      posterCarouselRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
-    <>
-      {/* <Header /> */} {/* Bỏ comment khi bạn đã tạo component Header */}
-      <main className="content home-page">
-        <div className="slider-container">
-          <div
-            className="slides"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {sliderImages.map((img, index) => (
-              <div className="slide" key={index}>
-                <img src={img} alt={`Banner ${index + 1}`} />
-              </div>
-            ))}
-          </div>
-          <button
-            className="arrow left"
-            onClick={handlePrevSlide}
-            aria-label="Previous slide"
-          >
-            ❮
-          </button>
-          <button
-            className="arrow right"
-            onClick={handleNextSlide}
-            aria-label="Next slide"
-          >
-            ❯
-          </button>
+    <main className="content home-page">
+      {/* Section 1: Hero Slider */}
+      <section className="slider-container">
+        <div
+          className="slides"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        >
+          {sliderImages.map((img, index) => (
+            <div className="slide" key={index}>
+              <img src={img} alt={`Banner ${index + 1}`} />
+            </div>
+          ))}
         </div>
+        <button
+          className="arrow left"
+          onClick={handlePrevSlide}
+          aria-label="Previous slide"
+        >
+          ❮
+        </button>
+        <button
+          className="arrow right"
+          onClick={handleNextSlide}
+          aria-label="Next slide"
+        >
+          ❯
+        </button>
+      </section>
 
-        <div className="review_home">
-          <div
-            className="item_review"
-            style={{ backgroundImage: `url(${review1})` }}
-          >
-            <p className="text_itemReview">PHONG CÁCH NAM</p>
-          </div>
-          <div
-            className="item_review"
-            style={{ backgroundImage: `url(${review2})` }}
-          >
-            <p className="text_itemReview">PHONG CÁCH NỮ</p>
-          </div>
-          <div
-            className="item_review"
-            style={{ backgroundImage: `url(${review3})` }}
-          >
-            <p className="text_itemReview">ĐIỂM NHẤN TINH TẾ</p>
-          </div>
+      {/* Section 2: Review Categories */}
+      <section className="review_home">
+        <div
+          className="item_review"
+          style={{ backgroundImage: `url(${review1})` }}
+        >
+          <p>PHONG CÁCH NAM</p>
         </div>
+        <div
+          className="item_review"
+          style={{ backgroundImage: `url(${review2})` }}
+        >
+          <p>PHONG CÁCH NỮ</p>
+        </div>
+        <div
+          className="item_review"
+          style={{ backgroundImage: `url(${review3})` }}
+        >
+          <p>ĐIỂM NHẤN TINH TẾ</p>
+        </div>
+      </section>
 
-        <h1 className="title_home_product">HÀNG MỚI VỀ</h1>
-
+      {/* Section 3: New Products */}
+      <section className="products-section">
+        <h1 className="section-title">HÀNG MỚI VỀ</h1>
         <div className="products_home">
-          {mockProducts.length > 0 ? (
-            mockProducts.map((prod) => (
-              <div key={prod.id} className="item_products_home">
+          {mockProducts.map((prod) => (
+            <div key={prod.id} className="item_products_home">
+              <a href={`/products/${prod.id}`} className="product-link">
                 <div className="image_home_item">
-                  <a href={`/products/${prod.id}`}>
-                    {" "}
-                    {/* Thay đổi URL cho phù hợp với routing của React */}
-                    <img
-                      src={prod.imgURL_1}
-                      alt={prod.name}
-                      className="image_products_home"
-                    />
-                  </a>
+                  <img
+                    src={prod.imgURL_1}
+                    alt={prod.name}
+                    className="image_products_home"
+                  />
                 </div>
-                <h4 className="infProducts_home">{prod.name}</h4>
+                <h4 className="infProducts_home name">{prod.name}</h4>
                 <p className="infProducts_home price-block">
-                  {prod.price_sale && prod.sale_name ? (
+                  {prod.price_sale ? (
                     <>
                       <span className="price-original">
                         {formatCurrency(prod.price)}
@@ -192,139 +164,116 @@ const HomePage: React.FC = () => {
                       <span className="discount-label">-{prod.sale_name}</span>
                     </>
                   ) : (
-                    <span>{formatCurrency(prod.price)}</span>
+                    <span className="price-normal">
+                      {formatCurrency(prod.price)}
+                    </span>
                   )}
                 </p>
-              </div>
-            ))
-          ) : (
-            <p className="no-products">Chưa có sản phẩm mới</p>
-          )}
+              </a>
+            </div>
+          ))}
         </div>
+      </section>
 
-        <h1 className="title_home_poster">Khám Phá Phong Cách Của Bạn</h1>
+      {/* Section 4: Poster Carousel */}
+      <section className="poster-section">
+        <h1 className="section-title">Khám Phá Phong Cách Của Bạn</h1>
         <div className="poster-carousel-wrapper">
-          <button className="btn-scroll btn-left" aria-label="Scroll Left">
+          <button
+            className="btn-scroll btn-left"
+            onClick={() => scrollPoster("left")}
+            aria-label="Scroll Left"
+          >
             &#10094;
           </button>
-          <div className="poster-carousel">
-            {/* Bạn có thể map qua một mảng ảnh tương tự như sản phẩm */}
-            <img src={poster1} alt="Image 1" className="image_poster" />
-            <img src={poster2} alt="Image 2" className="image_poster" />
-            <img src={poster3} alt="Image 3" className="image_poster" />
-            <img src={poster4} alt="Image 4" className="image_poster" />
-            <img src={poster5} alt="Image 5" className="image_poster" />
-            {/* ... thêm các ảnh còn lại */}
+          <div className="poster-carousel" ref={posterCarouselRef}>
+            {posterImages.map((img, index) => (
+              <img
+                key={index}
+                src={img}
+                alt={`Poster ${index + 1}`}
+                className="image_poster"
+              />
+            ))}
           </div>
-          <button className="btn-scroll btn-right" aria-label="Scroll Right">
+          <button
+            className="btn-scroll btn-right"
+            onClick={() => scrollPoster("right")}
+            aria-label="Scroll Right"
+          >
             &#10095;
           </button>
         </div>
+      </section>
 
-        <section className="about-us">
-          <div className="about-content">
-            <h2>Về Chúng Tôi</h2>
-            <p>
-              Chào mừng bạn đến với <strong>PIXCAM</strong> – cửa hàng thời
-              trang hiện đại nơi phong cách và cá tính được tôn vinh. Chúng tôi
-              tin rằng mỗi bộ trang phục không chỉ để mặc, mà là để kể câu
-              chuyện riêng của bạn.
-            </p>
-            <p>
-              Với đa dạng phong cách từ năng động, thanh lịch đến cá tính, sản
-              phẩm của chúng tôi được chọn lọc kỹ lưỡng nhằm mang lại chất lượng
-              và sự tự tin tuyệt đối cho bạn.
-            </p>
-            <p>
-              <strong>PIXCAM</strong> không chỉ là nơi mua sắm, mà còn là người
-              bạn đồng hành cùng bạn định hình phong cách và khẳng định bản thân
-              mỗi ngày.
-            </p>
-          </div>
-          <div className="about-image">
-            <img src={aboutImg} alt="Cửa hàng thời trang FashionVibe" />
-          </div>
-        </section>
+      {/* Section 5: About Us */}
+      <section className="about-us">
+        <div className="about-content">
+          <h2>Về Chúng Tôi</h2>
+          <p>
+            Chào mừng bạn đến với <strong>PIXCAM</strong> – nơi phong cách và cá
+            tính được tôn vinh. Chúng tôi tin rằng mỗi bộ trang phục là để kể
+            câu chuyện riêng của bạn.
+          </p>
+          <p>
+            <strong>PIXCAM</strong> là người bạn đồng hành cùng bạn định hình
+            phong cách và khẳng định bản thân mỗi ngày.
+          </p>
+        </div>
+        <div className="about-image">
+          <img src={aboutImg} alt="Cửa hàng thời trang PIXCAM" />
+        </div>
+      </section>
 
-        <section className="fashion-inspiration">
-          <h2 className="section-title">Góc Phối Đồ Cá Tính</h2>
-          <div className="scrolling-text-container">
-            <p className="scrolling-text">
-              ✦ Khám phá thế giới outfit đầy màu sắc, chất riêng và phá cách –
-              phong cách là bản sắc, hãy mặc đúng cá tính của bạn! ✦
-            </p>
-          </div>
-          <div className="inspiration-cards">
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://www.coolmate.me/post/cac-phong-cach-thoi-trang-nam-808"
-              className="card"
-            >
-              <img src={fashion1Img} alt="Look 1" />
-              <div className="card-text">
-                <h3>For Him — Tối Giản & Mạnh Mẽ</h3>
-                <p className="meta-info">Khám phá phong cách nam →</p>
-              </div>
-            </a>
-            <a
-              href="https://www.vfestival.vn/cach-phoi-do-dep-cho-nu-ca-tinh-di-choi-du-lich-dao-pho/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card"
-            >
-              <img src={fashion2Img} alt="Look 2" />
-              <div className="card-text">
-                <h3>For Her — Thanh Lịch & Cá Tính</h3>
-                <p className="meta-info">Gu thời trang nữ →</p>
-              </div>
-            </a>
-            <a
-              href="https://bp-guide.vn/AXtIQX6W"
-              className="card"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src={fashion3Img} alt="Look 3" />
-              <div className="card-text">
-                <h3>Accessories — Điểm Nhấn Đắt Giá</h3>
-                <p className="meta-info">Phụ kiện tạo chất →</p>
-              </div>
-            </a>
-          </div>
-        </section>
-
-        <section className="charity-banner">
-          <div className="charity-text">
-            <h2>PIXCAM & Hành Trình Lan Tỏa Yêu Thương</h2>
-            <p>
-              Mỗi chiếc áo bạn chọn không chỉ là một phong cách mà còn là một
-              hành động tử tế.
-              <strong>PIXCAM</strong> trích một phần lợi nhuận từ đơn hàng để
-              đồng hành cùng các hoạt động thiện nguyện: hỗ trợ trẻ em khó khăn,
-              người vô gia cư và các chiến dịch vì môi trường.
-            </p>
-            <p className="highlight">
-              ✦ Mua sắm có ý nghĩa — Mặc đẹp và lan tỏa điều tốt đẹp ✦
-            </p>
-            <div style={{ textAlign: "center" }}>
-              <a
-                href="https://www.nuoiem.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-charity"
-              >
-                Tìm hiểu các hoạt động của chúng tôi →
-              </a>
+      {/* Section 6: Fashion Inspiration */}
+      <section className="fashion-inspiration">
+        <h2 className="section-title">Góc Phối Đồ Cá Tính</h2>
+        <div className="inspiration-cards">
+          <a href="#" className="card">
+            <img src={fashion1Img} alt="Look 1" />
+            <div className="card-text">
+              <h3>For Him — Tối Giản & Mạnh Mẽ</h3>
+              <p className="meta-info">Khám phá phong cách nam →</p>
             </div>
-          </div>
-          <div className="charity-image">
-            <img src={thienNguyenImg} alt="Hành trình thiện nguyện" />
-          </div>
-        </section>
-      </main>
-      {/* <Footer /> */} {/* Bỏ comment khi bạn đã tạo component Footer */}
-    </>
+          </a>
+          <a href="#" className="card">
+            <img src={fashion2Img} alt="Look 2" />
+            <div className="card-text">
+              <h3>For Her — Thanh Lịch & Cá Tính</h3>
+              <p className="meta-info">Gu thời trang nữ →</p>
+            </div>
+          </a>
+          <a href="#" className="card">
+            <img src={fashion3Img} alt="Look 3" />
+            <div className="card-text">
+              <h3>Accessories — Điểm Nhấn Đắt Giá</h3>
+              <p className="meta-info">Phụ kiện tạo chất →</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      {/* Section 7: Charity Banner */}
+      <section className="charity-banner">
+        <div className="charity-text">
+          <h2>PIXCAM & Hành Trình Yêu Thương</h2>
+          <p>
+            <strong>PIXCAM</strong> trích một phần lợi nhuận để đồng hành cùng
+            các hoạt động thiện nguyện, hỗ trợ trẻ em khó khăn và các chiến dịch
+            vì môi trường.
+          </p>
+          <p className="highlight">
+            ✦ Mua sắm có ý nghĩa — Mặc đẹp và lan tỏa điều tốt đẹp ✦
+          </p>
+          <a href="#" className="btn-charity">
+            Tìm hiểu thêm →
+          </a>
+        </div>
+        <div className="charity-image">
+          <img src={thienNguyenImg} alt="Hành trình thiện nguyện" />
+        </div>
+      </section>
+    </main>
   );
 };
 
