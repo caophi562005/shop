@@ -4,6 +4,7 @@ import http from "../api/http";
 import "../assets/css/ChatWidget.css";
 import { FiMessageSquare, FiX, FiSend } from "react-icons/fi";
 import { useAuthStore } from "../stores/authStore";
+import envConfig from "../envConfig";
 
 // Định nghĩa kiểu dữ liệu cho một tin nhắn
 interface Message {
@@ -43,7 +44,7 @@ const ChatWidget: React.FC = () => {
     console.log("Start WS");
     console.log(isLoggedIn, " ", myUserId);
     if (isLoggedIn && myUserId && !socketRef.current) {
-      socketRef.current = io("localhost:3003/message", {
+      socketRef.current = io(`${envConfig.VITE_API_END_POINT}/message`, {
         withCredentials: true,
       });
 
