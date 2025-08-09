@@ -72,6 +72,8 @@ jobs:
                 restart: unless-stopped
                 ports:
                   - "${HOST_PORT:-3100}:80"
+                env_file:
+                  - .env
             EOF
             echo "✅ Đã tạo tệp docker-compose.yml."
 
