@@ -76,7 +76,7 @@ jobs:
             echo "✅ Đã tạo tệp docker-compose.yml."
 
             echo "🚀 Khởi động container bằng Docker Compose..."
-            docker-compose pull
-            docker-compose up -d
+            docker compose pull
+            docker compose up -d --force-recreate
 
             echo "🎉 Triển khai Frontend hoàn tất!"
