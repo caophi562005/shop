@@ -43,7 +43,6 @@ const ProductDetailPage: React.FC = () => {
           setSelectedSize(data.variants[1]?.options?.[0] || "");
         }
       } catch (error) {
-        console.log(error);
         // Nếu API trả về lỗi (ví dụ: 404 Not Found), đặt cờ sản phẩm đã bị xóa
         setIsDeleted(true);
       }
@@ -88,15 +87,10 @@ const ProductDetailPage: React.FC = () => {
 
     // Các listener khác không đổi...
     socket.on("productUpdated", (updatedProduct: GetProductDetailResType) => {
-      console.log(
-        "Sản phẩm được cập nhật theo thời gian thực:",
-        updatedProduct
-      );
       setProduct(updatedProduct);
     });
 
-    socket.on("productDeleted", (data: { message: string }) => {
-      console.log(data.message);
+    socket.on("productDeleted", () => {
       setIsDeleted(true);
     });
 

@@ -179,7 +179,6 @@ const EditProductModal: React.FC<Props> = ({
         ...formData,
         images: formData.images.filter((img) => img.trim() !== ""),
       };
-      console.log(submitData);
 
       await http.put(`/manage-product/products/${product.id}`, submitData);
 

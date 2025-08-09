@@ -41,8 +41,6 @@ const ChatWidget: React.FC = () => {
 
   // Kết nối WebSocket
   useEffect(() => {
-    console.log("Start WS");
-    console.log(isLoggedIn, " ", myUserId);
     if (isLoggedIn && myUserId && !socketRef.current) {
       socketRef.current = io(`${envConfig.VITE_API_END_POINT}/message`, {
         withCredentials: true,

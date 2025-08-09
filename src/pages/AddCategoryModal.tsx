@@ -23,11 +23,6 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       alert("Vui lòng nhập tên danh mục");
       return;
     }
-    console.log("Saving category:", {
-      name: name.trim(),
-      logo: logo.trim(),
-      parentCategoryId: parentCategoryId || null,
-    });
     onSave(name.trim(), logo.trim(), parentCategoryId || null);
 
     handleClose();

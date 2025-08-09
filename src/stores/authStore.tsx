@@ -33,9 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await http.post("/auth/logout");
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
     set({ isLoggedIn: false, user: null });
     toast.success("Đăng xuất thành công!");
   },
