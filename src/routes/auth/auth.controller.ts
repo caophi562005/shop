@@ -25,6 +25,8 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: true,
   sameSite: 'none',
+  domain: '.hacmieu.xyz',
+  path: '/',
 }
 
 @Controller('auth')
