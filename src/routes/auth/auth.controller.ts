@@ -63,8 +63,14 @@ export class AuthController {
       ip,
     })
 
-    res.cookie('accessToken', tokens.accessToken, cookieOptions)
-    res.cookie('refreshToken', tokens.refreshToken, cookieOptions)
+    res.cookie('accessToken', tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000, // 1 giờ
+    })
+    res.cookie('refreshToken', tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+    })
 
     return { message: 'Message.LoginSuccessfully' }
   }
@@ -88,8 +94,15 @@ export class AuthController {
       ip,
     })
 
-    res.cookie('accessToken', tokens.accessToken, cookieOptions)
-    res.cookie('refreshToken', tokens.refreshToken, cookieOptions)
+    res.cookie('accessToken', tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: 60 * 60 * 1000, // 1 giờ
+    })
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+    })
 
     return { message: 'Message.GetRefreshTokenSuccessfully' }
   }

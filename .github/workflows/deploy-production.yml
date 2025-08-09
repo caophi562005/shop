@@ -38,7 +38,7 @@ jobs:
             echo "🚀 Bắt đầu quá trình triển khai..."
 
             # Tạo thư mục dự án nếu chưa tồn tại
-            PROJECT_DIR="$HOME/pixcam-project"
+            PROJECT_DIR="$HOME/pixcam-server"
             mkdir -p $PROJECT_DIR
             cd $PROJECT_DIR
 
