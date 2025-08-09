@@ -68,7 +68,7 @@ jobs:
             services:
               pixcam-client:
                 image: caophi562005/pixcam-client:v1
-                container_name: pixcam-pixcam
+                container_name: pixcam-client
                 restart: unless-stopped
                 ports:
                   - "${HOST_PORT:-3100}:80"
