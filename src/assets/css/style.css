@@ -35,6 +35,13 @@ header {
   font-weight: bold;
 }
 
+.menu_toggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
 /* Style tổng thể cho menu */
 .navigate_header {
   display: flex;
@@ -279,6 +286,35 @@ footer {
   }
   .item_title_contact {
     border-bottom: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo_header img {
+    width: 150px;
+    height: auto;
+  }
+
+  .title_header {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .tools_header {
+    gap: 15px;
+  }
+
+  footer {
+    padding: 15px;
+  }
+
+  .contact_footer {
+    gap: 10px;
+  }
+
+  .logo_footerIcon {
+    width: 150px;
+    height: auto;
   }
 }
 

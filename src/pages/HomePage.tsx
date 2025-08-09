@@ -113,7 +113,7 @@ const HomePage: React.FC = () => {
   return (
     <>
       {/* <Header /> */} {/* Bỏ comment khi bạn đã tạo component Header */}
-      <main className="content">
+      <main className="content home-page">
         <div className="slider-container">
           <div
             className="slides"
@@ -125,10 +125,18 @@ const HomePage: React.FC = () => {
               </div>
             ))}
           </div>
-          <button className="arrow left" onClick={handlePrevSlide}>
+          <button
+            className="arrow left"
+            onClick={handlePrevSlide}
+            aria-label="Previous slide"
+          >
             ❮
           </button>
-          <button className="arrow right" onClick={handleNextSlide}>
+          <button
+            className="arrow right"
+            onClick={handleNextSlide}
+            aria-label="Next slide"
+          >
             ❯
           </button>
         </div>
