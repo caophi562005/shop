@@ -12,7 +12,6 @@ import type { CategoryType } from "../models/shared/shared-category.model";
 const formatCurrency = (price: number): string => {
   return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
 };
-
 const SortChooseType = {
   PRICE_ASC: "PRICE_ASC",
   PRICE_DESC: "PRICE_DESC",
