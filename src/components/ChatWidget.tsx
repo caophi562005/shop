@@ -59,9 +59,8 @@ const ChatWidget: React.FC = () => {
         if (
           (message.fromUserId === myUserId &&
             message.toUserId === SUPPORT_USER_ID) ||
-          (message.fromUser.id === SUPPORT_USER_ID &&
-            message.toUserId === myUserId) ||
-          (message.fromUser.name === "Support" && message.toUserId === myUserId)
+          (message.fromUserId === SUPPORT_USER_ID &&
+            message.toUserId === myUserId)
         ) {
           setMessages((prevMessages) => {
             // Tránh duplicate tin nhắn
@@ -138,6 +137,19 @@ const ChatWidget: React.FC = () => {
       content: newMessage,
     });
 
+    // Hiển thị tạm thời tin nhắn vừa gửi
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        content: newMessage,
+        fromUserId: myUserId,
+        toUserId: SUPPORT_USER_ID,
+        createdAt: new Date().toISOString(),
+        fromUser: { id: myUserId, name: user?.name || "Me" },
+      },
+    ]);
+
     setNewMessage("");
   };
 
@@ -172,9 +184,6 @@ const ChatWidget: React.FC = () => {
             ) : (
               messages.map((msg) => {
                 const isMyMessage = msg.fromUserId === myUserId;
-                const isFromSupport =
-                  msg.fromUser.name === "Support" ||
-                  msg.fromUser.id === SUPPORT_USER_ID;
 
                 return (
                   <div
