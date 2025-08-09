@@ -676,3 +676,58 @@ body {
 .main-content {
   flex: 1;
 }
+
+/* Responsive adjustments for HomePage */
+@media (max-width: 768px) {
+  .slider-container {
+    height: 300px;
+  }
+
+  .item_review {
+    width: 45%;
+    min-width: unset;
+    min-height: 250px;
+  }
+
+  .item_products_home {
+    width: 45%;
+    min-width: unset;
+  }
+
+  .image_poster {
+    width: 220px;
+    height: 300px;
+  }
+
+  .about-us {
+    padding: 40px 5%;
+  }
+}
+
+@media (max-width: 480px) {
+  .slider-container {
+    height: 200px;
+  }
+
+  .review_home {
+    gap: 10px;
+  }
+
+  .item_review {
+    width: 100%;
+    min-height: 200px;
+  }
+
+  .products_home {
+    justify-content: center;
+  }
+
+  .item_products_home {
+    width: 100%;
+  }
+
+  .image_poster {
+    width: 160px;
+    height: 240px;
+  }
+}

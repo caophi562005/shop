@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import "../assets/css/style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { RoleName } from "../constants/role.constant";
@@ -43,6 +44,7 @@ const Header: React.FC = () => {
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<number | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
+  const [isMenuOpen, setMenuOpen] = useState(false);
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
@@ -173,14 +175,17 @@ const Header: React.FC = () => {
   return (
     <header>
       <div className="logo_header">
-        <Link to="/" className="logo">
+        <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
           <img src={logoImg} alt="Logo" />
         </Link>
+        <div className="menu_toggle" onClick={() => setMenuOpen(!isMenuOpen)}>
+          <i className="fa-solid fa-bars icon_while"></i>
+        </div>
       </div>
 
-      <ul className="navigate_header">
+      <ul className={`navigate_header ${isMenuOpen ? "open" : ""}`}>
         <li>
-          <Link to="/" className="title_header">
+          <Link to="/" className="title_header" onClick={() => setMenuOpen(false)}>
             HOME
           </Link>
         </li>
@@ -191,14 +196,14 @@ const Header: React.FC = () => {
             onMouseEnter={() => setOpenCategory(cat.id)}
             onMouseLeave={() => setOpenCategory(null)}
           >
-            <Link to={cat.path} className="title_header">
+            <Link to={cat.path} className="title_header" onClick={() => setMenuOpen(false)}>
               {cat.name}
             </Link>
             {openCategory === cat.id && cat.subcategories.length > 0 && (
               <div className="mega_menu">
                 <div className="column">
                   {cat.subcategories.map((sub) => (
-                    <Link key={sub.id} to={sub.path}>
+                    <Link key={sub.id} to={sub.path} onClick={() => setMenuOpen(false)}>
                       {sub.name}
                     </Link>
                   ))}

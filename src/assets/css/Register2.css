@@ -6,18 +6,21 @@ body {
 }
 
 .register-wrapper {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 .register-box {
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
   padding: 30px 40px;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
 }
 
 .register-box h2 {
@@ -164,4 +167,20 @@ body {
   font-size: 14px;
   display: block;
   margin-bottom: 12px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .register-box {
+    padding: 20px;
+  }
+
+  .otp-group {
+    flex-direction: column;
+  }
+
+  .otp-btn {
+    width: 100%;
+    margin-top: 8px;
+  }
 }
