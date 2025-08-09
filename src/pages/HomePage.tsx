@@ -81,7 +81,7 @@ const HomePage: React.FC = () => {
   return (
     <>
       {/* <Header /> */} {/* Bỏ comment khi bạn đã tạo component Header */}
-      <div className="content">
+      <main className="content">
         <div className="slider-container">
           {/* GHI CHÚ: Slider này cần được làm lại bằng thư viện React (vd: Swiper.js) hoặc custom hook */}
           <div className="slides" id="slides">
@@ -301,7 +301,7 @@ const HomePage: React.FC = () => {
             <img src={thienNguyenImg} alt="Hành trình thiện nguyện" />
           </div>
         </section>
-      </div>
+      </main>
       {/* <Footer /> */} {/* Bỏ comment khi bạn đã tạo component Footer */}
     </>
   );

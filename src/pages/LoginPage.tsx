@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../assets/css/login.css";
 import http from "../api/http";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { toast } from "react-toastify";
 
@@ -65,9 +65,7 @@ const LoginPage: React.FC = () => {
           </button>
 
           <div className="forgot-password">
-            <a href="index.php?controller=login&action=forgotPassword">
-              Quên mật khẩu?
-            </a>
+            <Link to="/forgot-password">Quên mật khẩu?</Link>
           </div>
         </form>
 
@@ -84,8 +82,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="register-link">
-          Chưa có tài khoản?{" "}
-          <a href="index.php?controller=register&action=index">Đăng ký</a>
+          Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
         </div>
       </div>
     </div>

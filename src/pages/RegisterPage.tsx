@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../assets/css/Register2.css";
 import http from "../api/http";
 import type { RegisterBodyType } from "../models/auth.model";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState<RegisterBodyType>({
@@ -135,8 +135,7 @@ const RegisterPage: React.FC = () => {
         </form>
 
         <div className="login-link">
-          Đã có tài khoản?{" "}
-          <a href="index.php?controller=login&action=index">Đăng nhập</a>
+          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
         </div>
       </div>
     </div>

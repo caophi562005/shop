@@ -18,6 +18,10 @@ header {
   position: fixed;
   z-index: 9999;
 }
+.logo_header {
+  display: flex;
+  align-items: center;
+}
 .logo_header img {
   display: flex;
   align-items: center;
@@ -226,4 +230,60 @@ footer {
 }
 .fa-user {
   font-size: 20px;
+}
+
+/* Responsive header and footer */
+@media (max-width: 768px) {
+  header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 10px 15px;
+  }
+  .logo_header {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .menu_toggle {
+    display: block;
+    cursor: pointer;
+  }
+  .navigate_header {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding-bottom: 10px;
+    display: none;
+  }
+  .navigate_header.open {
+    display: flex;
+  }
+  .tools_header {
+    margin-top: 10px;
+    gap: 20px;
+  }
+  footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+  }
+  .logo_footer {
+    margin: 0 0 20px 0;
+  }
+  .contact_footer {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 20px;
+  }
+  .item_title_contact {
+    border-bottom: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .menu_toggle {
+    display: none;
+  }
 }

@@ -1,43 +1,23 @@
 import "../assets/css/style.css"; // File CSS riêng cho Footer
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 // Import logo
 import logoImg from "../assets/img/home/logo.png";
 
 const Footer: React.FC = () => {
-  // GHI CHÚ: Logic cho nút "Back to Top" cần được triển khai lại ở đây
-  // bằng cách sử dụng React Hooks (useEffect và useState).
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
   useEffect(() => {
-    const backToTopButton = document.getElementById("backToTop");
-
     const handleScroll = () => {
-      if (backToTopButton) {
-        if (window.scrollY > 300) {
-          // Hiển thị nút khi cuộn xuống 300px
-          backToTopButton.style.display = "block";
-        } else {
-          backToTopButton.style.display = "none";
-        }
-      }
+      setShowBackToTop(window.scrollY > 300);
     };
-
-    const scrollToTop = () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
     window.addEventListener("scroll", handleScroll);
-    if (backToTopButton) {
-      backToTopButton.addEventListener("click", scrollToTop);
-    }
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    // Dọn dẹp event listener khi component bị hủy
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (backToTopButton) {
-        backToTopButton.removeEventListener("click", scrollToTop);
-      }
-    };
-  }, []); // Mảng rỗng đảm bảo useEffect chỉ chạy một lần
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <footer>
@@ -117,10 +97,11 @@ const Footer: React.FC = () => {
           </div>
         </li>
       </ul>
-      {/* Nút này giờ sẽ được điều khiển bởi logic trong useEffect */}
-      <button id="backToTop" title="Lên đầu trang" style={{ display: "none" }}>
-        <i className="fas fa-arrow-up"></i>
-      </button>
+      {showBackToTop && (
+        <button id="backToTop" title="Lên đầu trang" onClick={scrollToTop}>
+          <i className="fas fa-arrow-up"></i>
+        </button>
+      )}
     </footer>
   );
 };
