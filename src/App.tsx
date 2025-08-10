@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
@@ -26,7 +26,13 @@ import CSVC from "./pages/CSVC";
 import AdminChat from "./pages/AdminChat";
 
 const App: React.FC = () => {
-  const isLoading = useAuthStore((state) => state.isLoading);
+  const { isLoading, checkAuthStatus } = useAuthStore();
+
+  // Kiểm tra trạng thái đăng nhập khi app khởi động
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
   return (
     <BrowserRouter>
       {isLoading && <LoadingOverlay />}

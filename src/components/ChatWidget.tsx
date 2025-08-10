@@ -27,7 +27,7 @@ const ChatWidget: React.FC = () => {
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { user, isLoggedIn } = useAuthStore();
+  const { user, isLoggedIn, isInitialized } = useAuthStore();
   const myUserId = user?.id;
 
   // Tự động cuộn xuống tin nhắn mới nhất
@@ -115,6 +115,11 @@ const ChatWidget: React.FC = () => {
 
   // Không hiển thị widget nếu chưa đăng nhập
   if (!isLoggedIn) {
+    return null;
+  }
+
+  // Chỉ hiển thị ChatWidget khi đã kiểm tra auth và user đã đăng nhập
+  if (!isInitialized || !isLoggedIn) {
     return null;
   }
 

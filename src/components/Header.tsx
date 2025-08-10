@@ -3,14 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../assets/css/style.css";
 import { Link, useNavigate } from "react-router-dom";
-// Giả lập các store và hằng số để component có thể chạy
-const useAuthStore = () => ({
-  isLoggedIn: false,
-  logout: () => console.log("Logged out"),
-  checkAuthStatus: () => console.log("Checked auth status"),
-  user: { roleName: "USER" },
-});
-const RoleName = { ADMIN: "ADMIN", USER: "USER" };
+import { useAuthStore } from "../stores/authStore";
+import { RoleName } from "../constants/role.constant";
 import logoImg from "../assets/img/home/logo.png";
 
 // Dữ liệu mẫu cho menu
