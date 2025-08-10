@@ -5,6 +5,7 @@ import http from "../api/http";
 import AddCategoryModal from "./AddCategoryModal";
 import EditCategoryModal from "./EditCategoryModal";
 import CategoryTranslationModal from "../components/CategoryTranslationModal";
+import DeleteCategoryModal from "../components/DeleteCategoryModal";
 import type { CategoryType } from "../models/shared/shared-category.model";
 import { toast } from "react-toastify";
 
@@ -23,6 +24,7 @@ const CategoryListPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showTranslationModal, setShowTranslationModal] =
     useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(
     null
   );
@@ -88,6 +90,7 @@ const CategoryListPage: React.FC = () => {
     setIsEditModalOpen(false);
     setIsAddModalOpen(false);
     setShowTranslationModal(false);
+    setShowDeleteModal(false);
     setSelectedCategory(null);
     setAddModalParentId(null);
   };
@@ -177,22 +180,23 @@ const CategoryListPage: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = async (category: CategoryType) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa danh mục "${category.name}"?`)) {
-      return;
-    }
+  const handleDeleteCategory = (category: CategoryType) => {
+    setSelectedCategory(category);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteSuccess = async () => {
+    if (!selectedCategory) return;
 
     try {
       setIsLoading(true);
-      await http.delete(`/categories/${category.id}`);
-      toast.success("Xóa thành công");
 
       // Refresh parent categories
       fetchCategories();
 
       // If deleting a subcategory, refresh its parent's subcategories
-      if (category.parentCategoryId) {
-        fetchSubCategories(category.parentCategoryId);
+      if (selectedCategory.parentCategoryId) {
+        fetchSubCategories(selectedCategory.parentCategoryId);
       }
 
       // Refresh all expanded subcategories
@@ -200,7 +204,6 @@ const CategoryListPage: React.FC = () => {
         fetchSubCategories(parentId);
       });
     } catch (error) {
-      toast.error("Xóa thất bại");
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -415,6 +418,17 @@ const CategoryListPage: React.FC = () => {
         onClose={closeModals}
         categoryId={selectedCategory?.id ?? 0}
         onSuccess={() => handleSuccess("Thao tác dịch thành công")}
+      />
+
+      <DeleteCategoryModal
+        isOpen={showDeleteModal}
+        category={selectedCategory}
+        onClose={closeModals}
+        onSuccess={(message: string) => {
+          handleSuccess(message);
+          handleDeleteSuccess();
+        }}
+        onRefresh={() => {}}
       />
     </div>
   );
