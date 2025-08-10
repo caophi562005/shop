@@ -109,7 +109,7 @@ const Header: React.FC = () => {
       );
     }
     // Nếu là admin
-    if (user?.roleName === RoleName.ADMIN) {
+    if (user?.role.name === RoleName.ADMIN) {
       return (
         <>
           <Link to="/profile" style={linkStyle}>

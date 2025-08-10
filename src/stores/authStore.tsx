@@ -1,13 +1,13 @@
 // src/stores/authStore.ts
 import { toast } from "react-toastify";
 import { create } from "zustand";
-import type { AccessTokenPayload } from "../models/jwt.type";
 import http from "../api/http";
+import type { GetUserProfileResType } from "../models/shared/shared-user.model";
 
 // Định nghĩa kiểu cho state và actions
 interface AuthState {
   isLoggedIn: boolean;
-  user: any;
+  user: GetUserProfileResType | null;
   isLoading: boolean;
   isInitialized: boolean;
   setLoading: (loading: boolean) => void;
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       set({ isLoading: true });
-      const response = await http.get<AccessTokenPayload>("/profile");
+      const response = await http.get<GetUserProfileResType>("/profile");
       set({
         isLoggedIn: true,
         user: response.data,
