@@ -5,6 +5,7 @@ import "../assets/css/detailProduct.css";
 import type { GetProductDetailResType } from "../models/product.model";
 import http from "../api/http";
 import type { SKUType } from "../models/shared/shared-sku.model";
+import { languageUtils } from "../utils/language";
 
 // Biến để lưu trữ socket instance bên ngoài component để không bị khởi tạo lại mỗi lần render
 let socket: Socket;
@@ -122,6 +123,19 @@ const ProductDetailPage: React.FC = () => {
       currency: "VND",
     }).format(amount);
 
+  // Helper function để lấy translation content theo ngôn ngữ hiện tại
+  const getTranslatedContent = (product: GetProductDetailResType) => {
+    const currentLang = languageUtils.getCurrentLanguage();
+    const translation = product.productTranslations.find(
+      (trans) => trans.languageId === currentLang
+    );
+
+    return {
+      name: translation?.name || product.name,
+      description: translation?.description || "",
+    };
+  };
+
   // ✅ THÊM: Hàm tính phần trăm giảm giá (giống SalePage)
   const calculateDiscountPercentage = (
     basePrice: number,
@@ -176,6 +190,9 @@ const ProductDetailPage: React.FC = () => {
   );
   const hasDiscount = discountPercentage > 0;
 
+  // Lấy nội dung đã dịch
+  const translatedContent = getTranslatedContent(product);
+
   return (
     <div className="content">
       <div className="content_detailProduct">
@@ -201,7 +218,7 @@ const ProductDetailPage: React.FC = () => {
         </div>
 
         <div className="inf_product">
-          <h2 className="title_inf_products">{product.name}</h2>
+          <h2 className="title_inf_products">{translatedContent.name}</h2>
 
           {/* ✅ THAY ĐỔI: Hiển thị giá với logic giảm giá */}
           <div className="price_inf_products">
@@ -306,6 +323,16 @@ const ProductDetailPage: React.FC = () => {
               </button>
             </form>
           </div>
+
+          {/* Hiển thị description ở cuối */}
+          {translatedContent.description && (
+            <div className="description_inf_products">
+              <h3 className="description_title">Mô tả sản phẩm</h3>
+              <div className="description_content">
+                <p>{translatedContent.description}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

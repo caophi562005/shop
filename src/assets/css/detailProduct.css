@@ -75,6 +75,48 @@
   margin-bottom: 16px;
 }
 
+/* Description styles - Updated for better design */
+.description_inf_products {
+  margin-top: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.description_title {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ff7f00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.description_title::before {
+  content: "📋";
+  font-size: 18px;
+}
+
+.description_content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ff7f00;
+}
+
+.description_content p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #495057;
+  text-align: justify;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  white-space: pre-line; /* 🔑 Fix line breaks - preserves \n characters */
+}
+
 /* ✅ THÊM: Styles cho giá giảm */
 .price_inf_products {
   font-size: 22px;

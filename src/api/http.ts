@@ -3,6 +3,7 @@ import type { AxiosRequestConfig } from "axios";
 import envConfig from "../envConfig";
 import { toast } from "react-toastify";
 import { languageUtils } from "../utils/language";
+import { shouldExcludeLang } from "../constants/api.constant";
 
 axios.defaults.withCredentials = true;
 
@@ -41,11 +42,16 @@ http.interceptors.request.use(
   (config) => {
     const currentLang = languageUtils.getCurrentLanguage();
 
-    // Add lang query parameter to all requests
-    if (!config.params) {
-      config.params = {};
+    // Check if this endpoint should exclude lang parameter
+    const shouldExclude = shouldExcludeLang(config.url || "");
+
+    // Only add lang query parameter if not in exclude list
+    if (!shouldExclude) {
+      if (!config.params) {
+        config.params = {};
+      }
+      config.params.lang = currentLang;
     }
-    config.params.lang = currentLang;
 
     return config;
   },
