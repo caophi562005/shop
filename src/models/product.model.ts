@@ -55,10 +55,20 @@ export const GetManageProductsQuerySchema = GetProductsQuerySchema.extend({
   isPublic: z.preprocess((value) => value === "true", z.boolean()).optional(),
 });
 
+export const ProductIncludeTranslation = ProductSchema.extend({
+  productTranslations: z.array(ProductTranslationSchema),
+  categories: z.array(z.object({ id: z.number() })),
+});
+
 export const GetProductsResSchema = z.object({
   data: z.array(
     ProductSchema.extend({
       productTranslations: z.array(ProductTranslationSchema),
+      categories: z.array(
+        z.object({
+          id: z.number(),
+        })
+      ),
     })
   ),
   page: z.number(),
@@ -124,6 +134,9 @@ export const CreateProductBodySchema = ProductSchema.pick({
 export const updateProductBodySchema = CreateProductBodySchema;
 
 export type GetProductsResType = z.infer<typeof GetProductsResSchema>;
+export type ProductIncludeTranslationType = z.infer<
+  typeof ProductIncludeTranslation
+>;
 export type GetProductsParamsType = z.infer<typeof GetProductsParamsSchema>;
 export type GetProductDetailResType = z.infer<typeof GetProductDetailResSchema>;
 export type CreateProductBodyType = z.infer<typeof CreateProductBodySchema>;
