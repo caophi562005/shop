@@ -94,6 +94,9 @@ export const EXCLUDE_LANG_ENDPOINTS = [
   "/filters",
   "/autocomplete",
 
+  // Category Structure APIs (structural data, no translation needed)
+  "/categories",
+
   // Settings/Configuration
   "/settings",
   "/config",

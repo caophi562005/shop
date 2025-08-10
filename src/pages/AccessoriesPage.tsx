@@ -70,7 +70,11 @@ const AccessoriesPage: React.FC = () => {
           `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoryParams}`
         );
         const data = response.data;
-        setProducts(data.data || []);
+        // Lọc sản phẩm có basePrice = virtualPrice (không có giảm giá)
+        const filteredProducts = (data.data || []).filter(
+          (product: ProductType) => product.basePrice === product.virtualPrice
+        );
+        setProducts(filteredProducts);
         setTotalPages(data.totalPages || 0);
         setTotalItems(data.totalItems || 0);
       } catch (error) {
