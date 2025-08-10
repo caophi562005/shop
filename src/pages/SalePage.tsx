@@ -14,8 +14,12 @@ const calculateDiscountPercentage = (
   basePrice: number,
   virtualPrice: number
 ): number => {
-  if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
-  return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+  // basePrice: giá bán thực tế (thấp hơn)
+  // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
+  // Sale khi virtualPrice > basePrice
+  if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
+    return 0;
+  return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
 };
 
 const SortChooseType = {
@@ -61,8 +65,9 @@ const SalePage: React.FC = () => {
         const data = response.data;
 
         // Lọc sản phẩm có giảm giá phía client
+        // Sale khi virtualPrice > basePrice (giá ảo cao hơn giá bán)
         const saleProducts = (data.data || []).filter(
-          (product: ProductType) => product.virtualPrice < product.basePrice
+          (product: ProductType) => product.virtualPrice > product.basePrice
         );
 
         setProducts(saleProducts);
@@ -277,10 +282,10 @@ const SalePage: React.FC = () => {
                       <h4 className="product-name">{product.name}</h4>
                       <p className="product-price">
                         <span className="price-original">
-                          {formatCurrency(product.basePrice)}
+                          {formatCurrency(product.virtualPrice)}
                         </span>
                         <span className="price-sale">
-                          {formatCurrency(product.virtualPrice)}
+                          {formatCurrency(product.basePrice)}
                         </span>
                       </p>
                     </div>

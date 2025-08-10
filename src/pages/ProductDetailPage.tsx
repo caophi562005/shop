@@ -141,8 +141,12 @@ const ProductDetailPage: React.FC = () => {
     basePrice: number,
     virtualPrice: number
   ): number => {
-    if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
-    return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+    // basePrice: giá bán thực tế (thấp hơn)
+    // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
+    // Sale khi virtualPrice > basePrice
+    if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
+      return 0;
+    return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
   };
 
   // Hàm xử lý tăng/giảm số lượng, kiểm tra với stock của SKU đã chọn
@@ -225,15 +229,15 @@ const ProductDetailPage: React.FC = () => {
             {hasDiscount ? (
               <>
                 <span className="price-original">
-                  {formatCurrency(product.basePrice)}
+                  {formatCurrency(product.virtualPrice)}
                 </span>
                 <span className="price-sale">
-                  {formatCurrency(product.virtualPrice)}
+                  {formatCurrency(product.basePrice)}
                 </span>
                 <span className="discount-badge">-{discountPercentage}%</span>
               </>
             ) : (
-              <span>{formatCurrency(product.virtualPrice)}</span>
+              <span>{formatCurrency(product.basePrice)}</span>
             )}
           </div>
 
