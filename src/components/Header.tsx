@@ -5,6 +5,7 @@ import "../assets/css/style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { RoleName } from "../constants/role.constant";
+import { languageUtils, LANGUAGES, type Language } from "../utils/language";
 import logoImg from "../assets/img/home/logo.png";
 
 // Dữ liệu mẫu cho menu
@@ -47,8 +48,13 @@ const Header: React.FC = () => {
   const [openCategory, setOpenCategory] = useState<number | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(
+    languageUtils.getCurrentLanguage()
+  );
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const languageMenuRef = useRef<HTMLDivElement>(null);
 
   // Logic đóng menu tài khoản khi click ra ngoài
   useEffect(() => {
@@ -58,6 +64,12 @@ const Header: React.FC = () => {
         !accountMenuRef.current.contains(event.target as Node)
       ) {
         setAccountMenuOpen(false);
+      }
+      if (
+        languageMenuRef.current &&
+        !languageMenuRef.current.contains(event.target as Node)
+      ) {
+        setLanguageMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -93,6 +105,15 @@ const Header: React.FC = () => {
   // Xử lý thay đổi input
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchKeyword(e.target.value);
+  };
+
+  // Xử lý thay đổi ngôn ngữ
+  const handleLanguageChange = (language: Language) => {
+    setCurrentLanguage(language);
+    languageUtils.setLanguage(language);
+    setLanguageMenuOpen(false);
+    // Reload page để apply ngôn ngữ mới cho tất cả components
+    window.location.reload();
   };
 
   const renderAccountMenuItems = () => {
@@ -261,6 +282,96 @@ const Header: React.FC = () => {
               <i className="fa-solid fa-magnifying-glass"></i>
             </button>
           </form>
+        </div>
+        {/* Language Switcher */}
+        <div
+          className="language-menu"
+          style={{ position: "relative", marginRight: "10px" }}
+        >
+          <button
+            className="menu-button"
+            onClick={() => setLanguageMenuOpen(!isLanguageMenuOpen)}
+            aria-label="Chọn ngôn ngữ"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              color: "white",
+            }}
+          >
+            <span>{languageUtils.getLanguageFlag(currentLanguage)}</span>
+            <span style={{ fontSize: "12px" }}>
+              {currentLanguage === LANGUAGES.VI ? "VI" : "EN"}
+            </span>
+            <i
+              className="fa-solid fa-chevron-down"
+              style={{ fontSize: "10px" }}
+            ></i>
+          </button>
+
+          {isLanguageMenuOpen && (
+            <div
+              ref={languageMenuRef}
+              className="account_dropdown"
+              style={{
+                position: "absolute",
+                top: "100%",
+                right: "0",
+                backgroundColor: "white",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                zIndex: 1000,
+                minWidth: "120px",
+              }}
+            >
+              <button
+                onClick={() => handleLanguageChange(LANGUAGES.VI)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "none",
+                  background:
+                    currentLanguage === LANGUAGES.VI
+                      ? "#f0f0f0"
+                      : "transparent",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textAlign: "left",
+                }}
+              >
+                <span>🇻🇳</span>
+                <span>Việt Nam</span>
+              </button>
+              <button
+                onClick={() => handleLanguageChange(LANGUAGES.EN)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "none",
+                  background:
+                    currentLanguage === LANGUAGES.EN
+                      ? "#f0f0f0"
+                      : "transparent",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textAlign: "left",
+                }}
+              >
+                <span>🇺🇸</span>
+                <span>English</span>
+              </button>
+            </div>
+          )}
         </div>
         <div className="account-menu" style={{ position: "relative" }}>
           <button

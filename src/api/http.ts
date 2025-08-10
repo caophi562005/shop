@@ -2,6 +2,7 @@ import axios, { AxiosError } from "axios";
 import type { AxiosRequestConfig } from "axios";
 import envConfig from "../envConfig";
 import { toast } from "react-toastify";
+import { languageUtils } from "../utils/language";
 
 axios.defaults.withCredentials = true;
 
@@ -34,6 +35,24 @@ async function refreshAccessToken(): Promise<unknown> {
   }
   return refreshTokenRequest;
 }
+
+// Add request interceptor to add lang query parameter
+http.interceptors.request.use(
+  (config) => {
+    const currentLang = languageUtils.getCurrentLanguage();
+
+    // Add lang query parameter to all requests
+    if (!config.params) {
+      config.params = {};
+    }
+    config.params.lang = currentLang;
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 http.interceptors.response.use(
   (response) => response,
