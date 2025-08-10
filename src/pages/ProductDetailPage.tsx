@@ -136,6 +136,19 @@ const ProductDetailPage: React.FC = () => {
     };
   };
 
+  // Hàm tính phần trăm giảm giá (giống SalePage)
+  const calculateDiscountPercentage = (
+    basePrice: number,
+    virtualPrice: number
+  ): number => {
+    // basePrice: giá bán thực tế (thấp hơn)
+    // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
+    // Sale khi virtualPrice > basePrice
+    if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
+      return 0;
+    return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
+  };
+
   // Hàm xử lý tăng/giảm số lượng, kiểm tra với stock của SKU đã chọn
   const handleQuantityChange = (amount: number) => {
     const newQuantity = quantity + amount;
@@ -177,6 +190,13 @@ const ProductDetailPage: React.FC = () => {
   // Lấy nội dung đã dịch
   const translatedContent = getTranslatedContent(product);
 
+  // Tính toán giảm giá dựa trên basePrice và virtualPrice
+  const discountPercentage = calculateDiscountPercentage(
+    product.basePrice,
+    product.virtualPrice
+  );
+  const hasDiscount = discountPercentage > 0;
+
   return (
     <div className="content">
       <div className="content_detailProduct">
@@ -204,12 +224,26 @@ const ProductDetailPage: React.FC = () => {
         <div className="inf_product">
           <h2 className="title_inf_products">{translatedContent.name}</h2>
 
-          {/* ✅ THAY ĐỔI: Hiển thị giá SKU được chọn */}
+          {/* ✅ Hiển thị giá với logic giảm giá */}
           <div className="price_inf_products">
-            {selectedSku ? (
-              <span>{formatCurrency(selectedSku.price)}</span>
+            {hasDiscount ? (
+              <>
+                <span className="price-original">
+                  {formatCurrency(product.virtualPrice)}
+                </span>
+                <span className="price-sale">
+                  {selectedSku
+                    ? formatCurrency(selectedSku.price)
+                    : formatCurrency(product.basePrice)}
+                </span>
+                <span className="discount-badge">-{discountPercentage}%</span>
+              </>
             ) : (
-              <span>{formatCurrency(product.basePrice)}</span>
+              <span>
+                {selectedSku
+                  ? formatCurrency(selectedSku.price)
+                  : formatCurrency(product.basePrice)}
+              </span>
             )}
           </div>
 
