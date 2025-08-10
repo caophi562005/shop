@@ -13,4 +13,8 @@ export class MessageService {
   createMessage(message: CreateMessageType, fromUserId: number) {
     return this.messageRepository.create({ message, fromUserId })
   }
+
+  listConversations(userId: number) {
+    return this.messageRepository.getConversations(userId)
+  }
 }

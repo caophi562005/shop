@@ -7,6 +7,11 @@ import { GetMessagesParamsDTO } from './message.dto'
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
+  @Get()
+  conversations(@ActiveUser('userId') userId: number) {
+    return this.messageService.listConversations(userId)
+  }
+
   @Get(':toUserId')
   list(@ActiveUser('userId') userId: number, @Param() params: GetMessagesParamsDTO) {
     return this.messageService.listMessages(userId, params.toUserId)

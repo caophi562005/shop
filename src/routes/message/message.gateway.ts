@@ -12,6 +12,17 @@ export class MessageGateway {
 
   @WebSocketServer()
   server: Server
+
+  @SubscribeMessage('joinMessageRoom')
+  async handleJoinRoom(@MessageBody() roomId: string, @ConnectedSocket() client: Socket) {
+    await client.join(roomId)
+  }
+
+  @SubscribeMessage('leaveMessageRoom')
+  async handleLeaveRoom(@MessageBody() roomId: string, @ConnectedSocket() client: Socket) {
+    await client.leave(roomId)
+  }
+
   @SubscribeMessage('send-message')
   async handleEvent(@MessageBody() message: CreateMessageDTO, @ConnectedSocket() client: Socket) {
     const fromUserId = client.data.userId

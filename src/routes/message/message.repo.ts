@@ -6,6 +6,50 @@ import { CreateMessageType } from './message.model'
 export class MessageRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async getConversations(userId: number) {
+    const messages = await this.prismaService.message.findMany({
+      where: {
+        OR: [{ fromUserId: userId }, { toUserId: userId }],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        fromUser: { select: { id: true, name: true } },
+        toUser: { select: { id: true, name: true } },
+      },
+    })
+
+    const conversations: {
+      user: { id: number; name: string }
+      lastMessage: {
+        id: number
+        fromUserId: number
+        toUserId: number
+        content: string
+        createdAt: Date
+      }
+    }[] = []
+    const partnerIds = new Set<number>()
+
+    for (const message of messages) {
+      const partner = message.fromUserId === userId ? message.toUser : message.fromUser
+      if (!partnerIds.has(partner.id)) {
+        conversations.push({
+          user: partner,
+          lastMessage: {
+            id: message.id,
+            fromUserId: message.fromUserId,
+            toUserId: message.toUserId,
+            content: message.content,
+            createdAt: message.createdAt,
+          },
+        })
+        partnerIds.add(partner.id)
+      }
+    }
+
+    return conversations
+  }
+
   getMessages({ fromUserId, toUserId }: { fromUserId: number; toUserId: number }) {
     return this.prismaService.message.findMany({
       where: {
