@@ -136,19 +136,6 @@ const ProductDetailPage: React.FC = () => {
     };
   };
 
-  // ✅ THÊM: Hàm tính phần trăm giảm giá (giống SalePage)
-  const calculateDiscountPercentage = (
-    basePrice: number,
-    virtualPrice: number
-  ): number => {
-    // basePrice: giá bán thực tế (thấp hơn)
-    // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
-    // Sale khi virtualPrice > basePrice
-    if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
-      return 0;
-    return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
-  };
-
   // Hàm xử lý tăng/giảm số lượng, kiểm tra với stock của SKU đã chọn
   const handleQuantityChange = (amount: number) => {
     const newQuantity = quantity + amount;
@@ -187,13 +174,6 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // ✅ THÊM: Tính toán giảm giá
-  const discountPercentage = calculateDiscountPercentage(
-    product.basePrice,
-    product.virtualPrice
-  );
-  const hasDiscount = discountPercentage > 0;
-
   // Lấy nội dung đã dịch
   const translatedContent = getTranslatedContent(product);
 
@@ -224,18 +204,10 @@ const ProductDetailPage: React.FC = () => {
         <div className="inf_product">
           <h2 className="title_inf_products">{translatedContent.name}</h2>
 
-          {/* ✅ THAY ĐỔI: Hiển thị giá với logic giảm giá */}
+          {/* ✅ THAY ĐỔI: Hiển thị giá SKU được chọn */}
           <div className="price_inf_products">
-            {hasDiscount ? (
-              <>
-                <span className="price-original">
-                  {formatCurrency(product.virtualPrice)}
-                </span>
-                <span className="price-sale">
-                  {formatCurrency(product.basePrice)}
-                </span>
-                <span className="discount-badge">-{discountPercentage}%</span>
-              </>
+            {selectedSku ? (
+              <span>{formatCurrency(selectedSku.price)}</span>
             ) : (
               <span>{formatCurrency(product.basePrice)}</span>
             )}
