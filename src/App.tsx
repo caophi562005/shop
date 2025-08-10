@@ -22,6 +22,8 @@ import SalePage from "./pages/SalePage";
 import FeedbackForm from "./pages/FeedbackForm";
 import FeedbackReadonly from "./pages/FeedbackReadonly";
 import OrderHistory from "./pages/oderHistory";
+import OrderDetail from "./pages/OrderDetail";
+import Pay from "./pages/Pay";
 
 const App: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -75,4 +77,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
 
