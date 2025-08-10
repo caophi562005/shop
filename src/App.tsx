@@ -23,6 +23,7 @@ import Cart from "./pages/Cart";
 import CSDT from "./pages/CSDT";
 import CSTV from "./pages/CSTV";
 import CSVC from "./pages/CSVC";
+import AdminChat from "./pages/AdminChat";
 
 const App: React.FC = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -59,7 +60,7 @@ const App: React.FC = () => {
           <Route path="admin">
             <Route index element={<Admin />} />
             <Route path="revenue" element={<RevenuePage />} />
-
+            <Route path="chat" element={<AdminChat />} />
             <Route path="category" element={<CategoryListPage />} />
             <Route path="account" element={<AccountList />} />
           </Route>

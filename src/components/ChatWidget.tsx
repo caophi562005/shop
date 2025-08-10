@@ -101,15 +101,15 @@ const ChatWidget: React.FC = () => {
     });
 
     // Thêm tin nhắn vào UI ngay lập tức (optimistic update)
-    const tempMessage: Message = {
-      id: Date.now(),
-      content: newMessage,
-      fromUserId: myUserId,
-      toUserId: ADMIN_USER_ID,
-      createdAt: new Date().toISOString(),
-    };
+    // const tempMessage: Message = {
+    //   id: Date.now(),
+    //   content: newMessage,
+    //   fromUserId: myUserId,
+    //   toUserId: ADMIN_USER_ID,
+    //   createdAt: new Date().toISOString(),
+    // };
 
-    setMessages((prev) => [...prev, tempMessage]);
+    // setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
   };
 
