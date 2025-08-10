@@ -323,18 +323,18 @@ const ProductDetailPage: React.FC = () => {
               </button>
             </form>
           </div>
-
-          {/* Hiển thị description ở cuối */}
-          {translatedContent.description && (
-            <div className="description_inf_products">
-              <h3 className="description_title">Mô tả sản phẩm</h3>
-              <div className="description_content">
-                <p>{translatedContent.description}</p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Description block - Separate from main content */}
+      {translatedContent.description && (
+        <div className="description_inf_products">
+          <h3 className="description_title">Mô tả sản phẩm</h3>
+          <div className="description_content">
+            <p>{translatedContent.description}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
