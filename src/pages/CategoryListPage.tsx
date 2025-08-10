@@ -95,6 +95,10 @@ const CategoryListPage: React.FC = () => {
   const handleSuccess = (message: string) => {
     toast.success(message);
     fetchCategories();
+    // Refresh all expanded subcategories
+    expandedCategories.forEach((parentId) => {
+      fetchSubCategories(parentId);
+    });
   };
 
   const handleEditCategory = (category: CategoryType) => {
@@ -121,7 +125,15 @@ const CategoryListPage: React.FC = () => {
         logo,
       });
       toast.success("Cập nhật thành công");
+
+      // Refresh parent categories
       fetchCategories();
+
+      // Refresh all expanded subcategories to reflect any changes
+      expandedCategories.forEach((parentId) => {
+        fetchSubCategories(parentId);
+      });
+
       closeModals();
     } catch (error) {
       toast.error("Cập nhật thất bại");
@@ -144,7 +156,18 @@ const CategoryListPage: React.FC = () => {
         logo,
       });
       toast.success("Thêm mới thành công");
+
+      // Refresh parent categories
       fetchCategories();
+
+      // If it's a subcategory, refresh the parent's subcategories and ensure it's expanded
+      if (parentCategoryId !== null) {
+        // Ensure parent is expanded to show new subcategory
+        setExpandedCategories((prev) => new Set([...prev, parentCategoryId]));
+        // Refresh subcategories for this parent
+        fetchSubCategories(parentCategoryId);
+      }
+
       closeModals();
     } catch (error) {
       toast.error("Thêm mới thất bại");
@@ -163,7 +186,19 @@ const CategoryListPage: React.FC = () => {
       setIsLoading(true);
       await http.delete(`/categories/${category.id}`);
       toast.success("Xóa thành công");
+
+      // Refresh parent categories
       fetchCategories();
+
+      // If deleting a subcategory, refresh its parent's subcategories
+      if (category.parentCategoryId) {
+        fetchSubCategories(category.parentCategoryId);
+      }
+
+      // Refresh all expanded subcategories
+      expandedCategories.forEach((parentId) => {
+        fetchSubCategories(parentId);
+      });
     } catch (error) {
       toast.error("Xóa thất bại");
       console.log(error);
