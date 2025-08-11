@@ -5,8 +5,19 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 
 const prisma = new PrismaService()
 
-const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATIONS', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS']
-const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS', 'MESSAGES']
+const SellerModule = [
+  'AUTH',
+  'MEDIA',
+  'PROFILE',
+  'CART',
+  'ORDERS',
+  'REVIEWS',
+  'MESSAGES',
+  'NOTIFICATIONS',
+  'MANAGE-PRODUCT',
+  'PRODUCT-TRANSLATIONS',
+]
+const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS', 'MESSAGES', 'NOTIFICATIONS']
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)

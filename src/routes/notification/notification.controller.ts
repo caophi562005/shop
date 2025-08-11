@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
+import { Controller, Get, Param, Patch } from '@nestjs/common'
 import { ActiveUser } from 'src/shared/decorators/active-user.decorator'
 import { NotificationService } from './notification.service'
-import { CreateNotificationDTO, MarkAsReadParamsDTO } from './notification.dto'
+import { MarkAsReadParamsDTO } from './notification.dto'
 
 @Controller('notifications')
 export class NotificationController {
@@ -10,11 +10,6 @@ export class NotificationController {
   @Get()
   list(@ActiveUser('userId') userId: number) {
     return this.notificationService.list(userId)
-  }
-
-  @Post()
-  create(@Body() body: CreateNotificationDTO) {
-    return this.notificationService.create(body)
   }
 
   @Patch(':id/read')
