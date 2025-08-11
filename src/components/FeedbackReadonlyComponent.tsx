@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../assets/css/feedbackReadonly.css";
 import http from "../api/http";
 import { toast } from "react-toastify";
+import LightboxModal from "./LightboxModal";
 
 interface MediaItem {
   id: number;
@@ -54,6 +55,11 @@ const FeedbackReadonlyComponent: React.FC<FeedbackReadonlyProps> = ({
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Lightbox state
+  const [showLightbox, setShowLightbox] = useState<boolean>(false);
+  const [lightboxImages, setLightboxImages] = useState<any[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+
   // Hiển thị sao
   const renderStars = (ratingValue: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -82,6 +88,35 @@ const FeedbackReadonlyComponent: React.FC<FeedbackReadonlyProps> = ({
 
   const handleRemoveMedia = (index: number) => {
     setMedias(medias.filter((_, i) => i !== index));
+  };
+
+  // Lightbox handlers
+  const handleImageClick = (mediaIndex: number) => {
+    // Chỉ lấy các hình ảnh, không bao gồm video
+    const imageMedias = reviewData.medias.filter(
+      (media) => media.type === "IMAGE"
+    );
+    const images = imageMedias.map((media) => ({
+      original: media.url,
+      thumbnail: media.url,
+      description: `Hình ảnh đánh giá từ ${reviewData.user.name}`,
+    }));
+
+    // Tìm index của hình ảnh được click trong danh sách chỉ có hình ảnh
+    const clickedMedia = reviewData.medias[mediaIndex];
+    const imageIndex = imageMedias.findIndex(
+      (media) => media.id === clickedMedia.id
+    );
+
+    setLightboxImages(images);
+    setCurrentImageIndex(imageIndex >= 0 ? imageIndex : 0);
+    setShowLightbox(true);
+  };
+
+  const closeLightbox = () => {
+    setShowLightbox(false);
+    setLightboxImages([]);
+    setCurrentImageIndex(0);
   };
 
   const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -281,13 +316,17 @@ const FeedbackReadonlyComponent: React.FC<FeedbackReadonlyProps> = ({
             <div className="field-group">
               <label>Hình ảnh/Video:</label>
               <div className="media-gallery">
-                {reviewData.medias.map((media) => (
+                {reviewData.medias.map((media, index) => (
                   <div key={media.id} className="media-item">
                     {media.type === "IMAGE" ? (
                       <img
                         src={media.url}
                         alt="Review media"
                         className="media-display"
+                        style={{ cursor: "pointer" }}
+                        onClick={() =>
+                          media.type === "IMAGE" && handleImageClick(index)
+                        }
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.jpg";
@@ -317,6 +356,14 @@ const FeedbackReadonlyComponent: React.FC<FeedbackReadonlyProps> = ({
           )}
         </div>
       </div>
+
+      {/* Lightbox for images */}
+      <LightboxModal
+        isOpen={showLightbox}
+        images={lightboxImages}
+        startIndex={currentImageIndex}
+        onClose={closeLightbox}
+      />
     </section>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../assets/css/feedbackfrom.css";
 import http from "../api/http";
 import { toast } from "react-toastify";
+import LightboxModal from "./LightboxModal";
 
 interface MediaItem {
   url: string;
@@ -27,6 +28,11 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Lightbox state
+  const [showLightbox, setShowLightbox] = useState<boolean>(false);
+  const [lightboxImages, setLightboxImages] = useState<any[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+
   const handleAddMedia = () => {
     if (mediaUrl.trim()) {
       const newMedia: MediaItem = {
@@ -40,6 +46,33 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
 
   const handleRemoveMedia = (index: number) => {
     setMedias(medias.filter((_, i) => i !== index));
+  };
+
+  // Lightbox handlers
+  const handleImageClick = (mediaIndex: number) => {
+    // Chỉ lấy các hình ảnh, không bao gồm video
+    const imageMedias = medias.filter((media) => media.type === "IMAGE");
+    const images = imageMedias.map((media) => ({
+      original: media.url,
+      thumbnail: media.url,
+      description: "Hình ảnh trong đánh giá",
+    }));
+
+    // Tìm index của hình ảnh được click trong danh sách chỉ có hình ảnh
+    const clickedMedia = medias[mediaIndex];
+    const imageIndex = imageMedias.findIndex(
+      (media) => media.url === clickedMedia.url
+    );
+
+    setLightboxImages(images);
+    setCurrentImageIndex(imageIndex >= 0 ? imageIndex : 0);
+    setShowLightbox(true);
+  };
+
+  const closeLightbox = () => {
+    setShowLightbox(false);
+    setLightboxImages([]);
+    setCurrentImageIndex(0);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -140,6 +173,10 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
                       src={media.url}
                       alt={`Media ${index + 1}`}
                       className="media-preview"
+                      style={{ cursor: "pointer" }}
+                      onClick={() =>
+                        media.type === "IMAGE" && handleImageClick(index)
+                      }
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = "/placeholder.jpg";
@@ -167,6 +204,14 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
           </button>
         </form>
       </div>
+
+      {/* Lightbox for images */}
+      <LightboxModal
+        isOpen={showLightbox}
+        images={lightboxImages}
+        startIndex={currentImageIndex}
+        onClose={closeLightbox}
+      />
     </section>
   );
 };

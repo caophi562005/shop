@@ -191,6 +191,14 @@ footer {
   height: 80px;
   object-fit: cover;
   display: block;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.media-preview:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .remove-media-btn {
@@ -354,6 +362,13 @@ footer {
 
 .feedback-section.compact .media-preview {
   height: 50px;
+  transition: all 0.3s ease;
+}
+
+.feedback-section.compact .media-preview:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .feedback-section.compact .feedback-submit {
@@ -366,4 +381,79 @@ footer {
   width: 80px;
   height: 80px;
   margin: 8px auto;
+}
+
+/* Lightbox overlay styles for FeedbackForm */
+.lightbox-overlay {
+  background: transparent !important;
+}
+
+.lightbox-overlay .image-gallery {
+  background: transparent;
+}
+
+.lightbox-overlay .image-gallery-content {
+  background: transparent;
+}
+
+.lightbox-overlay .image-gallery-slide img {
+  max-height: 80vh;
+  max-width: 80vw;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom styles for pixcam lightbox */
+.pixcam-lightbox .image-gallery-icon {
+  color: #fff;
+  background: rgba(238, 80, 34, 0.8);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.pixcam-lightbox .image-gallery-icon:hover {
+  background: rgba(238, 80, 34, 1);
+  transform: scale(1.05);
+}
+
+.pixcam-lightbox .image-gallery-left-nav,
+.pixcam-lightbox .image-gallery-right-nav {
+  background: rgba(238, 80, 34, 0.8);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  margin: auto;
+  transition: all 0.3s ease;
+}
+
+.pixcam-lightbox .image-gallery-left-nav:hover,
+.pixcam-lightbox .image-gallery-right-nav:hover {
+  background: rgba(238, 80, 34, 1);
+  transform: scale(1.1);
+}
+
+.pixcam-lightbox .image-gallery-bullets {
+  bottom: 20px;
+}
+
+.pixcam-lightbox .image-gallery-bullet {
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid rgba(238, 80, 34, 0.8);
+  transition: all 0.3s ease;
+}
+
+.pixcam-lightbox .image-gallery-bullet.active,
+.pixcam-lightbox .image-gallery-bullet:hover {
+  background: rgba(238, 80, 34, 1);
+  border-color: #fff;
+}
+
+.pixcam-lightbox .image-gallery-index {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
 }
