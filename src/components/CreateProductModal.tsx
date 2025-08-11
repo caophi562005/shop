@@ -33,7 +33,10 @@ const CreateProductModal: React.FC<Props> = ({
   });
   const [loading, setLoading] = useState<boolean>(false);
 
-  function generateSKUs(variants: VariantsType): UpsertSKUType[] {
+  function generateSKUs(
+    variants: VariantsType,
+    basePrice: number = 0
+  ): UpsertSKUType[] {
     function getCombinations(arrays: string[][]): string[] {
       return arrays.reduce(
         (acc, curr) =>
@@ -48,7 +51,7 @@ const CreateProductModal: React.FC<Props> = ({
 
     return combinations.map((value) => ({
       value,
-      price: 0,
+      price: basePrice,
       stock: 100,
       image: "",
     }));
@@ -56,7 +59,7 @@ const CreateProductModal: React.FC<Props> = ({
 
   // Update SKUs when variants or base price change
   useEffect(() => {
-    const newSKUs = generateSKUs(formData.variants);
+    const newSKUs = generateSKUs(formData.variants, formData.basePrice);
     setFormData((prev) => ({ ...prev, skus: newSKUs }));
   }, [formData.variants, formData.basePrice]);
 
