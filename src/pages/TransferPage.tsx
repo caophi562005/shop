@@ -8,6 +8,7 @@ import type { OrderInProductSKUSnapshotType } from "../models/shared/shared-orde
 import { toast } from "react-toastify";
 import io, { Socket } from "socket.io-client";
 import { useAuthStore } from "../stores/authStore";
+import { OrderStatus } from "../constants/order.constant";
 
 let socket: Socket;
 
@@ -38,10 +39,23 @@ const TransferPage: React.FC = () => {
   useEffect(() => {
     const takeOrder = async () => {
       try {
-        const order = await http.get(`/orders/${Number(orderId)}`);
-        const orderData: OrderInProductSKUSnapshotType = order.data;
-        setPaymentId(orderData.paymentId);
-        setAmount(getTotalPrice(orderData));
+        const response = await http.get(`/orders/${Number(orderId)}`);
+        const orderData: OrderInProductSKUSnapshotType = response.data;
+
+        // Kiểm tra status của order
+        if (orderData.status === OrderStatus.PENDING_PAYMENT) {
+          // Chỉ tiếp tục với transfer page nếu status là PENDING_PAYMENT
+          setPaymentId(orderData.paymentId);
+          setAmount(getTotalPrice(orderData));
+        } else if (orderData.status === OrderStatus.CANCELLED) {
+          // Nếu order đã bị cancel
+          toast.error("Đơn hàng đã bị hủy");
+          navigate("/");
+        } else {
+          // Nếu order đã thanh toán hoặc có status khác (PENDING_PICKUP, PENDING_DELIVERY, DELIVERED, RETURNED)
+          toast.success("Đơn hàng đã được thanh toán thành công");
+          navigate(`/order-success/${orderId}`);
+        }
       } catch (error) {
         navigate("/");
         toast.error("Đơn hàng không tồn tại hoặc không phải của bạn");
