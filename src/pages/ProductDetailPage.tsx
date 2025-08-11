@@ -6,11 +6,16 @@ import type { GetProductDetailResType } from "../models/product.model";
 import http from "../api/http";
 import type { SKUType } from "../models/shared/shared-sku.model";
 import { languageUtils } from "../utils/language";
+import { useAuthStore } from "../stores/authStore";
+import { toast } from "react-toastify";
 
 // Biến để lưu trữ socket instance bên ngoài component để không bị khởi tạo lại mỗi lần render
 let socket: Socket;
 
 const ProductDetailPage: React.FC = () => {
+  // Auth store để kiểm tra trạng thái đăng nhập
+  const { user, isInitialized } = useAuthStore();
+
   // State cho dữ liệu sản phẩm, cho phép null để xử lý trường hợp bị xóa
   const [product, setProduct] = useState<GetProductDetailResType | null>();
   // State để theo dõi tình trạng sản phẩm có bị xóa hay không
@@ -53,20 +58,21 @@ const ProductDetailPage: React.FC = () => {
 
   // Effect để quản lý vòng đời của kết nối WebSocket
   useEffect(() => {
-    // Lấy access token từ localStorage (hoặc bất cứ nơi nào bạn lưu trữ)
-    const accessToken = localStorage.getItem("accessToken");
-
-    // Chỉ khởi tạo kết nối nếu người dùng đã đăng nhập (có token)
-    if (!accessToken) {
-      console.log("Người dùng chưa đăng nhập, không khởi tạo WebSocket.");
-      return; // Dừng lại tại đây
+    // Đợi auth store được khởi tạo
+    if (!isInitialized) {
+      console.log("Đang khởi tạo auth store...");
+      return;
     }
 
-    // Khởi tạo socket với header xác thực
+    // Chỉ khởi tạo kết nối nếu người dùng đã đăng nhập
+    if (!user) {
+      console.log("Người dùng chưa đăng nhập, không khởi tạo WebSocket.");
+      return;
+    }
+
+    // Khởi tạo socket với credentials để gửi HTTP-only cookies
     socket = io("https://api-pixcam.hacmieu.xyz/product", {
-      extraHeaders: {
-        Authorization: `Bearer ${accessToken}`, // 🔑 Gửi token lên đây
-      },
+      withCredentials: true, // 🔑 Quan trọng: gửi HTTP-only cookies
     });
 
     // Listener khi kết nối thành công
@@ -80,9 +86,9 @@ const ProductDetailPage: React.FC = () => {
     // Listener để bắt lỗi kết nối
     socket.on("connect_error", (err) => {
       console.error("❌ WebSocket connection error:", err.message);
-      // Nếu lỗi là "Thiếu Authentication", có thể token đã hết hạn
+      // Nếu lỗi là "Thiếu Authentication", có thể cookies đã hết hạn
       if (err.message.includes("Authentication")) {
-        // Tại đây bạn có thể xử lý việc đăng xuất người dùng hoặc refresh token
+        console.log("Authentication failed, user may need to login again");
       }
     });
 
@@ -104,7 +110,7 @@ const ProductDetailPage: React.FC = () => {
         socket.disconnect();
       }
     };
-  }, [productId]);
+  }, [productId, isInitialized, user]);
 
   // Effect để tìm SKU tương ứng mỗi khi lựa chọn của người dùng thay đổi
   useEffect(() => {
@@ -157,17 +163,34 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
-  const handleAddToCart = (e: React.FormEvent) => {
+  const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!selectedSku || selectedSku.stock <= 0) {
-      alert(
+      toast.error(
         "Sản phẩm này đã hết hàng hoặc bạn chưa chọn đầy đủ. Vui lòng thử lại."
       );
       return;
     }
-    alert(
-      `Đã thêm vào giỏ: ${quantity} sản phẩm "${product?.name}", Màu: ${selectedColor}, Size: ${selectedSize}`
-    );
+
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+      return;
+    }
+
+    try {
+      // Gọi API để thêm vào giỏ hàng
+      await http.post("/cart", {
+        skuId: selectedSku.id,
+        quantity: quantity,
+      });
+
+      toast.success("Đã thêm sản phẩm vào giỏ hàng thành công!");
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast.error("Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
+    }
   };
 
   // --- RENDER LOGIC ---
