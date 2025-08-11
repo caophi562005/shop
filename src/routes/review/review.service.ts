@@ -25,4 +25,11 @@ export class ReviewService {
       body,
     })
   }
+
+  getDetail({ userId, productId }: { userId: number; productId: number }) {
+    return this.reviewRepository.getDetail({
+      userId,
+      productId,
+    })
+  }
 }

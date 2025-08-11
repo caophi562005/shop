@@ -219,4 +219,29 @@ export class ReviewRepository {
       }
     })
   }
+
+  async getDetail({ userId, productId }: { userId: number; productId: number }): Promise<CreateReviewResType> {
+    const review = await this.prismaService.review.findFirst({
+      where: {
+        userId,
+        productId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        medias: true,
+      },
+    })
+
+    if (!review) {
+      throw ReviewNotFoundException
+    }
+
+    return review
+  }
 }

@@ -40,4 +40,13 @@ export class ReviewController {
   ) {
     return this.reviewService.update(userId, params.reviewId, body)
   }
+
+  @Get(':productId')
+  @ZodSerializerDto(CreateReviewResDTO)
+  getReviewDetail(@Param() params: GetReviewsParamsDTO, @ActiveUser('userId') userId: number) {
+    return this.reviewService.getDetail({
+      userId,
+      productId: params.productId,
+    })
+  }
 }
