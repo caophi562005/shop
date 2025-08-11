@@ -9,6 +9,7 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CategoryListPage from "./pages/CategoryListPage";
 import { useAuthStore } from "./stores/authStore";
 import LoadingOverlay from "./components/LoadingOverlay";
+import AuthDebugger from "./components/AuthDebugger";
 import RevenuePage from "./pages/RevenuePage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import TransferPage from "./pages/TransferPage";
@@ -29,12 +30,26 @@ import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
 
 const App: React.FC = () => {
-  const { isLoading, checkAuthStatus } = useAuthStore();
+  const { isLoading, checkAuthStatus, resetAuthState } = useAuthStore();
 
-  // Kiểm tra trạng thái đăng nhập khi app khởi động
+  // Kiểm tra trạng  thái đăng nhập khi app khởi động
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
+
+  // Listen for auth logout events from http interceptor
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      console.log("Auth logout event received, resetting auth state");
+      resetAuthState();
+    };
+
+    window.addEventListener("auth:logout", handleAuthLogout);
+
+    return () => {
+      window.removeEventListener("auth:logout", handleAuthLogout);
+    };
+  }, [resetAuthState]);
 
   return (
     <BrowserRouter>
@@ -89,6 +104,7 @@ const App: React.FC = () => {
           />
         </Route>
       </Routes>
+      <AuthDebugger />
     </BrowserRouter>
   );
 };

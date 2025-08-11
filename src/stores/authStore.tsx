@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { create } from "zustand";
 import http from "../api/http";
 import type { GetUserProfileResType } from "../models/shared/shared-user.model";
+import { clearAuthCookies } from "../utils/cookies";
 
 // Định nghĩa kiểu cho state và actions
 interface AuthState {
@@ -14,6 +15,8 @@ interface AuthState {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
+  resetAuthState: () => void;
+  checkAuthCookiesAsync: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -52,6 +55,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      clearAuthCookies();
       set({
         isLoggedIn: false,
         user: null,
@@ -76,13 +80,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isInitialized: true,
       });
     } catch (error) {
-      console.error("Auth check error:", error);
+      console.log("Auth check failed - user not logged in or cookies invalid");
+
       set({
         isLoggedIn: false,
         user: null,
         isLoading: false,
         isInitialized: true,
       });
+    }
+  },
+
+  resetAuthState: () => {
+    clearAuthCookies();
+    set({
+      isLoggedIn: false,
+      user: null,
+      isLoading: false,
+      isInitialized: true,
+    });
+  },
+
+  checkAuthCookiesAsync: async () => {
+    try {
+      const response = await fetch("/api/profile", {
+        credentials: "include",
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
     }
   },
 }));

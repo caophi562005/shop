@@ -6,12 +6,10 @@ import "../assets/css/Transfer.css";
 import http from "../api/http";
 import type { OrderInProductSKUSnapshotType } from "../models/shared/shared-order.model";
 import { toast } from "react-toastify";
-import { useAuthStore } from "../stores/authStore";
 import { OrderStatus } from "../constants/order.constant";
 import { usePaymentSocket } from "../hooks/usePaymentSocket";
 
 const TransferPage: React.FC = () => {
-  const { user } = useAuthStore();
   const [paymentId, setPaymentId] = useState<number>(0);
   const [amount, setAmount] = useState(0);
   const { orderId } = useParams<{ orderId: string }>();

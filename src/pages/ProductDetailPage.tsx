@@ -49,7 +49,7 @@ interface ReviewsResponse {
 
 const ProductDetailPage: React.FC = () => {
   // Auth store để kiểm tra trạng thái đăng nhập
-  const { user, isInitialized } = useAuthStore();
+  const { user } = useAuthStore();
 
   // State cho dữ liệu sản phẩm, cho phép null để xử lý trường hợp bị xóa
   const [product, setProduct] = useState<GetProductDetailResType | null>();
