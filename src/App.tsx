@@ -25,6 +25,8 @@ import CSTV from "./pages/CSTV";
 import CSVC from "./pages/CSVC";
 import AdminChat from "./pages/AdminChat";
 import Pay from "./pages/Pay";
+import OrderHistory from "./pages/OrderHistory";
+import OrderDetail from "./pages/OrderDetail";
 
 const App: React.FC = () => {
   const { isLoading, checkAuthStatus } = useAuthStore();
@@ -51,6 +53,8 @@ const App: React.FC = () => {
           <Route path="chinh-sach-van-chuyen" element={<CSVC />} />
 
           <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
+          <Route path="order-history" element={<OrderHistory />} />
+          <Route path="order-detail/:orderId" element={<OrderDetail />} />
           <Route path="transfer/:orderId" element={<TransferPage />} />
           <Route path="/products/men" element={<MenPage />} />
           <Route path="/products/women" element={<WomenPage />} />
