@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import "../assets/css/style.css";
+import "../assets/css/notification.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { RoleName } from "../constants/role.constant";
 import { languageUtils, LANGUAGES, type Language } from "../utils/language";
+import { useNotifications } from "../hooks/useNotifications";
+import NotificationModal from "./NotificationModal";
 import logoImg from "../assets/img/home/logo.png";
 
 // Dữ liệu mẫu cho menu
@@ -44,11 +47,21 @@ const Header: React.FC = () => {
   const { isLoggedIn, logout, checkAuthStatus, user } = useAuthStore();
   const navigate = useNavigate();
 
+  // Notification hooks
+  const {
+    notifications,
+    hasUnread,
+    loading: notificationLoading,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications();
+
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<number | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
     languageUtils.getCurrentLanguage()
   );
@@ -373,6 +386,58 @@ const Header: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Notification Bell - Chỉ hiện khi đã đăng nhập */}
+        {isLoggedIn && (
+          <div
+            className="notification-menu"
+            style={{ position: "relative", marginRight: "10px" }}
+          >
+            <button
+              className="menu-button"
+              onClick={() => setNotificationModalOpen(true)}
+              aria-label="Thông báo"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                position: "relative",
+                padding: "8px",
+              }}
+            >
+              <i
+                className={`fa-solid fa-bell icon_while ${
+                  hasUnread ? "has-notification" : ""
+                }`}
+                style={{
+                  fontSize: "18px",
+                  color: hasUnread ? "#ffc107" : "white",
+                  transition: "color 0.3s ease",
+                }}
+              ></i>
+              {hasUnread && (
+                <span
+                  className="notification-badge"
+                  style={{
+                    position: "absolute",
+                    top: "4px",
+                    right: "4px",
+                    background: "#dc3545",
+                    color: "white",
+                    borderRadius: "50%",
+                    width: "8px",
+                    height: "8px",
+                    fontSize: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                ></span>
+              )}
+            </button>
+          </div>
+        )}
+
         <div className="account-menu" style={{ position: "relative" }}>
           <button
             className="menu-button"
@@ -394,6 +459,16 @@ const Header: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setNotificationModalOpen(false)}
+        notifications={notifications}
+        loading={notificationLoading}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+      />
     </header>
   );
 };
