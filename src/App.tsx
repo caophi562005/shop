@@ -27,8 +27,6 @@ import AdminChat from "./pages/AdminChat";
 import Pay from "./pages/Pay";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
-import FeedbackForm from "./pages/FeedbackForm";
-import FeedbackReadonly from "./pages/FeedbackReadonly";
 
 const App: React.FC = () => {
   const { isLoading, checkAuthStatus } = useAuthStore();
@@ -58,8 +56,6 @@ const App: React.FC = () => {
           <Route path="order-history" element={<OrderHistory />} />
           <Route path="order-detail/:orderId" element={<OrderDetail />} />
           <Route path="transfer/:orderId" element={<TransferPage />} />
-          <Route path="fbf" element={<FeedbackForm />} />
-          <Route path="fbr" element={<FeedbackReadonly />} />
           <Route path="/products/men" element={<MenPage />} />
           <Route path="/products/women" element={<WomenPage />} />
           <Route path="/products/accessories" element={<AccessoriesPage />} />

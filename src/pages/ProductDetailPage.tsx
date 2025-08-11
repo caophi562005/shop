@@ -8,6 +8,44 @@ import type { SKUType } from "../models/shared/shared-sku.model";
 import { languageUtils } from "../utils/language";
 import { useAuthStore } from "../stores/authStore";
 import { toast } from "react-toastify";
+import FeedbackReadonlyComponent from "../components/FeedbackReadonlyComponent";
+
+// Review interfaces
+interface MediaItem {
+  id: number;
+  url: string;
+  type: "IMAGE" | "VIDEO";
+  reviewId: number;
+  createdAt: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  avatar: string | null;
+}
+
+interface ReviewData {
+  id: number;
+  content: string;
+  rating: number;
+  orderId: number;
+  productId: number;
+  userId: number;
+  updateCount: number;
+  createdAt: string;
+  updatedAt: string;
+  medias: MediaItem[];
+  user: User;
+}
+
+interface ReviewsResponse {
+  data: ReviewData[];
+  totalItems: number;
+  totalPages: number;
+  page: number;
+  limit: number;
+}
 
 // Biến để lưu trữ socket instance bên ngoài component để không bị khởi tạo lại mỗi lần render
 let socket: Socket;
@@ -29,6 +67,12 @@ const ProductDetailPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string>("");
   // State cho SKU tương ứng với lựa chọn
   const [selectedSku, setSelectedSku] = useState<SKUType | null>(null);
+  // State cho reviews
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
 
   const { productId } = useParams<{ productId: string }>();
 
@@ -191,6 +235,49 @@ const ProductDetailPage: React.FC = () => {
       console.error("Failed to add to cart:", error);
       toast.error("Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
     }
+  };
+
+  // Fetch reviews function
+  const fetchReviews = async (page: number = 1) => {
+    if (!productId) return;
+
+    setReviewsLoading(true);
+    try {
+      const response = await http.get(
+        `/reviews/products/${productId}?page=${page}&limit=10`
+      );
+      const reviewsData: ReviewsResponse = response.data;
+
+      if (page === 1) {
+        setReviews(reviewsData.data);
+      } else {
+        setReviews((prev) => [...prev, ...reviewsData.data]);
+      }
+
+      setTotalPages(reviewsData.totalPages);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // Effect to fetch reviews when productId changes
+  useEffect(() => {
+    if (productId) {
+      fetchReviews(1);
+    }
+  }, [productId]);
+
+  const handleLoadMoreReviews = () => {
+    if (currentPage < totalPages) {
+      fetchReviews(currentPage + 1);
+    }
+  };
+
+  const toggleShowAllReviews = () => {
+    setShowAllReviews(!showAllReviews);
   };
 
   // --- RENDER LOGIC ---
@@ -368,6 +455,63 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Reviews Section */}
+      <div className="reviews_section">
+        <div className="reviews_header">
+          <h3 className="reviews_title">Đánh giá sản phẩm</h3>
+          {reviews.length > 0 && (
+            <span className="reviews_count">({reviews.length} đánh giá)</span>
+          )}
+        </div>
+
+        {reviewsLoading && reviews.length === 0 ? (
+          <div className="reviews_loading">Đang tải đánh giá...</div>
+        ) : reviews.length === 0 ? (
+          <div className="reviews_empty">
+            Chưa có đánh giá nào cho sản phẩm này.
+          </div>
+        ) : (
+          <div className="reviews_list">
+            {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
+              <div key={review.id} className="review_item_compact">
+                <FeedbackReadonlyComponent
+                  reviewData={review}
+                  isCompact={true}
+                />
+              </div>
+            ))}
+
+            {reviews.length > 3 && !showAllReviews && (
+              <button
+                onClick={toggleShowAllReviews}
+                className="btn_show_more_reviews"
+              >
+                Xem thêm {reviews.length - 3} đánh giá
+              </button>
+            )}
+
+            {showAllReviews && reviews.length > 3 && (
+              <button
+                onClick={toggleShowAllReviews}
+                className="btn_show_less_reviews"
+              >
+                Thu gọn đánh giá
+              </button>
+            )}
+
+            {showAllReviews && currentPage < totalPages && (
+              <button
+                onClick={handleLoadMoreReviews}
+                className="btn_load_more_reviews"
+                disabled={reviewsLoading}
+              >
+                {reviewsLoading ? "Đang tải..." : "Tải thêm đánh giá"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -4,6 +4,8 @@ import "../assets/css/orderDetail.css";
 import http from "../api/http";
 import { toast } from "react-toastify";
 import { languageUtils } from "../utils/language";
+import FeedbackFormComponent from "../components/FeedbackFormComponent";
+import FeedbackReadonlyComponent from "../components/FeedbackReadonlyComponent";
 
 // Type definitions
 interface OrderItem {
@@ -40,10 +42,45 @@ interface OrderDetail {
   note?: string;
 }
 
+interface MediaItem {
+  id: number;
+  url: string;
+  type: "IMAGE" | "VIDEO";
+  reviewId: number;
+  createdAt: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  avatar: string | null;
+}
+
+interface ReviewData {
+  id: number;
+  content: string;
+  rating: number;
+  orderId: number;
+  productId: number;
+  userId: number;
+  updateCount: number;
+  createdAt: string;
+  updatedAt: string;
+  medias: MediaItem[];
+  user: User;
+}
+
 const OrderDetail: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [reviews, setReviews] = useState<{
+    [productId: number]: ReviewData | null;
+  }>({});
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
+  const [showReviewForm, setShowReviewForm] = useState<{
+    [productId: number]: boolean;
+  }>({});
 
   useEffect(() => {
     if (orderId) {
@@ -67,6 +104,11 @@ const OrderDetail: React.FC = () => {
 
       if (orderData && orderData.id) {
         setOrder(orderData);
+
+        // If order is delivered, fetch reviews for each product
+        if (orderData.status === "DELIVERED") {
+          await fetchReviewsForOrder(orderData);
+        }
       } else {
         setOrder(null);
       }
@@ -77,6 +119,62 @@ const OrderDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchReviewsForOrder = async (orderData: OrderDetail) => {
+    setReviewsLoading(true);
+    try {
+      const productIds = [
+        ...new Set(orderData.items.map((item) => item.productId)),
+      ];
+      const reviewPromises = productIds.map(async (productId) => {
+        try {
+          const response = await http.get(`/reviews/${productId}`);
+          return {
+            productId,
+            review: response.data?.data || response.data || null,
+          };
+        } catch (error) {
+          // Review doesn't exist yet
+          return {
+            productId,
+            review: null,
+          };
+        }
+      });
+
+      const reviewResults = await Promise.all(reviewPromises);
+      const reviewsMap: { [productId: number]: ReviewData | null } = {};
+
+      reviewResults.forEach(({ productId, review }) => {
+        reviewsMap[productId] = review;
+      });
+
+      setReviews(reviewsMap);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleReviewSuccess = (productId: number) => {
+    // Refresh reviews after successful submission
+    if (order) {
+      fetchReviewsForOrder(order);
+    }
+    // Hide the form
+    setShowReviewForm((prev) => ({
+      ...prev,
+      [productId]: false,
+    }));
+  };
+
+  const toggleReviewForm = (productId: number) => {
+    setShowReviewForm((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
   };
 
   const formatCurrency = (amount: number): string => {
@@ -268,6 +366,88 @@ const OrderDetail: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Review Section - Only show for delivered orders */}
+        {order.status === "DELIVERED" && (
+          <div className="review-section">
+            <h3>Đánh giá sản phẩm</h3>
+            {reviewsLoading ? (
+              <div className="review-loading">Đang tải đánh giá...</div>
+            ) : (
+              <div className="review-list">
+                {[...new Set(order.items.map((item) => item.productId))].map(
+                  (productId) => {
+                    const productItem = order.items.find(
+                      (item) => item.productId === productId
+                    );
+                    const existingReview = reviews[productId];
+                    const showForm = showReviewForm[productId];
+
+                    if (!productItem) return null;
+
+                    return (
+                      <div key={productId} className="product-review-container">
+                        <div className="product-review-header">
+                          <div className="product-info">
+                            <img
+                              src={getImageUrl(productItem.image)}
+                              alt={getTranslatedProductName(productItem)}
+                              className="review-product-image"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/src/assets/img/placeholder.jpg";
+                              }}
+                            />
+                            <h4>{getTranslatedProductName(productItem)}</h4>
+                          </div>
+
+                          {existingReview ? (
+                            // Show existing review
+                            <FeedbackReadonlyComponent
+                              reviewData={existingReview}
+                              onEditSuccess={() =>
+                                handleReviewSuccess(productId)
+                              }
+                              isCompact={true}
+                            />
+                          ) : showForm ? (
+                            // Show review form
+                            <div className="review-form-container">
+                              <FeedbackFormComponent
+                                productId={productId}
+                                orderId={order.id}
+                                onSubmitSuccess={() =>
+                                  handleReviewSuccess(productId)
+                                }
+                                isCompact={true}
+                              />
+                              <button
+                                onClick={() => toggleReviewForm(productId)}
+                                className="btn-cancel-review"
+                              >
+                                Hủy đánh giá
+                              </button>
+                            </div>
+                          ) : (
+                            // Show button to create review
+                            <div className="review-action">
+                              <button
+                                onClick={() => toggleReviewForm(productId)}
+                                className="btn-create-review"
+                              >
+                                Viết đánh giá
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Order Summary */}
         <div className="order-summary">
