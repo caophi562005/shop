@@ -1,14 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import http from "../api/http";
 import "../assets/css/ChatWidget.css";
 import { FiMessageSquare, FiX, FiSend } from "react-icons/fi";
-import { jwtDecode } from "jwt-decode";
-
-// Định nghĩa kiểu cho payload của JWT
-interface JwtPayload {
-  userId: number;
-}
+import { useAuthStore } from "../stores/authStore";
+import envConfig from "../envConfig";
 
 // Định nghĩa kiểu dữ liệu cho một tin nhắn
 interface Message {
@@ -31,21 +27,8 @@ const ChatWidget: React.FC = () => {
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Lấy userId từ JWT token trong localStorage
-  const myUserId = useMemo(() => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) return null;
-      const decodedToken = jwtDecode<JwtPayload>(accessToken);
-      return decodedToken.userId;
-    } catch (error) {
-      console.error("Failed to decode token:", error);
-      return null;
-    }
-  }, []);
-
-  // Kiểm tra xem user đã đăng nhập chưa
-  const isLoggedIn = !!localStorage.getItem("accessToken");
+  const { user, isLoggedIn, isInitialized } = useAuthStore();
+  const myUserId = user?.id;
 
   // Tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
@@ -59,11 +42,8 @@ const ChatWidget: React.FC = () => {
   // Kết nối WebSocket
   useEffect(() => {
     if (isLoggedIn && myUserId && !socketRef.current) {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) return;
-
-      socketRef.current = io("https://api-pixcam.hacmieu.xyz/message", {
-        extraHeaders: { Authorization: `Bearer ${accessToken}` },
+      socketRef.current = io(`${envConfig.VITE_API_END_POINT}/message`, {
+        withCredentials: true,
       });
 
       // Lắng nghe tin nhắn mới từ admin
@@ -135,6 +115,11 @@ const ChatWidget: React.FC = () => {
 
   // Không hiển thị widget nếu chưa đăng nhập
   if (!isLoggedIn) {
+    return null;
+  }
+
+  // Chỉ hiển thị ChatWidget khi đã kiểm tra auth và user đã đăng nhập
+  if (!isInitialized || !isLoggedIn) {
     return null;
   }
 
