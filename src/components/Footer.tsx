@@ -1,56 +1,34 @@
-import "../assets/css/style.css"; // File CSS riêng cho Footer
-import React, { useEffect } from "react";
+// src/components/Footer.tsx
 
-// Import logo
+import "../assets/css/style.css"; // File CSS riêng cho Footer
+import React, { useEffect, useState } from "react";
 import logoImg from "../assets/img/home/logo.png";
 
 const Footer: React.FC = () => {
-  // GHI CHÚ: Logic cho nút "Back to Top" cần được triển khai lại ở đây
-  // bằng cách sử dụng React Hooks (useEffect và useState).
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
   useEffect(() => {
-    const backToTopButton = document.getElementById("backToTop");
-
     const handleScroll = () => {
-      if (backToTopButton) {
-        if (window.scrollY > 300) {
-          // Hiển thị nút khi cuộn xuống 300px
-          backToTopButton.style.display = "block";
-        } else {
-          backToTopButton.style.display = "none";
-        }
-      }
+      setShowBackToTop(window.scrollY > 300);
     };
-
-    const scrollToTop = () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
     window.addEventListener("scroll", handleScroll);
-    if (backToTopButton) {
-      backToTopButton.addEventListener("click", scrollToTop);
-    }
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    // Dọn dẹp event listener khi component bị hủy
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (backToTopButton) {
-        backToTopButton.removeEventListener("click", scrollToTop);
-      }
-    };
-  }, []); // Mảng rỗng đảm bảo useEffect chỉ chạy một lần
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <footer>
-      <div className="logo_footer">
-        <img src={logoImg} alt="Pixcam Logo" className="logo_footerIcon" />
-      </div>
-      <ul className="contact_footer">
-        <li>
-          <div className="item_title_contact">
-            <p className="title_contact">LIÊN HỆ</p>
-          </div>
-          <div className="content_contact">
-            <ul>
+      <div className="footer_container">
+        <div className="logo_footer">
+          <img src={logoImg} alt="Pixcam Logo" className="logo_footerIcon" />
+        </div>
+        <div className="contact_footer">
+          <div className="footer-column">
+            <h4 className="title_contact">LIÊN HỆ</h4>
+            <ul className="content_contact">
               <li className="address_contact">
                 <i className="fa-solid fa-location-dot"></i> 02,Võ Oanh, Bình
                 Thạnh,TPHCM
@@ -63,64 +41,55 @@ const Footer: React.FC = () => {
               </li>
             </ul>
           </div>
-        </li>
-        <li>
-          <div className="item_title_contact">
-            <p className="title_contact">CHÍNH SÁCH</p>
+          <div className="footer-column">
+            <h4 className="title_contact">CHÍNH SÁCH</h4>
+            <ul className="content_contact">
+              <li className="address_contact">
+                <a href="#">Chính sách thành viên</a>
+              </li>
+              <li className="address_contact">
+                <a href="#">Chính sách đổi trả</a>
+              </li>
+              <li className="address_contact">
+                <a href="#">Chính sách vận chuyển</a>
+              </li>
+            </ul>
           </div>
-          <div className="content_contact">
-            <ul>
+          <div className="footer-column">
+            <h4 className="title_contact">ĐĂNG KÝ NHẬN TIN</h4>
+            <ul className="content_contact">
               <li className="address_contact">
-                <a href="index.php?controller=CSTV&action=index">
-                  Chính sách thành viên
+                Nhận thông tin sản phẩm mới nhất và các chương trình khuyến mại.
+              </li>
+            </ul>
+          </div>
+          <div className="footer-column">
+            <h4 className="title_contact">KẾT NỐI</h4>
+            <ul className="social_links">
+              <li>
+                <a href="#" aria-label="Facebook">
+                  <i className="fa-brands fa-facebook"></i>
                 </a>
               </li>
-              <li className="address_contact">
-                <a href="index.php?controller=CSDT&action=index">
-                  Chính sách đổi trả
-                </a>
-              </li>
-              <li className="address_contact">
-                <a href="index.php?controller=CSVC&action=index">
-                  Chính sách vận chuyển
+              <li>
+                <a href="#" aria-label="Instagram">
+                  <i className="fa-brands fa-instagram"></i>
                 </a>
               </li>
             </ul>
           </div>
-        </li>
-        <li>
-          <div className="item_title_contact">
-            <p className="title_contact">ĐĂNG KÝ NHẬN TIN</p>
-          </div>
-          <div className="content_contact">
-            <ul>
-              <li className="address_contact">
-                Nhận thông tin sản phẩm mới nhất
-              </li>
-              <li className="address_contact">Thông tin sản phẩm khuyến mại</li>
-            </ul>
-          </div>
-        </li>
-        <li>
-          <div className="item_title_contact">
-            <p className="title_contact">KẾT NỐI</p>
-          </div>
-          <div className="content_contact">
-            <ul style={{ display: "flex", gap: "20px" }}>
-              <li className="address_contact">
-                <i className="fa-brands fa-facebook"></i>
-              </li>
-              <li className="address_contact">
-                <i className="fa-brands fa-instagram"></i>
-              </li>
-            </ul>
-          </div>
-        </li>
-      </ul>
-      {/* Nút này giờ sẽ được điều khiển bởi logic trong useEffect */}
-      <button id="backToTop" title="Lên đầu trang" style={{ display: "none" }}>
-        <i className="fas fa-arrow-up"></i>
-      </button>
+        </div>
+      </div>
+      {showBackToTop && (
+        <button
+          id="backToTop"
+          title="Lên đầu trang"
+          aria-label="Back to top"
+          onClick={scrollToTop}
+        >
+          <i className="fas fa-arrow-up"></i>
+        </button>
+      )}
     </footer>
   );
 };
