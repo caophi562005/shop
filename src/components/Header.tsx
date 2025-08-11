@@ -1,7 +1,11 @@
+// src/components/Header.tsx
+
 import React, { useState, useEffect, useRef } from "react";
+import "../assets/css/style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { RoleName } from "../constants/role.constant";
+import { languageUtils, LANGUAGES, type Language } from "../utils/language";
 import logoImg from "../assets/img/home/logo.png";
 
 // Dữ liệu mẫu cho menu
@@ -43,8 +47,14 @@ const Header: React.FC = () => {
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<number | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isLanguageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(
+    languageUtils.getCurrentLanguage()
+  );
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const languageMenuRef = useRef<HTMLDivElement>(null);
 
   // Logic đóng menu tài khoản khi click ra ngoài
   useEffect(() => {
@@ -55,6 +65,12 @@ const Header: React.FC = () => {
       ) {
         setAccountMenuOpen(false);
       }
+      if (
+        languageMenuRef.current &&
+        !languageMenuRef.current.contains(event.target as Node)
+      ) {
+        setLanguageMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -64,6 +80,17 @@ const Header: React.FC = () => {
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
+
+  // Đóng menu khi chuyển từ mobile sang desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 769) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Xử lý submit form tìm kiếm
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -80,6 +107,15 @@ const Header: React.FC = () => {
     setSearchKeyword(e.target.value);
   };
 
+  // Xử lý thay đổi ngôn ngữ
+  const handleLanguageChange = (language: Language) => {
+    setCurrentLanguage(language);
+    languageUtils.setLanguage(language);
+    setLanguageMenuOpen(false);
+    // Reload page để apply ngôn ngữ mới cho tất cả components
+    window.location.reload();
+  };
+
   const renderAccountMenuItems = () => {
     if (!isLoggedIn) {
       return (
@@ -94,7 +130,7 @@ const Header: React.FC = () => {
       );
     }
     // Nếu là admin
-    if (user?.roleName === RoleName.ADMIN) {
+    if (user?.role.name === RoleName.ADMIN) {
       return (
         <>
           <Link to="/profile" style={linkStyle}>
@@ -103,26 +139,21 @@ const Header: React.FC = () => {
           <Link to="/cart" style={linkStyle}>
             Giỏ hàng
           </Link>
-          <Link to="/admin/products" style={linkStyle}>
+          <Link to="/admin/chat" style={linkStyle}>
+            Hỗ trợ
+          </Link>
+          <Link to="/admin/revenue" style={linkStyle}>
+            Doanh thu
+          </Link>
+          <Link to="/admin/account" style={linkStyle}>
+            Quản lý tài khoản
+          </Link>
+          <Link to="/admin" style={linkStyle}>
             Quản lý sản phẩm
           </Link>
           <Link to="/admin/category" style={linkStyle}>
             Quản lý danh mục
           </Link>
-          <Link to="/admin/orders" style={linkStyle}>
-            Quản lý đơn hàng
-          </Link>
-          <Link to="/admin/customers" style={linkStyle}>
-            Quản lý khách hàng
-          </Link>
-          <Link to="/admin/categories" style={linkStyle}>
-            Quản lý danh mục
-          </Link>
-
-          <Link to="/revenue" style={linkStyle}>
-            Thống kê doanh thu
-          </Link>
-
           <Link
             to="/"
             onClick={() => {
@@ -173,83 +204,76 @@ const Header: React.FC = () => {
   return (
     <header>
       <div className="logo_header">
-        <Link to="/" className="logo">
+        <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
           <img src={logoImg} alt="Logo" />
         </Link>
+        <button
+          className="menu_toggle"
+          onClick={() => setMenuOpen(!isMenuOpen)}
+          aria-label="Toggle navigation"
+          aria-expanded={isMenuOpen}
+        >
+          <i className="fa-solid fa-bars icon_while"></i>
+        </button>
       </div>
 
-      <ul className="navigate_header">
-        <li>
-          <Link to="/" className="title_header">
-            HOME
-          </Link>
-        </li>
-        {mockCategories.map((cat) => (
-          <li
-            key={cat.id}
-            className="dropdown_header"
-            onMouseEnter={() => setOpenCategory(cat.id)}
-            onMouseLeave={() => setOpenCategory(null)}
-          >
-            <Link to={cat.path} className="title_header">
-              {cat.name}
-            </Link>
-            {openCategory === cat.id && cat.subcategories.length > 0 && (
-              <div className="mega_menu">
-                <div className="column">
-                  {cat.subcategories.map((sub) => (
-                    <Link key={sub.id} to={sub.path}>
-                      {sub.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      <ul className="tools_header">
-        <li
-          className="account-menu"
-          style={{ position: "relative", display: "inline-block" }}
-        >
-          <div
-            className="menu-button"
-            onClick={() => setAccountMenuOpen(!isAccountMenuOpen)}
-            style={{ cursor: "pointer" }}
-          >
-            <i className="fa-solid fa-user icon_while"></i>
-          </div>
-
-          {isAccountMenuOpen && (
-            <div
-              ref={accountMenuRef}
-              id="accountMenu"
-              style={{
-                display: "block",
-                position: "absolute",
-                top: "130%",
-                right: 0,
-                backgroundColor: "#fef6e4",
-                minWidth: "180px",
-                boxShadow: "0 6px 16px rgba(0,0,0,0.15)",
-                borderRadius: "6px",
-                zIndex: 999,
-              }}
+      <nav className={`nav_container ${isMenuOpen ? "open" : ""}`}>
+        <ul className="navigate_header">
+          <li>
+            <Link
+              to="/"
+              className="title_header"
+              onClick={() => setMenuOpen(false)}
             >
-              {renderAccountMenuItems()}
-            </div>
-          )}
-        </li>
+              HOME
+            </Link>
+          </li>
+          {mockCategories.map((cat) => (
+            <li
+              key={cat.id}
+              className="dropdown_header"
+              onMouseEnter={() =>
+                window.innerWidth > 768 && setOpenCategory(cat.id)
+              }
+              onMouseLeave={() =>
+                window.innerWidth > 768 && setOpenCategory(null)
+              }
+            >
+              <Link
+                to={cat.path}
+                className="title_header"
+                onClick={() => setMenuOpen(false)}
+              >
+                {cat.name}
+              </Link>
+              {openCategory === cat.id && cat.subcategories.length > 0 && (
+                <div className="mega_menu">
+                  <div className="column">
+                    {cat.subcategories.map((sub) => (
+                      <Link
+                        key={sub.id}
+                        to={sub.path}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-        <li className="header_search_wrapper">
+      <div className="tools_header">
+        <div className="header_search_wrapper">
           <form className="header_search_form" onSubmit={handleSearchSubmit}>
             <input
               type="text"
               name="q"
               className="header_search_input"
-              placeholder="Tìm sản phẩm..."
+              placeholder="Tìm kiếm..."
               autoComplete="off"
               value={searchKeyword}
               onChange={handleSearchInputChange}
@@ -258,8 +282,118 @@ const Header: React.FC = () => {
               <i className="fa-solid fa-magnifying-glass"></i>
             </button>
           </form>
-        </li>
-      </ul>
+        </div>
+        {/* Language Switcher */}
+        <div
+          className="language-menu"
+          style={{ position: "relative", marginRight: "10px" }}
+        >
+          <button
+            className="menu-button"
+            onClick={() => setLanguageMenuOpen(!isLanguageMenuOpen)}
+            aria-label="Chọn ngôn ngữ"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              color: "white",
+            }}
+          >
+            <span>{languageUtils.getLanguageFlag(currentLanguage)}</span>
+            <span style={{ fontSize: "12px" }}>
+              {currentLanguage === LANGUAGES.VI ? "VI" : "EN"}
+            </span>
+            <i
+              className="fa-solid fa-chevron-down"
+              style={{ fontSize: "10px" }}
+            ></i>
+          </button>
+
+          {isLanguageMenuOpen && (
+            <div
+              ref={languageMenuRef}
+              className="account_dropdown"
+              style={{
+                position: "absolute",
+                top: "100%",
+                right: "0",
+                backgroundColor: "white",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                zIndex: 1000,
+                minWidth: "120px",
+              }}
+            >
+              <button
+                onClick={() => handleLanguageChange(LANGUAGES.VI)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "none",
+                  background:
+                    currentLanguage === LANGUAGES.VI
+                      ? "#f0f0f0"
+                      : "transparent",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textAlign: "left",
+                }}
+              >
+                <span>🇻🇳</span>
+                <span>Việt Nam</span>
+              </button>
+              <button
+                onClick={() => handleLanguageChange(LANGUAGES.EN)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "none",
+                  background:
+                    currentLanguage === LANGUAGES.EN
+                      ? "#f0f0f0"
+                      : "transparent",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textAlign: "left",
+                }}
+              >
+                <span>🇺🇸</span>
+                <span>English</span>
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="account-menu" style={{ position: "relative" }}>
+          <button
+            className="menu-button"
+            onClick={() => setAccountMenuOpen(!isAccountMenuOpen)}
+            aria-label="Tài khoản"
+            style={{ background: "none", border: "none", cursor: "pointer" }}
+          >
+            <i className="fa-solid fa-user icon_while"></i>
+          </button>
+
+          {isAccountMenuOpen && (
+            <div
+              ref={accountMenuRef}
+              id="accountMenu"
+              className="account_dropdown"
+            >
+              {renderAccountMenuItems()}
+            </div>
+          )}
+        </div>
+      </div>
     </header>
   );
 };
