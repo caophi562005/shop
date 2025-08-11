@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../assets/css/Cart2.css";
 import DeleteCartItemModal from "../components/DeleteCartItemModal";
 import http from "../api/http";
@@ -9,6 +10,7 @@ import type {
 } from "../models/cart.model";
 
 const Cart: React.FC = () => {
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItemDetailResType>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(0);
@@ -114,10 +116,31 @@ const Cart: React.FC = () => {
   };
 
   const calculateSubTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.sku.price * item.quantity,
-      0
+    // Chỉ tính tổng cho các item được chọn
+    if (selectedItems.length === 0) {
+      return 0;
+    }
+    return cartItems
+      .filter((item) => selectedItems.includes(item.id))
+      .reduce((total, item) => total + item.sku.price * item.quantity, 0);
+  };
+
+  // Hàm để chuyển đến trang thanh toán
+  const handleProceedToPayment = () => {
+    if (selectedItems.length === 0) {
+      toast.warning("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      return;
+    }
+
+    // Lấy thông tin chi tiết của các item được chọn
+    const selectedCartItems = cartItems.filter((item) =>
+      selectedItems.includes(item.id)
     );
+
+    // Chuyển đến trang thanh toán với state
+    navigate("/pay", {
+      state: { selectedItems: selectedCartItems },
+    });
   };
 
   const handleSuccess = (message: string) => {
@@ -367,6 +390,9 @@ const Cart: React.FC = () => {
                 <div className="cart-right">
                   <h3>Tổng giỏ hàng</h3>
                   <div className="summary-line">
+                    <span>Sản phẩm đã chọn: {selectedItems.length}</span>
+                  </div>
+                  <div className="summary-line">
                     <span>Tạm tính</span>
                     <span>{formatVN(calculateSubTotal())}</span>
                   </div>
@@ -374,7 +400,17 @@ const Cart: React.FC = () => {
                     <span>Tổng cộng</span>
                     <span>{formatVN(calculateSubTotal())}</span>
                   </div>
-                  <div className="btn-payment">Tiến hành thanh toán</div>
+                  <button
+                    className={`btn-payment ${
+                      selectedItems.length === 0 ? "disabled" : ""
+                    }`}
+                    onClick={handleProceedToPayment}
+                    disabled={selectedItems.length === 0}
+                  >
+                    {selectedItems.length === 0
+                      ? "Chọn sản phẩm để thanh toán"
+                      : "Tiến hành thanh toán"}
+                  </button>
                 </div>
               </div>
 

@@ -24,6 +24,7 @@ import CSDT from "./pages/CSDT";
 import CSTV from "./pages/CSTV";
 import CSVC from "./pages/CSVC";
 import AdminChat from "./pages/AdminChat";
+import Pay from "./pages/Pay";
 
 const App: React.FC = () => {
   const { isLoading, checkAuthStatus } = useAuthStore();
@@ -59,6 +60,7 @@ const App: React.FC = () => {
             element={<FindProductPage />}
           />
           <Route path="/sale" element={<SalePage />} />
+          <Route path="/pay" element={<Pay />} />
           {/* 1. Route cho trang chi tiết sản phẩm với ID động */}
           <Route path="product/:productId" element={<ProductDetailPage />} />
 

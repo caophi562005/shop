@@ -7,10 +7,12 @@ import http from "../api/http";
 import type { OrderInProductSKUSnapshotType } from "../models/shared/shared-order.model";
 import { toast } from "react-toastify";
 import io, { Socket } from "socket.io-client";
+import { useAuthStore } from "../stores/authStore";
 
 let socket: Socket;
 
 const TransferPage: React.FC = () => {
+  const { user } = useAuthStore();
   const [paymentId, setPaymentId] = useState<number>(0);
   const [amount, setAmount] = useState(0);
   const { orderId } = useParams<{ orderId: string }>();
@@ -55,34 +57,38 @@ const TransferPage: React.FC = () => {
       return; // Không khởi tạo socket nếu chưa có paymentId
     }
 
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      toast.error("Người dùng chưa đăng nhập, không khởi tạo WebSocket");
+    // Kiểm tra user đã đăng nhập chưa thông qua authStore
+    if (!user) {
+      console.log("Người dùng chưa đăng nhập, không khởi tạo WebSocket");
       return;
     }
 
     socket = io(`${envConfig.VITE_API_END_POINT}/payment`, {
-      extraHeaders: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      withCredentials: true, // Để gửi HTTP-only cookies
     });
 
     socket.on("connect", () => {
+      console.log(
+        "✅ WebSocket connected successfully for payment:",
+        paymentId
+      );
       socket.emit("joinPaymentRoom", paymentId);
     });
 
     socket.on("connect_error", (err) => {
       console.error("❌ WebSocket connection error:", err.message);
       if (err.message.includes("Authentication")) {
-        // Tại đây bạn có thể xử lý việc đăng xuất người dùng hoặc refresh token
+        toast.error("Lỗi xác thực. Vui lòng đăng nhập lại.");
+        navigate("/login");
       }
     });
 
     socket.on("successPaymentId", (receivedPaymentId: number) => {
       if (receivedPaymentId === paymentId) {
         setStatusMessage("Thanh toán thành công");
+        toast.success("Thanh toán thành công!");
         setTimeout(() => {
-          navigate("/order-success/" + orderId); // hoặc trang nào đó
+          navigate("/order-success/" + orderId);
         }, 2000);
       }
     });
@@ -94,7 +100,7 @@ const TransferPage: React.FC = () => {
         socket.disconnect();
       }
     };
-  }, [paymentId, navigate]); // Dependency array bao gồm paymentId
+  }, [paymentId, navigate, user, orderId]); // Thêm user vào dependency array
 
   return (
     <div className="transfer-page-container">
