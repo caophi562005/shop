@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import io, { Socket } from "socket.io-client";
 import "../assets/css/detailProduct.css";
 import type { GetProductDetailResType } from "../models/product.model";
 import http from "../api/http";
@@ -9,6 +8,7 @@ import { languageUtils } from "../utils/language";
 import { useAuthStore } from "../stores/authStore";
 import { toast } from "react-toastify";
 import FeedbackReadonlyComponent from "../components/FeedbackReadonlyComponent";
+import { useProductSocket } from "../hooks/useProductSocket";
 
 // Review interfaces
 interface MediaItem {
@@ -47,9 +47,6 @@ interface ReviewsResponse {
   limit: number;
 }
 
-// Biến để lưu trữ socket instance bên ngoài component để không bị khởi tạo lại mỗi lần render
-let socket: Socket;
-
 const ProductDetailPage: React.FC = () => {
   // Auth store để kiểm tra trạng thái đăng nhập
   const { user, isInitialized } = useAuthStore();
@@ -76,6 +73,11 @@ const ProductDetailPage: React.FC = () => {
 
   const { productId } = useParams<{ productId: string }>();
 
+  // Use product socket hook
+  const { onProductUpdated, onProductDeleted, isConnected } = useProductSocket(
+    productId ? Number(productId) : undefined
+  );
+
   // Effect để fetch dữ liệu sản phẩm ban đầu khi component được mount hoặc productId thay đổi
   useEffect(() => {
     const fetchProduct = async () => {
@@ -100,61 +102,23 @@ const ProductDetailPage: React.FC = () => {
     fetchProduct();
   }, [productId]);
 
-  // Effect để quản lý vòng đời của kết nối WebSocket
+  // Listen for product updates using the hook
   useEffect(() => {
-    // Đợi auth store được khởi tạo
-    if (!isInitialized) {
-      console.log("Đang khởi tạo auth store...");
-      return;
-    }
+    if (!isConnected) return;
 
-    // Chỉ khởi tạo kết nối nếu người dùng đã đăng nhập
-    if (!user) {
-      console.log("Người dùng chưa đăng nhập, không khởi tạo WebSocket.");
-      return;
-    }
-
-    // Khởi tạo socket với credentials để gửi HTTP-only cookies
-    socket = io("https://api-pixcam.hacmieu.xyz/product", {
-      withCredentials: true, // 🔑 Quan trọng: gửi HTTP-only cookies
+    const cleanupUpdate = onProductUpdated((updatedProduct) => {
+      setProduct(updatedProduct as unknown as GetProductDetailResType);
     });
 
-    // Listener khi kết nối thành công
-    socket.on("connect", () => {
-      console.log("✅ WebSocket connected successfully! ID:", socket.id);
-      if (productId) {
-        socket.emit("joinProductRoom", Number(productId));
-      }
-    });
-
-    // Listener để bắt lỗi kết nối
-    socket.on("connect_error", (err) => {
-      console.error("❌ WebSocket connection error:", err.message);
-      // Nếu lỗi là "Thiếu Authentication", có thể cookies đã hết hạn
-      if (err.message.includes("Authentication")) {
-        console.log("Authentication failed, user may need to login again");
-      }
-    });
-
-    // Các listener khác không đổi...
-    socket.on("productUpdated", (updatedProduct: GetProductDetailResType) => {
-      setProduct(updatedProduct);
-    });
-
-    socket.on("productDeleted", () => {
+    const cleanupDelete = onProductDeleted(() => {
       setIsDeleted(true);
     });
 
-    // Hàm dọn dẹp không đổi
     return () => {
-      if (socket) {
-        if (productId) {
-          socket.emit("leaveProductRoom", Number(productId));
-        }
-        socket.disconnect();
-      }
+      cleanupUpdate();
+      cleanupDelete();
     };
-  }, [productId, isInitialized, user]);
+  }, [isConnected, onProductUpdated, onProductDeleted]);
 
   // Effect để tìm SKU tương ứng mỗi khi lựa chọn của người dùng thay đổi
   useEffect(() => {

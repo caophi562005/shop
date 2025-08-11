@@ -6,17 +6,20 @@ import "../assets/css/Transfer.css";
 import http from "../api/http";
 import type { OrderInProductSKUSnapshotType } from "../models/shared/shared-order.model";
 import { toast } from "react-toastify";
-import io, { Socket } from "socket.io-client";
 import { useAuthStore } from "../stores/authStore";
 import { OrderStatus } from "../constants/order.constant";
-
-let socket: Socket;
+import { usePaymentSocket } from "../hooks/usePaymentSocket";
 
 const TransferPage: React.FC = () => {
   const { user } = useAuthStore();
   const [paymentId, setPaymentId] = useState<number>(0);
   const [amount, setAmount] = useState(0);
   const { orderId } = useParams<{ orderId: string }>();
+
+  // Use payment socket hook
+  const { onPaymentSuccess, isConnected } = usePaymentSocket(
+    paymentId || undefined
+  );
 
   const qrUrl = `https://qr.sepay.vn/img?acc=${envConfig.VITE_BANK_ACCOUNT}&bank=${envConfig.VITE_BANK_CODE}&amount=${amount}&des=${envConfig.VITE_ORDER_PREFIX}${paymentId}`;
   const [statusMessage, setStatusMessage] = useState("Đang chờ thanh toán...");
@@ -64,40 +67,11 @@ const TransferPage: React.FC = () => {
     takeOrder();
   }, [orderId, navigate]);
 
-  // WebSocket connection - chỉ chạy khi có paymentId
+  // Listen for payment success using the hook
   useEffect(() => {
-    if (!paymentId || paymentId === 0) {
-      console.log("PaymentId not ready yet:", paymentId);
-      return; // Không khởi tạo socket nếu chưa có paymentId
-    }
+    if (!isConnected || !paymentId) return;
 
-    // Kiểm tra user đã đăng nhập chưa thông qua authStore
-    if (!user) {
-      console.log("Người dùng chưa đăng nhập, không khởi tạo WebSocket");
-      return;
-    }
-
-    socket = io(`${envConfig.VITE_API_END_POINT}/payment`, {
-      withCredentials: true, // Để gửi HTTP-only cookies
-    });
-
-    socket.on("connect", () => {
-      console.log(
-        "✅ WebSocket connected successfully for payment:",
-        paymentId
-      );
-      socket.emit("joinPaymentRoom", paymentId);
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("❌ WebSocket connection error:", err.message);
-      if (err.message.includes("Authentication")) {
-        toast.error("Lỗi xác thực. Vui lòng đăng nhập lại.");
-        navigate("/login");
-      }
-    });
-
-    socket.on("successPaymentId", (receivedPaymentId: number) => {
+    const cleanup = onPaymentSuccess((receivedPaymentId: number) => {
       if (receivedPaymentId === paymentId) {
         setStatusMessage("Thanh toán thành công");
         toast.success("Thanh toán thành công!");
@@ -107,14 +81,8 @@ const TransferPage: React.FC = () => {
       }
     });
 
-    // Cleanup function
-    return () => {
-      if (socket) {
-        socket.emit("leavePaymentRoom", paymentId);
-        socket.disconnect();
-      }
-    };
-  }, [paymentId, navigate, user, orderId]); // Thêm user vào dependency array
+    return cleanup;
+  }, [isConnected, paymentId, onPaymentSuccess, navigate, orderId]);
 
   return (
     <div className="transfer-page-container">
