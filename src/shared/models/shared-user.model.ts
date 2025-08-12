@@ -25,6 +25,7 @@ export const GetUserProfileResSchema = UserSchema.omit({
   password: true,
   totpSecret: true,
 }).extend({
+  phoneNumber: z.string(),
   role: RoleSchema.pick({
     id: true,
     name: true,
