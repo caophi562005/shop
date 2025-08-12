@@ -142,13 +142,20 @@ export class AuthController {
       })
 
       if (data) {
-        return res.redirect(
-          `${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?accessToken=${data.accessToken}&refreshToken=${data.refreshToken}`,
-        )
+        res.cookie('accessToken', data.accessToken, {
+          ...cookieOptions,
+          maxAge: 60 * 60 * 1000, // 1 giờ
+        })
+        res.cookie('refreshToken', data.refreshToken, {
+          ...cookieOptions,
+          maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+        })
+
+        return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?success=true`)
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong'
-      return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?error=${message}`)
+      return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URI}?error=${encodeURIComponent(message)}`)
     }
   }
 
