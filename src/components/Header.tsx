@@ -9,6 +9,7 @@ import { RoleName } from "../constants/role.constant";
 import { languageUtils, LANGUAGES, type Language } from "../utils/language";
 import { useNotifications } from "../hooks/useNotifications";
 import NotificationModal from "./NotificationModal";
+import UserAvatar from "./UserAvatar";
 import logoImg from "../assets/img/home/logo.png";
 
 // Dữ liệu mẫu cho menu
@@ -443,9 +444,20 @@ const Header: React.FC = () => {
             className="menu-button"
             onClick={() => setAccountMenuOpen(!isAccountMenuOpen)}
             aria-label="Tài khoản"
-            style={{ background: "none", border: "none", cursor: "pointer" }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+            }}
           >
-            <i className="fa-solid fa-user icon_while"></i>
+            <div className="user-avatar-container">
+              <UserAvatar user={user} size={32} />
+            </div>
           </button>
 
           {isAccountMenuOpen && (

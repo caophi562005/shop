@@ -169,42 +169,47 @@ const HomePage: React.FC = () => {
             <p>Đang tải sản phẩm...</p>
           </div>
         ) : products.length > 0 ? (
-          <div className="products-carousel-wrapper">
+          <div className="products_home">
             <Slider {...productSettings}>
               {products.map((product) => (
-                <div key={product.id} className="product-item">
+                <div key={product.id} className="item_products_home">
                   <a href={`/products/${product.id}`} className="product-link">
-                    <img
-                      src={
-                        product.images[0] ||
-                        "https://via.placeholder.com/300x400/e0e0e0/666666?text=No+Image"
-                      }
-                      alt={product.name}
-                      className="image_product"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://via.placeholder.com/300x400/e0e0e0/666666?text=No+Image";
-                      }}
-                    />
-                    <div className="product-overlay">
-                      <h4 className="product-name">{product.name}</h4>
-                      <p className="product-price">
-                        {product.virtualPrice !== product.basePrice ? (
-                          <>
-                            <span className="price-sale">
-                              {formatCurrency(product.virtualPrice)}
-                            </span>
-                            <span className="price-original">
-                              {formatCurrency(product.basePrice)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="price-normal">
+                    <div className="image_home_item">
+                      <img
+                        src={product.images[0] || "/default-product.jpg"}
+                        alt={product.name}
+                        className="image_products_home"
+                        onError={(e) => {
+                          e.currentTarget.src = "/default-product.jpg";
+                        }}
+                      />
+                    </div>
+                    <h4 className="infProducts_home name">{product.name}</h4>
+                    <p className="infProducts_home price-block">
+                      {product.virtualPrice !== product.basePrice ? (
+                        <>
+                          <span className="price-original">
+                            {formatCurrency(product.basePrice)}
+                          </span>
+                          <span className="price-sale">
                             {formatCurrency(product.virtualPrice)}
                           </span>
-                        )}
-                      </p>
-                    </div>
+                          <span className="discount-label">
+                            -
+                            {Math.round(
+                              ((product.basePrice - product.virtualPrice) /
+                                product.basePrice) *
+                                100
+                            )}
+                            %
+                          </span>
+                        </>
+                      ) : (
+                        <span className="price-normal">
+                          {formatCurrency(product.virtualPrice)}
+                        </span>
+                      )}
+                    </p>
                   </a>
                 </div>
               ))}

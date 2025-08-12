@@ -191,6 +191,46 @@ header {
   background-color: rgba(238, 80, 34, 0.1);
 }
 
+/* Avatar Button Styles */
+.account-menu .menu-button {
+  transition: transform 0.3s ease;
+}
+
+.account-menu .menu-button:hover {
+  transform: scale(1.1);
+}
+
+.account-menu .menu-button:focus {
+  outline: 2px solid rgba(255, 152, 0, 0.5);
+  outline-offset: 2px;
+}
+
+/* Avatar specific styles */
+.user-avatar-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-container::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, transparent, rgba(255, 152, 0, 0.3));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.user-avatar-container:hover::after {
+  opacity: 1;
+}
+
 /* --- FOOTER --- */
 footer {
   background-color: #000;
