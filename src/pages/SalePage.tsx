@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import "../assets/css/home.css";
-import "../assets/css/Top.css";
 import "../assets/css/style.css";
-import "../assets/css/Sale.css";
-import "../assets/css/Product.css";
+import "../assets/css/CategoryPage.css";
 import type { ProductType } from "../models/shared/shared-product.model";
 import { Link } from "react-router-dom";
 import http from "../api/http";
@@ -17,12 +14,15 @@ const calculateDiscountPercentage = (
   basePrice: number,
   virtualPrice: number
 ): number => {
-  if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
-  return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+  // basePrice: giá bán thực tế (thấp hơn)
+  // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
+  // Sale khi virtualPrice > basePrice
+  if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
+    return 0;
+  return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
 };
 
 const SortChooseType = {
-  DEFAULT: "DEFAULT",
   PRICE_ASC: "PRICE_ASC",
   PRICE_DESC: "PRICE_DESC",
   LATEST: "LATEST",
@@ -64,11 +64,15 @@ const SalePage: React.FC = () => {
         );
         const data = response.data;
 
+        // Lọc sản phẩm có giảm giá phía client
+        // Sale khi virtualPrice > basePrice (giá ảo cao hơn giá bán)
         const saleProducts = (data.data || []).filter(
-          (product: ProductType) => product.virtualPrice < product.basePrice
+          (product: ProductType) => product.virtualPrice > product.basePrice
         );
 
         setProducts(saleProducts);
+        // Lưu ý: Phân trang có thể không chính xác nếu lọc phía client.
+        // Lý tưởng nhất là API nên hỗ trợ một query param `onSale=true`.
         setTotalPages(data.totalPages || 0);
         setTotalItems(saleProducts.length);
       } catch (error) {
@@ -86,7 +90,7 @@ const SalePage: React.FC = () => {
         return "Giá: thấp → cao";
       case SortChooseType.PRICE_DESC:
         return "Giá: cao → thấp";
-      case SortChooseType.LATEST:
+      default:
         return "Mới nhất";
     }
   };
@@ -199,130 +203,100 @@ const SalePage: React.FC = () => {
     );
   };
 
-  // Calculate start and end indices for display
   const startIndex =
     products.length === 0 ? 0 : (currentPage - 1) * productsPerPage + 1;
   const endIndex = Math.min(currentPage * productsPerPage, totalItems);
 
   return (
-    <main>
-      <div className="content">
-        <div className="content_top">
-          <div className="contentProducts_navigate">
-            <div className="navigate_shopAll">
-              <p className="title_navigate">
-                <Link to="/" className="home_navigate">
-                  TRANG CHỦ
-                </Link>
-                / DANH MỤC SALE
-              </p>
-            </div>
-            <div className="filter_shopAlll">
-              <p>
-                Hiển thị {startIndex}–{endIndex} của {totalItems} kết quả
-              </p>
+    <main className="content">
+      <div className="content_top">
+        <div className="contentProducts_navigate">
+          <div className="navigate_shopAll">
+            <p className="title_navigate">
+              <Link to="/" className="home_navigate">
+                TRANG CHỦ
+              </Link>{" "}
+              / SẢN PHẨM KHUYẾN MÃI
+            </p>
+          </div>
+          <div className="filter_shopAlll">
+            <p>
+              Hiển thị {startIndex}–{endIndex} của {totalItems} kết quả
+            </p>
+            <div
+              className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
+              ref={dropdownRef}
+            >
               <div
-                className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
-                ref={dropdownRef}
+                className="selected"
+                onClick={() => setIsDropdownOpen((o) => !o)}
               >
-                <div
-                  className="selected"
-                  onClick={() => setIsDropdownOpen((o) => !o)}
-                >
-                  {getSortLabel(sortOption)} &#9662;
-                </div>
-                {isDropdownOpen && (
-                  <ul className="options" onClick={(e) => e.stopPropagation()}>
-                    <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
-                      Mới nhất
-                    </li>
-                    <li
-                      onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
-                    >
-                      Giá: thấp → cao
-                    </li>
-                    <li
-                      onClick={() =>
-                        handleSortChange(SortChooseType.PRICE_DESC)
-                      }
-                    >
-                      Giá: cao → thấp
-                    </li>
-                  </ul>
-                )}
+                <span>{getSortLabel(sortOption)}</span>
+                <span>&#9662;</span>
               </div>
+              <ul className="options" onClick={(e) => e.stopPropagation()}>
+                <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                  Mới nhất
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}>
+                  Giá: thấp → cao
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}>
+                  Giá: cao → thấp
+                </li>
+              </ul>
             </div>
           </div>
+        </div>
 
-          {products.length === 0 ? (
-            <p style={{ textAlign: "center", padding: "20px" }}>
-              Chưa có sản phẩm giảm giá nào.
-            </p>
-          ) : (
-            <div className="product_top">
-              <div className="products_home">
-                {products.map((product) => {
-                  const discountPercentage = calculateDiscountPercentage(
-                    product.basePrice,
-                    product.virtualPrice
-                  );
-                  const hasDiscount = discountPercentage > 0;
-
-                  return (
-                    <div className="item_products_home" key={product.id}>
-                      <div className="image_home_item">
-                        {hasDiscount && (
-                          <div className="product_sale">
-                            <p className="text_products_sale">
-                              -{discountPercentage}%
-                            </p>
-                          </div>
-                        )}
-                        <a href={`/product/${product.id}`}>
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="image_products_home"
-                          />
-                        </a>
+        {products.length === 0 ? (
+          <p style={{ textAlign: "center", padding: "40px 0" }}>
+            Chưa có sản phẩm giảm giá nào.
+          </p>
+        ) : (
+          <div className="product_top">
+            <div className="products_home">
+              {products.map((product) => {
+                const discountPercentage = calculateDiscountPercentage(
+                  product.basePrice,
+                  product.virtualPrice
+                );
+                return (
+                  <div className="item_products_home" key={product.id}>
+                    <a
+                      href={`/product/${product.id}`}
+                      className="image_home_item"
+                    >
+                      <div className="product_sale">
+                        <p className="text_products_sale">
+                          -{discountPercentage}%
+                        </p>
                       </div>
-                      <h4 className="infProducts_home">{product.name}</h4>
-                      <p className="infProducts_home">
-                        {hasDiscount ? (
-                          <>
-                            <span
-                              className="price-original"
-                              style={{
-                                textDecoration: "line-through",
-                                color: "#999",
-                                marginRight: "8px",
-                              }}
-                            >
-                              {formatCurrency(product.basePrice)}
-                            </span>
-                            <span
-                              className="price-sale"
-                              style={{
-                                color: "#ff0000",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {formatCurrency(product.virtualPrice)}
-                            </span>
-                          </>
-                        ) : (
-                          <span>{formatCurrency(product.virtualPrice)}</span>
-                        )}
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="image_products_home"
+                      />
+                    </a>
+                    <div className="product-info-container">
+                      <h4 className="product-name">{product.name}</h4>
+                      <p className="product-price">
+                        <span className="price-original">
+                          {formatCurrency(product.virtualPrice)}
+                        </span>
+                        <span className="price-sale">
+                          {formatCurrency(product.basePrice)}
+                        </span>
                       </p>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+        {renderPagination()}
       </div>
-      {renderPagination()}
     </main>
   );
 };
