@@ -75,6 +75,51 @@
   margin-bottom: 16px;
 }
 
+/* Description styles - Updated as separate block */
+.description_inf_products {
+  max-width: 1200px; /* 🔑 Same max-width as content_detailProduct */
+  margin: 20px auto 0 auto; /* 🔑 Center and add top margin from main content */
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: calc(100% - 40px); /* 🔑 Account for content margins */
+  box-sizing: border-box; /* 🔑 Include padding in width */
+}
+
+.description_title {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ff7f00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.description_title::before {
+  content: "📋";
+  font-size: 18px;
+}
+
+.description_content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ff7f00;
+}
+
+.description_content p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #495057;
+  text-align: justify;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  white-space: pre-line; /* 🔑 Fix line breaks - preserves \n characters */
+}
+
 /* ✅ THÊM: Styles cho giá giảm */
 .price_inf_products {
   font-size: 22px;
@@ -506,4 +551,79 @@
 .feedback-pagination a:first-child,
 .feedback-pagination a:last-child {
   font-weight: bold;
+}
+
+/* ---- Responsive Design for New Layout ---- */
+/* Tablet Styles */
+@media (max-width: 1024px) {
+  .content_detailProduct {
+    gap: 30px;
+    padding: 15px;
+  }
+
+  .description_inf_products {
+    margin: 15px auto 0 auto;
+    padding: 20px;
+    width: calc(100% - 30px);
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .content_detailProduct {
+    flex-direction: column; /* 🔑 Stack vertically on mobile */
+    gap: 20px;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 6px;
+  }
+
+  .inf_product,
+  .img_product {
+    width: 100%; /* 🔑 Full width on mobile */
+  }
+
+  /* Description as separate block on mobile */
+  .description_inf_products {
+    margin: 15px 10px 0 10px; /* 🔑 Match content margins */
+    padding: 15px;
+    width: calc(100% - 20px);
+  }
+
+  .description_content {
+    padding: 15px;
+  }
+
+  .description_content p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 480px) {
+  .content_detailProduct {
+    gap: 15px;
+    padding: 10px;
+    margin: 5px;
+  }
+
+  .description_inf_products {
+    margin: 10px 5px 0 5px; /* 🔑 Match content margins */
+    padding: 12px;
+    width: calc(100% - 10px);
+  }
+
+  .description_title {
+    font-size: 18px;
+  }
+
+  .description_content {
+    padding: 12px;
+  }
+
+  .description_content p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
 }
