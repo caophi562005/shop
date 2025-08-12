@@ -5,6 +5,7 @@ import "../assets/css/detailProduct.css";
 import type { GetProductDetailResType } from "../models/product.model";
 import http from "../api/http";
 import type { SKUType } from "../models/shared/shared-sku.model";
+import { languageUtils } from "../utils/language";
 
 // Biến để lưu trữ socket instance bên ngoài component để không bị khởi tạo lại mỗi lần render
 let socket: Socket;
@@ -43,7 +44,6 @@ const ProductDetailPage: React.FC = () => {
           setSelectedSize(data.variants[1]?.options?.[0] || "");
         }
       } catch (error) {
-        console.log(error);
         // Nếu API trả về lỗi (ví dụ: 404 Not Found), đặt cờ sản phẩm đã bị xóa
         setIsDeleted(true);
       }
@@ -88,15 +88,10 @@ const ProductDetailPage: React.FC = () => {
 
     // Các listener khác không đổi...
     socket.on("productUpdated", (updatedProduct: GetProductDetailResType) => {
-      console.log(
-        "Sản phẩm được cập nhật theo thời gian thực:",
-        updatedProduct
-      );
       setProduct(updatedProduct);
     });
 
-    socket.on("productDeleted", (data: { message: string }) => {
-      console.log(data.message);
+    socket.on("productDeleted", () => {
       setIsDeleted(true);
     });
 
@@ -128,13 +123,30 @@ const ProductDetailPage: React.FC = () => {
       currency: "VND",
     }).format(amount);
 
-  // ✅ THÊM: Hàm tính phần trăm giảm giá (giống SalePage)
+  // Helper function để lấy translation content theo ngôn ngữ hiện tại
+  const getTranslatedContent = (product: GetProductDetailResType) => {
+    const currentLang = languageUtils.getCurrentLanguage();
+    const translation = product.productTranslations.find(
+      (trans) => trans.languageId === currentLang
+    );
+
+    return {
+      name: translation?.name || product.name,
+      description: translation?.description || "",
+    };
+  };
+
+  // Hàm tính phần trăm giảm giá (giống SalePage)
   const calculateDiscountPercentage = (
     basePrice: number,
     virtualPrice: number
   ): number => {
-    if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
-    return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+    // basePrice: giá bán thực tế (thấp hơn)
+    // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
+    // Sale khi virtualPrice > basePrice
+    if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
+      return 0;
+    return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
   };
 
   // Hàm xử lý tăng/giảm số lượng, kiểm tra với stock của SKU đã chọn
@@ -175,7 +187,10 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // ✅ THÊM: Tính toán giảm giá
+  // Lấy nội dung đã dịch
+  const translatedContent = getTranslatedContent(product);
+
+  // Tính toán giảm giá dựa trên basePrice và virtualPrice
   const discountPercentage = calculateDiscountPercentage(
     product.basePrice,
     product.virtualPrice
@@ -207,22 +222,28 @@ const ProductDetailPage: React.FC = () => {
         </div>
 
         <div className="inf_product">
-          <h2 className="title_inf_products">{product.name}</h2>
+          <h2 className="title_inf_products">{translatedContent.name}</h2>
 
-          {/* ✅ THAY ĐỔI: Hiển thị giá với logic giảm giá */}
+          {/* ✅ Hiển thị giá với logic giảm giá */}
           <div className="price_inf_products">
             {hasDiscount ? (
               <>
                 <span className="price-original">
-                  {formatCurrency(product.basePrice)}
+                  {formatCurrency(product.virtualPrice)}
                 </span>
                 <span className="price-sale">
-                  {formatCurrency(product.virtualPrice)}
+                  {selectedSku
+                    ? formatCurrency(selectedSku.price)
+                    : formatCurrency(product.basePrice)}
                 </span>
                 <span className="discount-badge">-{discountPercentage}%</span>
               </>
             ) : (
-              <span>{formatCurrency(product.virtualPrice)}</span>
+              <span>
+                {selectedSku
+                  ? formatCurrency(selectedSku.price)
+                  : formatCurrency(product.basePrice)}
+              </span>
             )}
           </div>
 
@@ -314,6 +335,16 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Description block - Separate from main content */}
+      {translatedContent.description && (
+        <div className="description_inf_products">
+          <h3 className="description_title">Mô tả sản phẩm</h3>
+          <div className="description_content">
+            <p>{translatedContent.description}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
