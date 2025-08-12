@@ -30,6 +30,7 @@ import Pay from "./pages/Pay";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
 import OAuthGoogleCallback from "./pages/OAuthGoogleCallback";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 const App: React.FC = () => {
   const {
@@ -74,6 +75,7 @@ const App: React.FC = () => {
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route
             path="oauth-google-callback"
             element={<OAuthGoogleCallback />}
