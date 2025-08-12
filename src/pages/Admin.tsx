@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import DeleteProductModal from "../components/DeleteProductModal";
 import EditProductModal from "../components/EditProductModal";
 import CreateProductModal from "../components/CreateProductModal";
+import ProductTranslationModal from "../components/ProductTranslationModal";
 import http from "../api/http";
 import type {
   GetProductsResType,
@@ -21,6 +22,8 @@ const Admin: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [showTranslationModal, setShowTranslationModal] =
+    useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] =
     useState<ProductIncludeTranslationType | null>(null);
 
@@ -61,10 +64,16 @@ const Admin: React.FC = () => {
     setShowDeleteModal(true);
   };
 
+  const openTranslationModal = (product: ProductIncludeTranslationType) => {
+    setSelectedProduct(product);
+    setShowTranslationModal(true);
+  };
+
   const closeModals = () => {
     setShowCreateModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);
+    setShowTranslationModal(false);
     setSelectedProduct(null);
   };
 
@@ -255,6 +264,22 @@ const Admin: React.FC = () => {
                         <i className="fas fa-edit"></i>
                       </button>
                       <button
+                        className="btn-create"
+                        onClick={() => openTranslationModal(product)}
+                        title="Dịch sản phẩm"
+                        style={{
+                          backgroundColor: "#28a745",
+                          color: "white",
+                          border: "none",
+                          padding: "5px 8px",
+                          borderRadius: "3px",
+                          cursor: "pointer",
+                          margin: "0 2px",
+                        }}
+                      >
+                        <i className="fas fa-plus"></i>
+                      </button>
+                      <button
                         className="btn-delete"
                         onClick={() => openDeleteModal(product)}
                         title="Xóa"
@@ -294,6 +319,13 @@ const Admin: React.FC = () => {
         onSuccess={handleSuccess}
         onClose={closeModals}
         onRefresh={fetchProducts}
+      />
+
+      <ProductTranslationModal
+        isOpen={showTranslationModal}
+        onClose={closeModals}
+        productId={selectedProduct?.id ?? 0}
+        onSuccess={() => handleSuccess("Thao tác dịch thành công")}
       />
     </div>
   );
