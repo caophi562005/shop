@@ -78,6 +78,13 @@
   font-weight: 600;
 }
 
+.typing-indicator {
+  font-size: 12px;
+  opacity: 0.8;
+  font-style: italic;
+  margin-top: 2px;
+}
+
 .close-btn {
   background: none;
   border: none;
@@ -170,6 +177,14 @@
   background-color: #e4e6eb;
   color: #050505;
   border-bottom-left-radius: 4px;
+}
+
+/* Tên người gửi */
+.sender-name {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0.8;
 }
 
 /* Nội dung tin nhắn */
@@ -286,6 +301,10 @@
 
   .loading-messages,
   .empty-messages {
+    color: #b0b3b8;
+  }
+
+  .sender-name {
     color: #b0b3b8;
   }
 }
