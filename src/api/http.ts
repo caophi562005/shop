@@ -65,14 +65,31 @@ http.interceptors.response.use(
   async (error: AxiosError<ErrorResponse>) => {
     const originalRequest = error.config as ExtendedAxiosRequestConfig;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Không retry nếu đang gọi refresh-token endpoint
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh-token")
+    ) {
       originalRequest._retry = true;
       try {
         await refreshAccessToken();
         return http(originalRequest);
-      } catch {
-        window.dispatchEvent(new CustomEvent("auth:logout"));
+      } catch (refreshError) {
+        console.log("Refresh token failed:", refreshError);
+        // Trigger event để xử lý refresh token failure
+        window.dispatchEvent(new CustomEvent("auth:refresh-failed"));
       }
+    }
+
+    // Nếu là refresh-token endpoint bị 401, trigger auth failure ngay
+    if (
+      error.response?.status === 401 &&
+      originalRequest.url?.includes("/auth/refresh-token")
+    ) {
+      console.log("Refresh token endpoint returned 401");
+      window.dispatchEvent(new CustomEvent("auth:refresh-failed"));
+      return Promise.reject(error); // Không hiển thị toast cho refresh token error
     }
 
     handleErrorDisplay(error);

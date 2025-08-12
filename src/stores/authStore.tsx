@@ -16,6 +16,7 @@ interface AuthState {
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
   resetAuthState: () => void;
+  handleRefreshTokenFailure: () => void;
   checkAuthCookiesAsync: () => Promise<boolean>;
 }
 
@@ -68,11 +69,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuthStatus: async () => {
     // Nếu đã kiểm tra rồi thì không kiểm tra lại
-    if (get().isInitialized) return;
+    if (get().isInitialized) {
+      console.log("Auth already initialized, skipping check");
+      return;
+    }
 
+    console.log("Starting auth status check...");
     try {
       set({ isLoading: true });
       const response = await http.get<GetUserProfileResType>("/profile");
+      console.log("Auth check successful, user logged in");
       set({
         isLoggedIn: true,
         user: response.data,
@@ -99,6 +105,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isLoading: false,
       isInitialized: true,
     });
+  },
+
+  // Method để xử lý khi refresh token thất bại
+  handleRefreshTokenFailure: () => {
+    console.log("Refresh token failed - clearing auth state");
+    console.log("Current isInitialized:", get().isInitialized);
+    clearAuthCookies();
+    set({
+      isLoggedIn: false,
+      user: null,
+      isLoading: false,
+      isInitialized: true, // ĐÚNG: đã hoàn thành quá trình kiểm tra auth
+    });
+    console.log("Auth state cleared, isInitialized set to true");
   },
 
   checkAuthCookiesAsync: async () => {

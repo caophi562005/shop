@@ -30,7 +30,12 @@ import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
 
 const App: React.FC = () => {
-  const { isLoading, checkAuthStatus, resetAuthState } = useAuthStore();
+  const {
+    isLoading,
+    checkAuthStatus,
+    resetAuthState,
+    handleRefreshTokenFailure,
+  } = useAuthStore();
 
   // Kiểm tra trạng  thái đăng nhập khi app khởi động
   useEffect(() => {
@@ -44,12 +49,19 @@ const App: React.FC = () => {
       resetAuthState();
     };
 
+    const handleRefreshFailed = () => {
+      console.log("Refresh token failed, handling auth failure");
+      handleRefreshTokenFailure();
+    };
+
     window.addEventListener("auth:logout", handleAuthLogout);
+    window.addEventListener("auth:refresh-failed", handleRefreshFailed);
 
     return () => {
       window.removeEventListener("auth:logout", handleAuthLogout);
+      window.removeEventListener("auth:refresh-failed", handleRefreshFailed);
     };
-  }, [resetAuthState]);
+  }, [resetAuthState, handleRefreshTokenFailure]);
 
   return (
     <BrowserRouter>
