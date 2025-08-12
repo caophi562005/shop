@@ -20,6 +20,7 @@ import SalePage from "./pages/SalePage";
 import WomenPage from "./pages/WomenPage";
 import AccountList from "./pages/Accountlist";
 import Admin from "./pages/Admin";
+import AdminOrder from "./pages/AdminOrder";
 import Cart from "./pages/Cart";
 import CSDT from "./pages/CSDT";
 import CSTV from "./pages/CSTV";
@@ -102,6 +103,7 @@ const App: React.FC = () => {
             <Route path="chat" element={<AdminChat />} />
             <Route path="category" element={<CategoryListPage />} />
             <Route path="account" element={<AccountList />} />
+            <Route path="orders" element={<AdminOrder />} />
           </Route>
 
           {/* 3. Route cho trang 404 Not Found */}
