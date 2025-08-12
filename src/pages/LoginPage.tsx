@@ -5,11 +5,16 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { toast } from "react-toastify";
 
+interface GoogleOAuthLinkResponse {
+  url: string;
+}
+
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   const { login } = useAuthStore();
@@ -30,6 +35,25 @@ const LoginPage: React.FC = () => {
       console.error("Lỗi khi đăng nhập:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const response = await http.get<GoogleOAuthLinkResponse>(
+        "/auth/google-link"
+      );
+      const { url } = response.data;
+
+      console.log("Google OAuth URL received:", url);
+
+      // Chuyển hướng đến Google OAuth
+      window.location.href = url;
+    } catch (error) {
+      console.error("Lỗi khi lấy Google OAuth link:", error);
+      toast.error("Không thể kết nối với Google. Vui lòng thử lại.");
+      setIsGoogleLoading(false);
     }
   };
 
@@ -72,12 +96,18 @@ const LoginPage: React.FC = () => {
         <div className="social-login">
           <p>Hoặc đăng nhập bằng</p>
           <div className="social-buttons">
-            <a href="#" className="google-btn">
-              <i className="fab fa-google"></i> Google
-            </a>
-            <a href="#" className="facebook-btn">
-              <i className="fab fa-facebook-f"></i> Facebook
-            </a>
+            <button
+              onClick={handleGoogleLogin}
+              className="google-btn"
+              disabled={isGoogleLoading}
+            >
+              {isGoogleLoading ? (
+                <i className="fas fa-spinner fa-spin"></i>
+              ) : (
+                <i className="fab fa-google"></i>
+              )}
+              {isGoogleLoading ? "Đang kết nối..." : "Google"}
+            </button>
           </div>
         </div>
 
