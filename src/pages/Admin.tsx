@@ -1,182 +1,300 @@
-import React, { useState, useEffect } from 'react';
-import '../assets/css/admin.css';
+import React, { useEffect, useState } from "react";
+import "../assets/css/admin.css";
+import "../assets/css/modal.css";
+import { toast } from "react-toastify";
+import DeleteProductModal from "../components/DeleteProductModal";
+import EditProductModal from "../components/EditProductModal";
+import CreateProductModal from "../components/CreateProductModal";
+import http from "../api/http";
+import type {
+  GetProductsResType,
+  ProductIncludeTranslationType,
+} from "../models/product.model";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  detail: string;
-};
+const Admin: React.FC = () => {
+  const [products, setProducts] = useState<ProductIncludeTranslationType[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
 
-type Props = {
-  products: Product[];
-  page: number;
-  totalPages: number;
-};
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [selectedProduct, setSelectedProduct] =
+    useState<ProductIncludeTranslationType | null>(null);
 
-const Admin: React.FC<Props> = ({ products = [], page = 1, totalPages = 1 }) => {
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
+  const productsPerPage = 10;
 
   useEffect(() => {
-    if (selectAll) {
-      setSelectedIds(products.map((p) => p.id));
-    } else {
-      setSelectedIds([]);
-    }
-  }, [selectAll, products]);
+    fetchProducts();
+  }, [currentPage]);
 
-  const toggleCheckbox = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+  const fetchProducts = async () => {
+    try {
+      const response = await http.get(
+        `/manage-product/products?page=${currentPage}&limit=${productsPerPage}`
+      );
+
+      const data: GetProductsResType = await response.data;
+      setProducts(data.data || []);
+      setTotalPages(data.totalPages || 0);
+      setTotalItems(data.totalItems || 0);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      setProducts([]);
+      toast.error("Không thể tải danh sách sản phẩm");
+    }
   };
 
-  const handleDeleteSubmit = (e: React.FormEvent) => {
-    if (!window.confirm('Bạn có chắc muốn xóa các sản phẩm đã chọn?')) {
-      e.preventDefault();
-    }
+  const openCreateModal = () => {
+    setShowCreateModal(true);
   };
 
-  const openModal = (id: number) => setEditId(id);
-  const closeModal = () => setEditId(null);
-  const confirmEdit = () => {
-    if (editId !== null) {
-      window.location.href = `index.php?controller=admin&action=edit&id=${editId}`;
-    }
+  const openEditModal = (product: ProductIncludeTranslationType) => {
+    setSelectedProduct(product);
+    setShowEditModal(true);
+  };
+
+  const openDeleteModal = (product: ProductIncludeTranslationType) => {
+    setSelectedProduct(product);
+    setShowDeleteModal(true);
+  };
+
+  const closeModals = () => {
+    setShowCreateModal(false);
+    setShowEditModal(false);
+    setShowDeleteModal(false);
+    setSelectedProduct(null);
+  };
+
+  const handleSuccess = (message: string) => {
+    toast.success(message);
   };
 
   const renderPagination = () => {
-    const start = Math.max(1, page - 2);
-    const end = Math.min(totalPages, page + 2);
-    const pages = [];
+    if (totalPages <= 1) return null;
 
-    if (start > 1) {
-      pages.push(
-        <a key="page-1" href="?controller=admin&action=index&page=1" className="admin-page-link">1</a>
-      );
-      if (start > 2) pages.push(<span key="dots-start" className="admin-dots">…</span>);
+    const range = 2;
+    const pages: (number | string)[] = [];
+
+    // Previous button
+    pages.push("prev");
+
+    // First page and ellipsis
+    if (currentPage > range + 1) {
+      pages.push(1);
+      if (currentPage > range + 2) pages.push("...");
     }
 
-    for (let i = start; i <= end; i++) {
-      pages.push(
-        i === page ? (
-          <span key={i} className="admin-page-link admin-current">{i}</span>
-        ) : (
-          <a key={i} href={`?controller=admin&action=index&page=${i}`} className="admin-page-link">{i}</a>
-        )
-      );
+    // Current page range
+    for (
+      let i = Math.max(1, currentPage - range);
+      i <= Math.min(totalPages, currentPage + range);
+      i++
+    ) {
+      pages.push(i);
     }
 
-    if (end < totalPages) {
-      if (end < totalPages - 1) {
-        pages.push(<span key="dots-end" className="admin-dots">…</span>);
-      }
-      pages.push(
-        <a key={totalPages} href={`?controller=admin&action=index&page=${totalPages}`} className="admin-page-link">
-          {totalPages}
-        </a>
-      );
+    // Last page and ellipsis
+    if (currentPage < totalPages - range) {
+      if (currentPage < totalPages - (range + 1)) pages.push("...");
+      pages.push(totalPages);
     }
 
-    return pages;
+    // Next button
+    pages.push("next");
+
+    return (
+      <nav className="admin-pagination">
+        {pages.map((p, index) => {
+          if (p === "prev") {
+            return currentPage > 1 ? (
+              <a
+                key={index}
+                href="#"
+                className="admin-page-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage - 1);
+                }}
+              >
+                <i className="fas fa-angle-left"></i>
+              </a>
+            ) : (
+              <span key={index} className="admin-page-link admin-disabled">
+                <i className="fas fa-angle-left"></i>
+              </span>
+            );
+          }
+          if (p === "next") {
+            return currentPage < totalPages ? (
+              <a
+                key={index}
+                href="#"
+                className="admin-page-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(currentPage + 1);
+                }}
+              >
+                <i className="fas fa-angle-right"></i>
+              </a>
+            ) : (
+              <span key={index} className="admin-page-link admin-disabled">
+                <i className="fas fa-angle-right"></i>
+              </span>
+            );
+          }
+          if (p === "...") {
+            return (
+              <span key={index} className="admin-page-link admin-disabled">
+                ...
+              </span>
+            );
+          }
+          return p === currentPage ? (
+            <span key={index} className="admin-page-link admin-current">
+              {p}
+            </span>
+          ) : (
+            <a
+              key={index}
+              href="#"
+              className="admin-page-link"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage(p as number);
+              }}
+            >
+              {p}
+            </a>
+          );
+        })}
+      </nav>
+    );
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
     <div className="wrapper">
       <main>
         <h2>Danh sách sản phẩm</h2>
-
         <div className="action-bar">
-          <a id="Themsanpham" href="index.php?controller=admin&action=create" className="btn add-btn">
-            ➕ Thêm sản phẩm
-          </a>
+          <button className="btn add-btn" onClick={openCreateModal}>
+            <i className="fas fa-plus"></i>
+            Thêm sản phẩm
+          </button>
         </div>
 
-        <form method="post" action="index.php?controller=admin&action=deleteMulti" onSubmit={handleDeleteSubmit}>
-          <table>
+        <div className="filter-info">
+          <p>
+            Hiển thị {products.length} của {totalItems} sản phẩm
+          </p>
+        </div>
+
+        <div className="table-container">
+          <table className="cinema-table">
             <thead>
               <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    id="selectAll"
-                    checked={selectAll}
-                    onChange={(e) => setSelectAll(e.target.checked)}
-                  />
-                </th>
                 <th>ID</th>
-                <th>Tên</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Chi tiết</th>
+                <th>Hình ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Giá gốc</th>
+                <th>Giá ảo</th>
+                <th>Ngày xuất bản</th>
+                <th>Ngày tạo</th>
                 <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => (
                 <tr key={product.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      name="ids[]"
-                      value={product.id}
-                      checked={selectedIds.includes(product.id)}
-                      onChange={() => toggleCheckbox(product.id)}
-                    />
-                  </td>
                   <td>{product.id}</td>
+                  <td>
+                    {product.images.length > 0 && (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        style={{
+                          width: "50px",
+                          height: "50px",
+                          objectFit: "cover",
+                          borderRadius: "4px",
+                        }}
+                      />
+                    )}
+                  </td>
                   <td className="tooltip" data-tooltip={product.name}>
                     {product.name}
                   </td>
-                  <td>{product.price}</td>
-                  <td>{product.quantity}</td>
-                  <td>{product.detail}</td>
+                  <td>{product.basePrice.toLocaleString()} VND</td>
+                  <td>{product.virtualPrice.toLocaleString()} VND</td>
                   <td>
-                    <a
-                      href="javascript:void(0)"
-                      className="action-link"
-                      onClick={() => openModal(product.id)}
-                    >
-                      ✏️ Sửa
-                    </a>
+                    {product.publishedAt
+                      ? formatDate(String(product.publishedAt))
+                      : "Chưa xuất bản"}
+                  </td>
+                  <td>{formatDate(String(product.createdAt))}</td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="btn-edit"
+                        onClick={() => openEditModal(product)}
+                        title="Chỉnh sửa"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => openDeleteModal(product)}
+                        title="Xóa"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <button className="btn-deleteproduct" type="submit">🗑️ Xóa đã chọn</button>
-        </form>
+        </div>
 
-        {totalPages > 1 && (
-          <nav className="admin-pagination">
-            {page > 1 ? (
-              <a href={`?controller=admin&action=index&page=${page - 1}`} className="admin-page-link">«</a>
-            ) : (
-              <span className="admin-page-link admin-disabled">«</span>
-            )}
-            {renderPagination()}
-            {page < totalPages ? (
-              <a href={`?controller=admin&action=index&page=${page + 1}`} className="admin-page-link">»</a>
-            ) : (
-              <span className="admin-page-link admin-disabled">»</span>
-            )}
-          </nav>
-        )}
-
-        {/* Modal */}
-        {editId !== null && (
-          <div className="modal" id="editModal" onClick={(e) => e.target === e.currentTarget && closeModal()}>
-            <div className="modal-content">
-              <h3>Xác nhận sửa sản phẩm?</h3>
-              <button className="confirm-edit" onClick={confirmEdit}>Đồng ý</button>
-              <button className="close-modal" onClick={closeModal}>Huỷ</button>
-            </div>
-          </div>
-        )}
+        {renderPagination()}
       </main>
+
+      {/* Modals */}
+      <CreateProductModal
+        isOpen={showCreateModal}
+        onClose={closeModals}
+        onSuccess={handleSuccess}
+        onRefresh={fetchProducts}
+      />
+
+      <EditProductModal
+        isOpen={showEditModal}
+        product={selectedProduct}
+        onSuccess={handleSuccess}
+        onClose={closeModals}
+        onRefresh={fetchProducts}
+      />
+
+      <DeleteProductModal
+        isOpen={showDeleteModal}
+        product={selectedProduct}
+        onSuccess={handleSuccess}
+        onClose={closeModals}
+        onRefresh={fetchProducts}
+      />
     </div>
   );
 };
