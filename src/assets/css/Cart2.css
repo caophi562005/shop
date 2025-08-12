@@ -16,8 +16,6 @@
 }
 
 body {
-  background: var(--bg-light) url("/PIXCAM/view/img/bg-light.jpg") center/cover
-    no-repeat;
   color: var(--text-dark);
   font-family: var(--font);
   display: flex;
