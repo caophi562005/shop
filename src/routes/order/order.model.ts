@@ -7,7 +7,6 @@ export const GetOrderListResSchema = z.object({
     OrderSchema.extend({
       items: z.array(ProductSKUSnapshotSchema),
     }).omit({
-      receiver: true,
       deletedAt: true,
       deletedById: true,
       createdById: true,
@@ -51,6 +50,23 @@ export const GetOrderParamsSchema = z
   })
   .strict()
 
+export const UpdateOrderBodySchema = z.object({
+  status: OrderStatusSchema.optional(),
+  receiver: z
+    .object({
+      name: z.string().optional(),
+      phone: z.string().optional(),
+      address: z.string().optional(),
+      email: z.string().email().optional(),
+      note: z.string().optional(),
+    })
+    .optional(),
+})
+
+export const UpdateOrderResSchema = OrderSchema.extend({
+  items: z.array(ProductSKUSnapshotSchema),
+})
+
 export type GetOrderParamsType = z.infer<typeof GetOrderParamsSchema>
 export type OrderType = z.infer<typeof OrderSchema>
 export type GetOrderListResType = z.infer<typeof GetOrderListResSchema>
@@ -59,3 +75,5 @@ export type GetOrderDetailResType = z.infer<typeof GetOrderDetailResSchema>
 export type CreateOrderBodyType = z.infer<typeof CreateOrderBodySchema>
 export type CreateOrderResType = z.infer<typeof CreateOrderResSchema>
 export type CancelOrderResType = z.infer<typeof CancelOrderResSchema>
+export type UpdateOrderBodyType = z.infer<typeof UpdateOrderBodySchema>
+export type UpdateOrderResType = z.infer<typeof UpdateOrderResSchema>

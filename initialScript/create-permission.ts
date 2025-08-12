@@ -16,6 +16,7 @@ const SellerModule = [
   'NOTIFICATIONS',
   'MANAGE-PRODUCT',
   'PRODUCT-TRANSLATIONS',
+  'MANAGE-ORDERS',
 ]
 const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS', 'MESSAGES', 'NOTIFICATIONS']
 

@@ -7,6 +7,8 @@ import {
   GetOrderDetailResType,
   GetOrderListQueryType,
   GetOrderListResType,
+  UpdateOrderBodyType,
+  UpdateOrderResType,
 } from './order.model'
 import { Prisma } from '@prisma/client'
 import { OrderStatus } from 'src/shared/constants/order.constant'
@@ -59,6 +61,40 @@ export class OrderRepository {
 
     return {
       revenue: revenueWithTotal,
+    }
+  }
+
+  async listAll(query: GetOrderListQueryType): Promise<GetOrderListResType> {
+    const skip = (query.page - 1) * query.limit
+    const take = query.limit
+
+    const where: Prisma.OrderWhereInput = {
+      status: query.status,
+    }
+
+    const [totalItems, data] = await Promise.all([
+      this.prismaService.order.count({
+        where,
+      }),
+      this.prismaService.order.findMany({
+        where,
+        include: {
+          items: true,
+        },
+        skip,
+        take,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+    ])
+
+    return {
+      data,
+      page: query.page,
+      limit: query.limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / query.limit),
     }
   }
 
@@ -299,6 +335,43 @@ export class OrderRepository {
       })
 
       return cancel
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw OrderNotFoundException
+      }
+      throw error
+    }
+  }
+
+  async update({ orderId, body }: { orderId: number; body: UpdateOrderBodyType }): Promise<UpdateOrderResType> {
+    try {
+      const updateData: any = {}
+
+      if (body.status !== undefined) {
+        updateData.status = body.status
+      }
+
+      if (body.receiver !== undefined) {
+        const currentOrder = await this.prismaService.order.findUniqueOrThrow({
+          where: { id: orderId },
+          select: { receiver: true },
+        })
+
+        updateData.receiver = {
+          ...currentOrder.receiver,
+          ...Object.fromEntries(Object.entries(body.receiver).filter(([_, value]) => value !== undefined)),
+        }
+      }
+
+      const updatedOrder = await this.prismaService.order.update({
+        where: { id: orderId },
+        data: updateData,
+        include: {
+          items: true,
+        },
+      })
+
+      return updatedOrder
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
         throw OrderNotFoundException
