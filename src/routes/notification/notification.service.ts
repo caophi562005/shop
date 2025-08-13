@@ -1,26 +1,24 @@
 import { Injectable } from '@nestjs/common'
-import { NotificationRepository } from './notification.repo'
-import { CreateNotificationType } from './notification.model'
-import { NotificationGateway } from './notification.gateway'
+import { CreateNotificationType } from 'src/shared/models/shared-notification.model'
+import { SharedNotificationRepository } from 'src/shared/repositories/shared-notification.repo'
 
 @Injectable()
 export class NotificationService {
-  constructor(
-    private readonly notificationRepository: NotificationRepository,
-    private readonly notificationGateway: NotificationGateway,
-  ) {}
+  constructor(private readonly sharedNotificationRepository: SharedNotificationRepository) {}
 
   list(userId: number) {
-    return this.notificationRepository.list(userId)
+    return this.sharedNotificationRepository.list(userId)
   }
 
-  async create(notification: CreateNotificationType) {
-    const newNotification = await this.notificationRepository.create(notification)
-    this.notificationGateway.handleNotificationCreated(newNotification)
-    return newNotification
+  create(notification: CreateNotificationType) {
+    return this.sharedNotificationRepository.create(notification)
   }
 
   markAsRead(id: number) {
-    return this.notificationRepository.markAsRead(id)
+    return this.sharedNotificationRepository.markAsRead(id)
+  }
+
+  delete(id: number) {
+    return this.sharedNotificationRepository.delete(id)
   }
 }

@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../services/prisma.service'
 import { OrderStatus } from '@prisma/client'
 import { PaymentStatus } from '../constants/payment.constant'
+import { SharedNotificationRepository } from './shared-notification.repo'
 
 @Injectable()
 export class SharedPaymentRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly sharedNotificationRepository: SharedNotificationRepository,
+  ) {}
 
   async cancelPaymentAndOrder(paymentId: number) {
     const payment = await this.prismaService.payment.findUnique({
@@ -31,6 +35,8 @@ export class SharedPaymentRepository {
     if (!order) {
       throw Error('Order not found')
     }
+
+    const userId = order.userId
 
     const productSKUSnapshots = order.items
     await this.prismaService.$transaction(async (tx) => {
@@ -71,7 +77,12 @@ export class SharedPaymentRepository {
         },
       })
 
-      return await Promise.all([updateOrder$, updateSkus$, updatePayment$])
+      const notification$ = this.sharedNotificationRepository.create({
+        userId,
+        content: `Your payment #${paymentId} has been cancelled.`,
+      })
+
+      return await Promise.all([updateOrder$, updateSkus$, updatePayment$, notification$])
     })
   }
 }

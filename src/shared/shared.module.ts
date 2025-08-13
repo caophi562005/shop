@@ -11,6 +11,8 @@ import { PaymentAPIKeyGuard } from './guards/payment-api-key.guard'
 import { AuthenticationGuard } from './guards/authentication.guard'
 import { TwoFactorService } from './services/twoFactorService.service'
 import { SharedPaymentRepository } from './repositories/shared-payment.repo'
+import { SharedNotificationRepository } from './repositories/shared-notification.repo'
+import { NotificationGateway } from 'src/websockets/notification.gateway'
 
 const sharedServices = [
   PrismaService,
@@ -21,6 +23,8 @@ const sharedServices = [
   SharedUserRepository,
   SharedRoleRepository,
   SharedPaymentRepository,
+  SharedNotificationRepository,
+  NotificationGateway,
 ]
 
 @Global()
