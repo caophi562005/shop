@@ -173,7 +173,7 @@ const HomePage: React.FC = () => {
             <Slider {...productSettings}>
               {products.map((product) => (
                 <div key={product.id} className="product-item">
-                  <a href={`/products/${product.id}`} className="product-link">
+                  <a href={`/product/${product.id}`} className="product-link">
                     <img
                       src={
                         product.images[0] ||
