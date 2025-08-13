@@ -102,6 +102,18 @@ const ProductDetailPage: React.FC = () => {
     fetchProduct();
   }, [productId]);
 
+  // Effect để set title với tên sản phẩm
+  useEffect(() => {
+    if (product) {
+      const currentLang = languageUtils.getCurrentLanguage();
+      const translation = product.productTranslations.find(
+        (trans) => trans.languageId === currentLang
+      );
+      const productName = translation?.name || product.name;
+      document.title = `${productName} - PIXCAM`;
+    }
+  }, [product]);
+
   // Listen for product updates using the hook
   useEffect(() => {
     if (!isConnected) return;

@@ -13,6 +13,7 @@ import CategoryListPage from "./pages/CategoryListPage";
 import { useAuthStore } from "./stores/authStore";
 import LoadingOverlay from "./components/LoadingOverlay";
 import AuthDebugger from "./components/AuthDebugger";
+import TitleManager from "./components/TitleManager";
 import RevenuePage from "./pages/RevenuePage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import TransferPage from "./pages/TransferPage";
@@ -72,6 +73,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <TitleManager />
       {isLoading && <LoadingOverlay />}
       <Routes>
         <Route path="/" element={<Layout />}>
