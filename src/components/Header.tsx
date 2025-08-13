@@ -153,20 +153,11 @@ const Header: React.FC = () => {
           <Link to="/cart" style={linkStyle}>
             Giỏ hàng
           </Link>
-          <Link to="/admin/chat" style={linkStyle}>
-            Hỗ trợ
-          </Link>
-          <Link to="/admin/revenue" style={linkStyle}>
-            Doanh thu
-          </Link>
-          <Link to="/admin/account" style={linkStyle}>
-            Quản lý tài khoản
+          <Link to="/order-history" style={linkStyle}>
+            Lịch sử mua hàng{" "}
           </Link>
           <Link to="/admin" style={linkStyle}>
-            Quản lý sản phẩm
-          </Link>
-          <Link to="/admin/category" style={linkStyle}>
-            Quản lý danh mục
+            Quản lý
           </Link>
           <Link
             to="/"

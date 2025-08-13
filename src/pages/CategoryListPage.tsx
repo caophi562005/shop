@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../assets/css/admin.css";
+import "../assets/css/adminProducts.css";
 import "../assets/css/modal.css";
 import http from "../api/http";
 import AddCategoryModal from "./AddCategoryModal";

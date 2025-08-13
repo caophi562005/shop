@@ -19,7 +19,6 @@ import FindProductPage from "./pages/FindProductPage";
 import SalePage from "./pages/SalePage";
 import WomenPage from "./pages/WomenPage";
 import AccountList from "./pages/Accountlist";
-import Admin from "./pages/Admin";
 import AdminOrder from "./pages/AdminOrder";
 import Cart from "./pages/Cart";
 import CSDT from "./pages/CSDT";
@@ -31,6 +30,8 @@ import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
 import OAuthGoogleCallback from "./pages/OAuthGoogleCallback";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import AdminProducts from "./pages/AdminProducts";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const App: React.FC = () => {
   const {
@@ -105,7 +106,8 @@ const App: React.FC = () => {
 
           {/* 2. Các routes dành cho Admin được gom vào một nhóm */}
           <Route path="admin">
-            <Route index element={<Admin />} />
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
             <Route path="revenue" element={<RevenuePage />} />
             <Route path="chat" element={<AdminChat />} />
             <Route path="category" element={<CategoryListPage />} />

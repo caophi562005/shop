@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../assets/css/admin.css";
+import "../assets/css/adminProducts.css";
 import "../assets/css/modal.css";
 import { toast } from "react-toastify";
 import DeleteProductModal from "../components/DeleteProductModal";
@@ -12,7 +12,7 @@ import type {
   ProductIncludeTranslationType,
 } from "../models/product.model";
 
-const Admin: React.FC = () => {
+const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<ProductIncludeTranslationType[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(0);
@@ -331,4 +331,4 @@ const Admin: React.FC = () => {
   );
 };
 
-export default Admin;
+export default AdminProducts;
