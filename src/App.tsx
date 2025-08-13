@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import GuestOnlyRoute from "./components/GuestOnlyRoute";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -74,8 +77,22 @@ const App: React.FC = () => {
         <Route path="/" element={<Layout />}>
           {/* --- Các trang công khai --- */}
           <Route index element={<HomePage />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
+          <Route
+            path="login"
+            element={
+              <GuestOnlyRoute>
+                <LoginPage />
+              </GuestOnlyRoute>
+            }
+          />
+          <Route
+            path="register"
+            element={
+              <GuestOnlyRoute>
+                <RegisterPage />
+              </GuestOnlyRoute>
+            }
+          />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route
             path="oauth-google-callback"
@@ -96,23 +113,121 @@ const App: React.FC = () => {
             element={<FindProductPage />}
           />
 
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="/pay" element={<Pay />} />
-          <Route path="transfer/:orderId" element={<TransferPage />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
-          <Route path="order-history" element={<OrderHistory />} />
-          <Route path="order-detail/:orderId" element={<OrderDetail />} />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pay"
+            element={
+              <ProtectedRoute>
+                <Pay />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="transfer/:orderId"
+            element={
+              <ProtectedRoute>
+                <TransferPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="order-success/:orderId"
+            element={
+              <ProtectedRoute>
+                <OrderSuccessPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="order-history"
+            element={
+              <ProtectedRoute>
+                <OrderHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="order-detail/:orderId"
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
 
           {/* 2. Các routes dành cho Admin được gom vào một nhóm */}
           <Route path="admin">
-            <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="revenue" element={<RevenuePage />} />
-            <Route path="chat" element={<AdminChat />} />
-            <Route path="category" element={<CategoryListPage />} />
-            <Route path="account" element={<AccountList />} />
-            <Route path="orders" element={<AdminOrder />} />
+            <Route
+              index
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="products"
+              element={
+                <AdminRoute>
+                  <AdminProducts />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="revenue"
+              element={
+                <AdminRoute>
+                  <RevenuePage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="chat"
+              element={
+                <AdminRoute>
+                  <AdminChat />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="category"
+              element={
+                <AdminRoute>
+                  <CategoryListPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="account"
+              element={
+                <AdminRoute>
+                  <AccountList />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <AdminRoute>
+                  <AdminOrder />
+                </AdminRoute>
+              }
+            />
           </Route>
 
           {/* 3. Route cho trang 404 Not Found */}

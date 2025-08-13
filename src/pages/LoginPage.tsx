@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../assets/css/login.css";
 import http from "../api/http";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { toast } from "react-toastify";
 
@@ -16,8 +16,12 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { login } = useAuthStore();
+
+  // Lấy địa chỉ trang trước đó từ state, mặc định là "/"
+  const from = location.state?.from?.pathname || "/";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +34,8 @@ const LoginPage: React.FC = () => {
       });
       await login();
       toast.success(response.data.message);
-      navigate("/");
+      // Redirect về trang trước đó hoặc trang chủ
+      navigate(from, { replace: true });
     } catch (error) {
       console.error("Lỗi khi đăng nhập:", error);
     } finally {
