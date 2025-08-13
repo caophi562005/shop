@@ -41,7 +41,7 @@ const mockCategories = [
       { id: 302, name: "Kính Mắt", path: "/products/accessories/glasses" },
     ],
   },
-  { id: 4, name: "SALE", path: "/sale", subcategories: [] },
+  { id: 4, name: "SALE", path: "/products/sale", subcategories: [] },
 ];
 
 const Header: React.FC = () => {

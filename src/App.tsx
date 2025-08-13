@@ -81,28 +81,28 @@ const App: React.FC = () => {
             path="oauth-google-callback"
             element={<OAuthGoogleCallback />}
           />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="cart" element={<Cart />} />
 
           <Route path="chinh-sach-doi-tra" element={<CSDT />} />
           <Route path="chinh-sach-thanh-vien" element={<CSTV />} />
           <Route path="chinh-sach-van-chuyen" element={<CSVC />} />
 
-          <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
-          <Route path="order-history" element={<OrderHistory />} />
-          <Route path="order-detail/:orderId" element={<OrderDetail />} />
-          <Route path="transfer/:orderId" element={<TransferPage />} />
           <Route path="/products/men" element={<MenPage />} />
           <Route path="/products/women" element={<WomenPage />} />
           <Route path="/products/accessories" element={<AccessoriesPage />} />
+          <Route path="/products/sale" element={<SalePage />} />
+          <Route path="product/:productId" element={<ProductDetailPage />} />
           <Route
             path="/products/find-products/:name"
             element={<FindProductPage />}
           />
-          <Route path="/sale" element={<SalePage />} />
+
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="/pay" element={<Pay />} />
-          {/* 1. Route cho trang chi tiết sản phẩm với ID động */}
-          <Route path="product/:productId" element={<ProductDetailPage />} />
+          <Route path="transfer/:orderId" element={<TransferPage />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
+          <Route path="order-history" element={<OrderHistory />} />
+          <Route path="order-detail/:orderId" element={<OrderDetail />} />
 
           {/* 2. Các routes dành cho Admin được gom vào một nhóm */}
           <Route path="admin">
