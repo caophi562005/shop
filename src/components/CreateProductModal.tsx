@@ -4,6 +4,8 @@ import type { VariantsType } from "../models/shared/shared-product.model";
 import type { UpsertSKUType } from "../models/sku.model";
 import type { SKUType } from "../models/shared/shared-sku.model";
 import http from "../api/http";
+import axios from "axios";
+import "../assets/css/createProduct.css";
 
 type Props = {
   isOpen: boolean;
@@ -32,6 +34,12 @@ const CreateProductModal: React.FC<Props> = ({
     skus: [],
   });
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Upload states
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<Record<number, number>>(
+    {}
+  );
 
   function generateSKUs(
     variants: VariantsType,
@@ -128,6 +136,69 @@ const CreateProductModal: React.FC<Props> = ({
       const newImages = formData.images.filter((_, i) => i !== index);
       setFormData((prev) => ({ ...prev, images: newImages }));
     }
+  };
+
+  const handleImageUpload = (index: number, file: File) => {
+    setUploadingIndex(index);
+    setUploadProgress((prev) => ({ ...prev, [index]: 0 }));
+
+    // Follow exact same flow as Upload.tsx
+    http
+      .post(
+        "/media/images/upload/presigned-url",
+        {
+          filename: file.name,
+          filesize: file.size,
+        },
+        { withCredentials: false }
+      )
+      .then((res) => {
+        // Store URLs first (matching Upload.tsx logic)
+        const url = res.data.url;
+        const presignedUrl = res.data.presignedUrl;
+
+        // Return axios.put to chain promises (matching Upload.tsx)
+        return axios
+          .put(presignedUrl, file, {
+            headers: {
+              "Content-Type": file.type,
+            },
+            withCredentials: false, // Fix CORS issue with S3
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                setUploadProgress((prev) => ({ ...prev, [index]: progress }));
+              }
+            },
+          })
+          .then(() => {
+            // Return the final URL after successful upload
+            return url;
+          });
+      })
+      .then((finalUrl) => {
+        // Update input form với URL sau khi upload thành công
+        handleImageChange(index, finalUrl);
+
+        setUploadingIndex(null);
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[index];
+          return newProgress;
+        });
+      })
+      .catch((error) => {
+        console.error("Upload failed:", error);
+        alert("Upload thất bại! Vui lòng thử lại.");
+        setUploadingIndex(null);
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[index];
+          return newProgress;
+        });
+      });
   };
 
   const handleSKUChange = (
@@ -265,14 +336,43 @@ const CreateProductModal: React.FC<Props> = ({
                   placeholder="URL hình ảnh"
                   value={image}
                   onChange={(e) => handleImageChange(index, e.target.value)}
-                  disabled={loading}
+                  disabled={loading || uploadingIndex === index}
                 />
+
+                {/* Upload button */}
+                <label className="btn-upload">
+                  📁 Upload
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleImageUpload(index, file);
+                      }
+                    }}
+                    disabled={loading || uploadingIndex === index}
+                    style={{ display: "none" }}
+                  />
+                </label>
+
+                {/* Progress bar */}
+                {uploadingIndex === index && (
+                  <div className="upload-progress">
+                    <div
+                      className="progress-bar"
+                      style={{ width: `${uploadProgress[index] || 0}%` }}
+                    ></div>
+                    <span>{uploadProgress[index] || 0}%</span>
+                  </div>
+                )}
+
                 {formData.images.length > 1 && (
                   <button
                     type="button"
                     className="btn-remove"
                     onClick={() => removeImageField(index)}
-                    disabled={loading}
+                    disabled={loading || uploadingIndex === index}
                   >
                     ❌
                   </button>
