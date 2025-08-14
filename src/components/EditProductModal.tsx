@@ -5,10 +5,29 @@ import type {
   GetProductDetailResType,
 } from "../models/product.model";
 import type { VariantsType } from "../models/shared/shared-product.model";
-import type { UpsertSKUType } from "../models/sku.model";
 import http from "../api/http";
 import axios from "axios";
 import "../assets/css/editProduct.css";
+
+// Local interface for form state với string prices
+interface EditProductFormData {
+  name: string;
+  publishedAt: string | null;
+  basePrice: string;
+  virtualPrice: string;
+  images: string[];
+  categories: number[];
+  variants: VariantsType;
+  skus: LocalSKUType[];
+}
+
+// Local SKU type with string price
+interface LocalSKUType {
+  value: string;
+  price: string; // Changed from number to string
+  stock: number;
+  image: string;
+}
 
 type Props = {
   isOpen: boolean;
@@ -27,11 +46,11 @@ const EditProductModal: React.FC<Props> = ({
   onSuccess,
   onRefresh,
 }) => {
-  const [formData, setFormData] = useState<UpdateProductBodyType>({
+  const [formData, setFormData] = useState<EditProductFormData>({
     name: "",
     publishedAt: null,
-    basePrice: 0,
-    virtualPrice: 0,
+    basePrice: "0",
+    virtualPrice: "0",
     images: [""],
     categories: [0],
     variants: [
@@ -64,10 +83,10 @@ const EditProductModal: React.FC<Props> = ({
         "skus" in product && product.skus && product.skus.length > 0;
 
       // Sử dụng SKU từ API thay vì tự generate
-      const existingSKUs = hasSkus
+      const existingSKUs: LocalSKUType[] = hasSkus
         ? (product as any).skus.map((sku: any) => ({
             value: sku.value,
-            price: sku.price,
+            price: sku.price.toString(), // Convert to string
             stock: sku.stock,
             image: sku.image || "",
           }))
@@ -75,9 +94,11 @@ const EditProductModal: React.FC<Props> = ({
 
       setFormData({
         name: product.name,
-        publishedAt: product.publishedAt,
-        basePrice: product.basePrice,
-        virtualPrice: product.virtualPrice,
+        publishedAt: product.publishedAt
+          ? product.publishedAt.toString()
+          : null,
+        basePrice: product.basePrice.toString(),
+        virtualPrice: product.virtualPrice.toString(),
         images: product.images.length > 0 ? product.images : [""],
         categories: product.categories.map((cat: any) => cat.id),
         variants:
@@ -98,7 +119,7 @@ const EditProductModal: React.FC<Props> = ({
     }
   }, [product, isOpen, isLoading]); // Thêm isLoading vào dependency array
 
-  function generateSKUs(variants: VariantsType): UpsertSKUType[] {
+  function generateSKUs(variants: VariantsType): LocalSKUType[] {
     function getCombinations(arrays: string[][]): string[] {
       return arrays.reduce(
         (acc, curr) =>
@@ -113,7 +134,7 @@ const EditProductModal: React.FC<Props> = ({
 
     return combinations.map((value) => ({
       value,
-      price: 0,
+      price: "0", // String instead of number
       stock: 100,
       image: "",
     }));
@@ -134,8 +155,8 @@ const EditProductModal: React.FC<Props> = ({
       setFormData({
         name: "",
         publishedAt: null,
-        basePrice: 0,
-        virtualPrice: 0,
+        basePrice: "0",
+        virtualPrice: "0",
         images: [""],
         categories: [0],
         variants: [
@@ -289,7 +310,7 @@ const EditProductModal: React.FC<Props> = ({
 
   const handleSKUChange = (
     skuIndex: number,
-    field: keyof UpsertSKUType,
+    field: keyof LocalSKUType,
     value: any
   ) => {
     const newSKUs = [...formData.skus];
@@ -305,9 +326,18 @@ const EditProductModal: React.FC<Props> = ({
     setLoading(true);
 
     try {
-      const submitData = {
+      const submitData: UpdateProductBodyType = {
         ...formData,
+        basePrice: Number(formData.basePrice) || 0,
+        virtualPrice: Number(formData.virtualPrice) || 0,
+        publishedAt: formData.publishedAt
+          ? new Date(formData.publishedAt)
+          : null,
         images: formData.images.filter((img) => img.trim() !== ""),
+        skus: formData.skus.map((sku) => ({
+          ...sku,
+          price: Number(sku.price) || 0,
+        })),
       };
 
       await http.put(`/manage-product/products/${product.id}`, submitData);
@@ -408,27 +438,25 @@ const EditProductModal: React.FC<Props> = ({
             <div className="form-group">
               <label>Giá gốc *</label>
               <input
-                type="number"
+                type="text"
                 value={formData.basePrice}
-                onChange={(e) =>
-                  handleInputChange("basePrice", Number(e.target.value))
-                }
+                onChange={(e) => handleInputChange("basePrice", e.target.value)}
                 required
-                min="0"
                 disabled={loading}
+                placeholder="Nhập giá gốc"
               />
             </div>
             <div className="form-group">
               <label>Giá ảo *</label>
               <input
-                type="number"
+                type="text"
                 value={formData.virtualPrice}
                 onChange={(e) =>
-                  handleInputChange("virtualPrice", Number(e.target.value))
+                  handleInputChange("virtualPrice", e.target.value)
                 }
                 required
-                min="0"
                 disabled={loading}
+                placeholder="Nhập giá ảo"
               />
             </div>
           </div>
@@ -591,11 +619,11 @@ const EditProductModal: React.FC<Props> = ({
                   <h5>SKU: {sku.value}</h5>
                   <div className="sku-fields">
                     <input
-                      type="number"
+                      type="text"
                       placeholder="Giá"
                       value={sku.price}
                       onChange={(e) =>
-                        handleSKUChange(index, "price", Number(e.target.value))
+                        handleSKUChange(index, "price", e.target.value)
                       }
                       disabled={loading}
                     />

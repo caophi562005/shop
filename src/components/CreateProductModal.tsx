@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from "react";
 import type { CreateProductBodyType } from "../models/product.model";
 import type { VariantsType } from "../models/shared/shared-product.model";
-import type { UpsertSKUType } from "../models/sku.model";
-import type { SKUType } from "../models/shared/shared-sku.model";
 import http from "../api/http";
 import axios from "axios";
 import "../assets/css/createProduct.css";
+
+// Local interface for form state với string prices
+interface CreateProductFormData {
+  name: string;
+  publishedAt: string | null;
+  basePrice: string;
+  virtualPrice: string;
+  images: string[];
+  categories: number[];
+  variants: VariantsType;
+  skus: LocalSKUType[];
+}
+
+// Local SKU type with string price
+interface LocalSKUType {
+  value: string;
+  price: string; // Changed from number to string
+  stock: number;
+  image: string;
+}
 
 type Props = {
   isOpen: boolean;
@@ -20,11 +38,11 @@ const CreateProductModal: React.FC<Props> = ({
   onSuccess,
   onRefresh,
 }) => {
-  const [formData, setFormData] = useState<CreateProductBodyType>({
+  const [formData, setFormData] = useState<CreateProductFormData>({
     name: "",
     publishedAt: null,
-    basePrice: 0,
-    virtualPrice: 0,
+    basePrice: "0",
+    virtualPrice: "0",
     images: [""],
     categories: [0],
     variants: [
@@ -44,7 +62,7 @@ const CreateProductModal: React.FC<Props> = ({
   function generateSKUs(
     variants: VariantsType,
     basePrice: number = 0
-  ): UpsertSKUType[] {
+  ): LocalSKUType[] {
     function getCombinations(arrays: string[][]): string[] {
       return arrays.reduce(
         (acc, curr) =>
@@ -59,7 +77,7 @@ const CreateProductModal: React.FC<Props> = ({
 
     return combinations.map((value) => ({
       value,
-      price: basePrice,
+      price: basePrice.toString(), // Convert to string
       stock: 100,
       image: "",
     }));
@@ -67,7 +85,8 @@ const CreateProductModal: React.FC<Props> = ({
 
   // Update SKUs when variants or base price change
   useEffect(() => {
-    const newSKUs = generateSKUs(formData.variants, formData.basePrice);
+    const basePriceNum = Number(formData.basePrice) || 0;
+    const newSKUs = generateSKUs(formData.variants, basePriceNum);
     setFormData((prev) => ({ ...prev, skus: newSKUs }));
   }, [formData.variants, formData.basePrice]);
 
@@ -203,7 +222,7 @@ const CreateProductModal: React.FC<Props> = ({
 
   const handleSKUChange = (
     skuIndex: number,
-    field: keyof SKUType,
+    field: keyof LocalSKUType,
     value: any
   ) => {
     const newSKUs = [...formData.skus];
@@ -216,10 +235,18 @@ const CreateProductModal: React.FC<Props> = ({
     setLoading(true);
 
     try {
-      const submitData = {
+      const submitData: CreateProductBodyType = {
         ...formData,
+        basePrice: Number(formData.basePrice) || 0,
+        virtualPrice: Number(formData.virtualPrice) || 0,
         images: formData.images.filter((img) => img.trim() !== ""),
-        publishedAt: formData.publishedAt || new Date().toISOString(),
+        publishedAt: formData.publishedAt
+          ? new Date(formData.publishedAt)
+          : new Date(),
+        skus: formData.skus.map((sku) => ({
+          ...sku,
+          price: Number(sku.price) || 0, // Convert price to number
+        })),
       };
 
       await http.post("/manage-product/products", submitData);
@@ -239,8 +266,8 @@ const CreateProductModal: React.FC<Props> = ({
     setFormData({
       name: "",
       publishedAt: null,
-      basePrice: 0,
-      virtualPrice: 0,
+      basePrice: "0",
+      virtualPrice: "0",
       images: [""],
       categories: [0],
       variants: [
@@ -287,27 +314,25 @@ const CreateProductModal: React.FC<Props> = ({
             <div className="form-group">
               <label>Giá gốc *</label>
               <input
-                type="number"
+                type="text"
                 value={formData.basePrice}
-                onChange={(e) =>
-                  handleInputChange("basePrice", Number(e.target.value))
-                }
+                onChange={(e) => handleInputChange("basePrice", e.target.value)}
                 required
-                min="0"
                 disabled={loading}
+                placeholder="Nhập giá gốc"
               />
             </div>
             <div className="form-group">
               <label>Giá ảo *</label>
               <input
-                type="number"
+                type="text"
                 value={formData.virtualPrice}
                 onChange={(e) =>
-                  handleInputChange("virtualPrice", Number(e.target.value))
+                  handleInputChange("virtualPrice", e.target.value)
                 }
                 required
-                min="0"
                 disabled={loading}
+                placeholder="Nhập giá ảo"
               />
             </div>
           </div>
@@ -469,11 +494,11 @@ const CreateProductModal: React.FC<Props> = ({
                   <h5>SKU: {sku.value}</h5>
                   <div className="sku-fields">
                     <input
-                      type="number"
+                      type="text"
                       placeholder="Giá"
                       value={sku.price}
                       onChange={(e) =>
-                        handleSKUChange(index, "price", Number(e.target.value))
+                        handleSKUChange(index, "price", e.target.value)
                       }
                       disabled={loading}
                     />
