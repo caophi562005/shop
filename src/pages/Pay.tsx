@@ -27,6 +27,12 @@ interface ReceiverInfo {
   note: string;
 }
 
+interface CreateOrderRequest {
+  cartItemIds: number[];
+  receiver: ReceiverInfo;
+  isCOD?: boolean; // Optional field for COD payment
+}
+
 const Pay: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,19 +128,26 @@ const Pay: React.FC = () => {
     try {
       const cartItemIds = selectedItems.map((item) => item.id);
 
-      const requestBody = {
+      // Tạo request body với logic COD
+      const requestBody: CreateOrderRequest = {
         cartItemIds,
         receiver: formData,
       };
 
+      // Thêm trường isCOD nếu phương thức thanh toán là COD
+      if (paymentMethod === "cod") {
+        requestBody.isCOD = true;
+      }
+
+      console.log("Creating order with payload:", requestBody);
       const response = await http.post("/orders", requestBody);
       const orderId = response.data.data.id;
 
       if (paymentMethod === "bank") {
         // Chuyển đến trang chuyển khoản
         navigate(`/transfer/${orderId}`);
-      } else {
-        // Thanh toán khi nhận hàng - để trống logic, sẽ bổ sung sau
+      } else if (paymentMethod === "cod") {
+        // Thanh toán khi nhận hàng - chuyển đến trang thành công
         navigate(`/order-success/${orderId}`);
       }
     } catch (error) {

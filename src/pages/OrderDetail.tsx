@@ -338,31 +338,37 @@ const OrderDetail: React.FC = () => {
           <h3>Sản phẩm trong đơn hàng</h3>
           <div className="items-list">
             {order.items.map((item) => (
-              <div key={item.id} className="order-item">
-                <div className="item-image">
-                  <img
-                    src={getImageUrl(item.image)}
-                    alt={getTranslatedProductName(item)}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/src/assets/img/placeholder.jpg";
-                    }}
-                  />
-                </div>
-                <div className="item-info">
-                  <h4>{getTranslatedProductName(item)}</h4>
-                  <p className="item-sku">Phân loại: {item.skuValue}</p>
-                  <div className="item-details">
-                    <span className="item-price">
-                      {formatCurrency(item.skuPrice)}
-                    </span>
-                    <span className="item-quantity">x{item.quantity}</span>
-                    <span className="item-total">
-                      {formatCurrency(item.skuPrice * item.quantity)}
-                    </span>
+              <Link
+                key={item.id}
+                to={`/product/${item.productId}`}
+                className="order-item-link"
+              >
+                <div className="order-item">
+                  <div className="item-image">
+                    <img
+                      src={getImageUrl(item.image)}
+                      alt={getTranslatedProductName(item)}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/src/assets/img/placeholder.jpg";
+                      }}
+                    />
+                  </div>
+                  <div className="item-info">
+                    <h4>{getTranslatedProductName(item)}</h4>
+                    <p className="item-sku">Phân loại: {item.skuValue}</p>
+                    <div className="item-details">
+                      <span className="item-price">
+                        {formatCurrency(item.skuPrice)}
+                      </span>
+                      <span className="item-quantity">x{item.quantity}</span>
+                      <span className="item-total">
+                        {formatCurrency(item.skuPrice * item.quantity)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

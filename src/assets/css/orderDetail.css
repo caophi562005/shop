@@ -128,6 +128,18 @@
   gap: 15px;
 }
 
+.order-item-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.order-item-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
 .order-item {
   display: flex;
   gap: 15px;
@@ -136,11 +148,14 @@
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.order-item:hover {
+.order-item:hover,
+.order-item-link:hover .order-item {
   transform: translateY(-2px);
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+  background: linear-gradient(145deg, #ffffff, #f0f5ff);
 }
 
 .item-image {
@@ -167,6 +182,11 @@
   color: #333;
   font-size: 16px;
   font-weight: 600;
+  position: relative;
+}
+
+.order-item-link:hover .item-info h4 {
+  color: #ee5022;
 }
 
 .item-sku {
