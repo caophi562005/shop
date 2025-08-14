@@ -331,7 +331,20 @@ const CategoryListPage: React.FC = () => {
                           color: "#666",
                         }}
                       >
-                        {category.logo || "📁"}
+                        {category.logo && category.logo.startsWith("http") ? (
+                          <img
+                            src={category.logo}
+                            alt="Category logo"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        ) : (
+                          category.logo || "📁"
+                        )}
                       </div>
                     </td>
                     <td>
