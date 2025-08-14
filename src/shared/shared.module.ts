@@ -13,6 +13,7 @@ import { TwoFactorService } from './services/twoFactorService.service'
 import { SharedPaymentRepository } from './repositories/shared-payment.repo'
 import { SharedNotificationRepository } from './repositories/shared-notification.repo'
 import { NotificationGateway } from 'src/websockets/notification.gateway'
+import { S3Service } from './services/s3.service'
 
 const sharedServices = [
   PrismaService,
@@ -20,6 +21,7 @@ const sharedServices = [
   TokenService,
   EmailService,
   TwoFactorService,
+  S3Service,
   SharedUserRepository,
   SharedRoleRepository,
   SharedPaymentRepository,
