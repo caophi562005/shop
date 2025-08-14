@@ -35,6 +35,19 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Fix for ProductTranslationModal - using modal-content instead of modal-container */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -61,6 +74,7 @@
   font-weight: 700;
   color: #333;
   background: linear-gradient(to right, #ff6600, #ff944d);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -81,7 +95,25 @@
   transition: all 0.2s ease;
 }
 
-.modal-close-btn:hover {
+/* Fix for ProductTranslationModal - using modal-close instead of modal-close-btn */
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover,
+.modal-close:hover {
   background: rgba(231, 76, 60, 0.1);
   color: #e74c3c;
   transform: scale(1.1);
@@ -89,6 +121,12 @@
 
 .modal-form {
   padding: 30px;
+}
+
+/* Fix for ProductTranslationModal - using modal-body instead of modal-form */
+.modal-body {
+  padding: 30px;
+  background: white;
 }
 
 .form-group {
