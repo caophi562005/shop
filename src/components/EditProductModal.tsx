@@ -187,7 +187,9 @@ const EditProductModal: React.FC<Props> = ({
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Trim string values to remove leading/trailing spaces
+    const trimmedValue = typeof value === "string" ? value.trim() : value;
+    setFormData((prev) => ({ ...prev, [field]: trimmedValue }));
   };
 
   const handleVariantChange = (
@@ -197,7 +199,9 @@ const EditProductModal: React.FC<Props> = ({
   ) => {
     const newVariants = [...formData.variants];
     if (field === "value") {
-      newVariants[variantIndex].value = value;
+      // Trim variant value
+      newVariants[variantIndex].value =
+        typeof value === "string" ? value.trim() : value;
     } else {
       newVariants[variantIndex].options = value;
     }
@@ -210,7 +214,8 @@ const EditProductModal: React.FC<Props> = ({
     value: string
   ) => {
     const newVariants = [...formData.variants];
-    newVariants[variantIndex].options[optionIndex] = value;
+    // Trim variant option value
+    newVariants[variantIndex].options[optionIndex] = value.trim();
     setFormData((prev) => ({ ...prev, variants: newVariants }));
   };
 
@@ -230,7 +235,8 @@ const EditProductModal: React.FC<Props> = ({
 
   const handleImageChange = (index: number, value: string) => {
     const newImages = [...formData.images];
-    newImages[index] = value;
+    // Trim image URL
+    newImages[index] = value.trim();
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
 
@@ -314,7 +320,9 @@ const EditProductModal: React.FC<Props> = ({
     value: any
   ) => {
     const newSKUs = [...formData.skus];
-    newSKUs[skuIndex] = { ...newSKUs[skuIndex], [field]: value };
+    // Trim string values (price, value, image)
+    const trimmedValue = typeof value === "string" ? value.trim() : value;
+    newSKUs[skuIndex] = { ...newSKUs[skuIndex], [field]: trimmedValue };
     setFormData((prev) => ({ ...prev, skus: newSKUs }));
   };
 
