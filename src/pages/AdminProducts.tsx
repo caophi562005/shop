@@ -59,24 +59,24 @@ const AdminProducts: React.FC = () => {
 
   const openEditModal = async (product: ProductIncludeTranslationType) => {
     setIsLoadingProductDetail(true);
+    setShowEditModal(true); // Mở modal ngay để show loading state
+
     try {
       // Fetch chi tiết sản phẩm với SKU và thông tin đầy đủ
       const response = await http.get(`/manage-product/products/${product.id}`);
       const productDetail: GetProductDetailResType = response.data;
 
-      // Set selected product với thông tin đầy đủ
-      setSelectedProduct(productDetail);
-      setShowEditModal(true);
-
       console.log("Product detail loaded:", productDetail);
       console.log("SKUs:", productDetail.skus);
       console.log("Categories:", productDetail.categories);
+
+      // Set selected product với thông tin đầy đủ
+      setSelectedProduct(productDetail);
     } catch (error) {
       console.error("Failed to fetch product detail:", error);
       toast.error("Không thể tải thông tin chi tiết sản phẩm");
       // Fallback: sử dụng thông tin từ danh sách
       setSelectedProduct(product);
-      setShowEditModal(true);
     } finally {
       setIsLoadingProductDetail(false);
     }

@@ -51,7 +51,11 @@ const EditProductModal: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (product && isOpen) {
+    // Chỉ populate form khi:
+    // 1. Modal đang mở
+    // 2. Có product data
+    // 3. Không đang loading (đảm bảo data đã được fetch xong)
+    if (product && isOpen && !isLoading) {
       const categoriesIds = product.categories.map((cat) => cat.id);
       setCategoriesInput(categoriesIds.join("-"));
 
@@ -92,7 +96,7 @@ const EditProductModal: React.FC<Props> = ({
       console.log("Product has SKUs:", hasSkus);
       console.log("Populated form with SKUs:", existingSKUs);
     }
-  }, [product, isOpen]);
+  }, [product, isOpen, isLoading]); // Thêm isLoading vào dependency array
 
   function generateSKUs(variants: VariantsType): UpsertSKUType[] {
     function getCombinations(arrays: string[][]): string[] {
@@ -123,6 +127,35 @@ const EditProductModal: React.FC<Props> = ({
       console.log("Auto-generated SKUs:", newSKUs);
     }
   }, [formData.variants, formData.basePrice, isOpen, hasExistingSKUs]);
+
+  // Reset form khi modal đóng
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: "",
+        publishedAt: null,
+        basePrice: 0,
+        virtualPrice: 0,
+        images: [""],
+        categories: [0],
+        variants: [
+          { value: "Màu sắc", options: [""] },
+          { value: "Kích thước", options: [""] },
+        ],
+        skus: [],
+      });
+      setCategoriesInput("");
+      setHasExistingSKUs(false);
+      setUploadingIndex(null);
+      setUploadProgress({});
+    }
+  }, [isOpen]);
+
+  // Debug: Log khi SKUs thay đổi
+  useEffect(() => {
+    console.log("SKUs updated:", formData.skus);
+    console.log("Has existing SKUs:", hasExistingSKUs);
+  }, [formData.skus, hasExistingSKUs]);
 
   const parseCategoriesString = (value: string): number[] => {
     if (!value.trim()) return [0];

@@ -11,42 +11,16 @@ import { useNotifications } from "../hooks/useNotifications";
 import NotificationModal from "./NotificationModal";
 import UserAvatar from "./UserAvatar";
 import logoImg from "../assets/img/home/logo.png";
-
-// Dữ liệu mẫu cho menu
-const mockCategories = [
-  {
-    id: 1,
-    name: "NAM",
-    path: "/products/men",
-    subcategories: [
-      { id: 101, name: "Áo Nam", path: "/products/men/shirts" },
-      { id: 102, name: "Quần Nam", path: "/products/men/trousers" },
-    ],
-  },
-  {
-    id: 2,
-    name: "NỮ",
-    path: "/products/women",
-    subcategories: [
-      { id: 201, name: "Áo Nữ", path: "/products/women/blouses" },
-      { id: 202, name: "Váy & Chân Váy", path: "/products/women/dresses" },
-    ],
-  },
-  {
-    id: 3,
-    name: "PHỤ KIỆN",
-    path: "/products/accessories",
-    subcategories: [
-      { id: 301, name: "Túi Xách", path: "/products/accessories/bags" },
-      { id: 302, name: "Kính Mắt", path: "/products/accessories/glasses" },
-    ],
-  },
-  { id: 4, name: "SALE", path: "/products/sale", subcategories: [] },
-];
+import { categoryApi } from "../api/categoryApi";
+import type { CategoryWithSubcategories } from "../models/category.model";
 
 const Header: React.FC = () => {
   const { isLoggedIn, logout, checkAuthStatus, user } = useAuthStore();
   const navigate = useNavigate();
+
+  // State cho categories
+  const [categories, setCategories] = useState<CategoryWithSubcategories[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Notification hooks
   const {
@@ -94,6 +68,95 @@ const Header: React.FC = () => {
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
+
+  // Fetch categories khi component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const response = await categoryApi.getCategories();
+        const categoriesData = response.data;
+
+        // Map categories với display names và paths
+        const mappedCategories: CategoryWithSubcategories[] =
+          categoriesData.map((cat) => {
+            let displayName = cat.name;
+            let path = `/products/${cat.id}`;
+
+            // Map specific categories
+            if (cat.id === 1) {
+              // Thời trang nam
+              displayName = "NAM";
+              path = "/products/men";
+            } else if (cat.id === 2) {
+              // Thời trang nữ
+              displayName = "NỮ";
+              path = "/products/women";
+            } else if (cat.id === 3) {
+              // Phụ kiện
+              displayName = "PHỤ KIỆN";
+              path = "/products/accessories";
+            } else if (cat.id === 13) {
+              // Sale
+              displayName = "SALE";
+              path = "/products/sale";
+            }
+
+            return {
+              ...cat,
+              name: displayName,
+              path,
+              subcategories: [],
+            };
+          });
+
+        setCategories(mappedCategories);
+        console.log("Categories loaded:", mappedCategories);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Function để fetch subcategories khi hover
+  const handleCategoryHover = async (categoryId: number) => {
+    if (window.innerWidth <= 768) return; // Skip on mobile
+
+    setOpenCategory(categoryId);
+
+    // Check if already has subcategories
+    const category = categories.find((cat) => cat.id === categoryId);
+    if (
+      category &&
+      category.subcategories &&
+      category.subcategories.length > 0
+    ) {
+      return; // Already loaded
+    }
+
+    try {
+      const response = await categoryApi.getSubcategories(categoryId);
+      const subcategories = response.data.map((sub) => ({
+        ...sub,
+        path: `/products/category/${sub.id}`,
+      }));
+
+      // Update the category with subcategories
+      setCategories((prevCategories) =>
+        prevCategories.map((cat) =>
+          cat.id === categoryId ? { ...cat, subcategories } : cat
+        )
+      );
+
+      console.log(`Subcategories for ${categoryId}:`, subcategories);
+    } catch (error) {
+      console.error(`Failed to fetch subcategories for ${categoryId}:`, error);
+    }
+  };
 
   // Đóng menu khi chuyển từ mobile sang desktop
   useEffect(() => {
@@ -233,39 +296,39 @@ const Header: React.FC = () => {
               HOME
             </Link>
           </li>
-          {mockCategories.map((cat) => (
+          {categories.map((cat) => (
             <li
               key={cat.id}
               className="dropdown_header"
-              onMouseEnter={() =>
-                window.innerWidth > 768 && setOpenCategory(cat.id)
-              }
+              onMouseEnter={() => handleCategoryHover(cat.id)}
               onMouseLeave={() =>
                 window.innerWidth > 768 && setOpenCategory(null)
               }
             >
               <Link
-                to={cat.path}
+                to={cat.path || `/products/${cat.id}`}
                 className="title_header"
                 onClick={() => setMenuOpen(false)}
               >
                 {cat.name}
               </Link>
-              {openCategory === cat.id && cat.subcategories.length > 0 && (
-                <div className="mega_menu">
-                  <div className="column">
-                    {cat.subcategories.map((sub) => (
-                      <Link
-                        key={sub.id}
-                        to={sub.path}
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
+              {openCategory === cat.id &&
+                cat.subcategories &&
+                cat.subcategories.length > 0 && (
+                  <div className="mega_menu">
+                    <div className="column">
+                      {cat.subcategories.map((sub) => (
+                        <Link
+                          key={sub.id}
+                          to={sub.path || `/products/category/${sub.id}`}
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          {sub.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </li>
           ))}
         </ul>
