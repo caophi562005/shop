@@ -36,6 +36,7 @@ export const CreateOrderBodySchema = z.object({
     note: z.string().default(''),
   }),
   cartItemIds: z.array(z.number()).min(1),
+  isCOD: z.boolean().optional(),
 })
 
 export const CreateOrderResSchema = z.object({

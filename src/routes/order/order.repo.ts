@@ -189,15 +189,17 @@ export class OrderRepository {
 
     // Tạo order và xoá cartItem
     const [orders] = await this.prismaService.$transaction(async (tx) => {
+      // Tạo payment record - COD vẫn cần payment record để track
       const payment = await tx.payment.create({
         data: {
-          status: PaymentStatus.PENDING,
+          status: PaymentStatus.PENDING, // COD sẽ thanh toán khi nhận hàng
         },
       })
       const orders$ = tx.order.create({
         data: {
           userId,
-          status: OrderStatus.PENDING_PAYMENT,
+          // Nếu COD thì chuyển thẳng sang PENDING_PICKUP, không cần chờ payment
+          status: body.isCOD === true ? OrderStatus.PENDING_PICKUP : OrderStatus.PENDING_PAYMENT,
           receiver: body.receiver,
           createdById: userId,
           paymentId: payment.id,
