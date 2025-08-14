@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type {
   ProductIncludeTranslationType,
   UpdateProductBodyType,
+  GetProductDetailResType,
 } from "../models/product.model";
 import type { VariantsType } from "../models/shared/shared-product.model";
 import type { UpsertSKUType } from "../models/sku.model";
@@ -9,7 +10,8 @@ import http from "../api/http";
 
 type Props = {
   isOpen: boolean;
-  product: ProductIncludeTranslationType | null;
+  product: ProductIncludeTranslationType | GetProductDetailResType | null;
+  isLoading?: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
   onRefresh: () => void;
@@ -18,6 +20,7 @@ type Props = {
 const EditProductModal: React.FC<Props> = ({
   isOpen,
   product,
+  isLoading = false,
   onClose,
   onSuccess,
   onRefresh,
@@ -37,11 +40,27 @@ const EditProductModal: React.FC<Props> = ({
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [categoriesInput, setCategoriesInput] = useState<string>("");
+  const [hasExistingSKUs, setHasExistingSKUs] = useState<boolean>(false);
 
   useEffect(() => {
     if (product && isOpen) {
       const categoriesIds = product.categories.map((cat) => cat.id);
       setCategoriesInput(categoriesIds.join("-"));
+
+      // Type guard để check xem có SKUs hay không
+      const hasSkus =
+        "skus" in product && product.skus && product.skus.length > 0;
+
+      // Sử dụng SKU từ API thay vì tự generate
+      const existingSKUs = hasSkus
+        ? (product as any).skus.map((sku: any) => ({
+            value: sku.value,
+            price: sku.price,
+            stock: sku.stock,
+            image: sku.image || "",
+          }))
+        : generateSKUs(product.variants); // Fallback nếu không có SKU
+
       setFormData({
         name: product.name,
         publishedAt: product.publishedAt,
@@ -56,8 +75,14 @@ const EditProductModal: React.FC<Props> = ({
                 { value: "Màu sắc", options: [""] },
                 { value: "Kích thước", options: [""] },
               ],
-        skus: generateSKUs(product.variants),
+        skus: existingSKUs,
       });
+
+      // Set flag để không auto-generate SKU
+      setHasExistingSKUs(hasSkus);
+
+      console.log("Product has SKUs:", hasSkus);
+      console.log("Populated form with SKUs:", existingSKUs);
     }
   }, [product, isOpen]);
 
@@ -82,13 +107,14 @@ const EditProductModal: React.FC<Props> = ({
     }));
   }
 
-  // Update SKUs when variants or base price change
+  // Update SKUs when variants or base price change (chỉ khi không có existing SKU)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasExistingSKUs) {
       const newSKUs = generateSKUs(formData.variants);
       setFormData((prev) => ({ ...prev, skus: newSKUs }));
+      console.log("Auto-generated SKUs:", newSKUs);
     }
-  }, [formData.variants, formData.basePrice, isOpen]);
+  }, [formData.variants, formData.basePrice, isOpen, hasExistingSKUs]);
 
   const parseCategoriesString = (value: string): number[] => {
     if (!value.trim()) return [0];
@@ -202,7 +228,41 @@ const EditProductModal: React.FC<Props> = ({
     });
   };
 
-  if (!isOpen || !product) return null;
+  if (!isOpen) return null;
+
+  // Hiển thị loading spinner khi đang fetch data
+  if (isLoading) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal modal-large">
+          <div className="modal-header">
+            <h3>Đang tải thông tin sản phẩm...</h3>
+          </div>
+          <div
+            className="modal-body"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "300px",
+            }}
+          >
+            <div className="loading-spinner">
+              <i
+                className="fas fa-spinner fa-spin"
+                style={{ fontSize: "2rem", color: "#ee5022" }}
+              ></i>
+              <p style={{ marginTop: "1rem", color: "#666" }}>
+                Đang tải dữ liệu sản phẩm...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>

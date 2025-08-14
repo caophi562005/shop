@@ -10,6 +10,7 @@ import http from "../api/http";
 import type {
   GetProductsResType,
   ProductIncludeTranslationType,
+  GetProductDetailResType,
 } from "../models/product.model";
 
 const AdminProducts: React.FC = () => {
@@ -17,6 +18,8 @@ const AdminProducts: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalItems, setTotalItems] = useState<number>(0);
+  const [isLoadingProductDetail, setIsLoadingProductDetail] =
+    useState<boolean>(false);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
@@ -54,9 +57,29 @@ const AdminProducts: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const openEditModal = (product: ProductIncludeTranslationType) => {
-    setSelectedProduct(product);
-    setShowEditModal(true);
+  const openEditModal = async (product: ProductIncludeTranslationType) => {
+    setIsLoadingProductDetail(true);
+    try {
+      // Fetch chi tiết sản phẩm với SKU và thông tin đầy đủ
+      const response = await http.get(`/manage-product/products/${product.id}`);
+      const productDetail: GetProductDetailResType = response.data;
+
+      // Set selected product với thông tin đầy đủ
+      setSelectedProduct(productDetail);
+      setShowEditModal(true);
+
+      console.log("Product detail loaded:", productDetail);
+      console.log("SKUs:", productDetail.skus);
+      console.log("Categories:", productDetail.categories);
+    } catch (error) {
+      console.error("Failed to fetch product detail:", error);
+      toast.error("Không thể tải thông tin chi tiết sản phẩm");
+      // Fallback: sử dụng thông tin từ danh sách
+      setSelectedProduct(product);
+      setShowEditModal(true);
+    } finally {
+      setIsLoadingProductDetail(false);
+    }
   };
 
   const openDeleteModal = (product: ProductIncludeTranslationType) => {
@@ -308,6 +331,7 @@ const AdminProducts: React.FC = () => {
       <EditProductModal
         isOpen={showEditModal}
         product={selectedProduct}
+        isLoading={isLoadingProductDetail}
         onSuccess={handleSuccess}
         onClose={closeModals}
         onRefresh={fetchProducts}
