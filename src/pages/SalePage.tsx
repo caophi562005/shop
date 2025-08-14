@@ -40,7 +40,7 @@ const SalePage: React.FC = () => {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalItems, setTotalItems] = useState<number>(0);
 
-  const productsPerPage = 12;
+  const productsPerPage = 10;
 
   useEffect(() => {
     const fetchProducts = async () => {
