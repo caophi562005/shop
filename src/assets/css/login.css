@@ -6,18 +6,21 @@ body {
 }
 
 .login-wrapper {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 .login-box {
-  width: 380px;
+  width: 100%;
+  max-width: 380px;
   padding: 30px 40px;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
 }
 
 .login-box h2 {
@@ -141,4 +144,27 @@ body {
 
 .forgot-password a:hover {
   text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-box {
+    padding: 20px;
+  }
+
+  .login-box h2 {
+    font-size: 20px;
+  }
+
+  .login-box input,
+  .login-box button {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .login-box {
+    max-width: 420px;
+  }
 }
