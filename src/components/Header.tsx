@@ -20,7 +20,6 @@ const Header: React.FC = () => {
 
   // State cho categories
   const [categories, setCategories] = useState<CategoryWithSubcategories[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Notification hooks
   const {
@@ -73,7 +72,6 @@ const Header: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoadingCategories(true);
         const response = await categoryApi.getCategories();
         const categoriesData = response.data;
 
@@ -114,8 +112,6 @@ const Header: React.FC = () => {
         console.log("Categories loaded:", mappedCategories);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
-      } finally {
-        setLoadingCategories(false);
       }
     };
 
