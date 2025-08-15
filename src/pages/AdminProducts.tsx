@@ -30,7 +30,7 @@ const AdminProducts: React.FC = () => {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductIncludeTranslationType | null>(null);
 
-  const productsPerPage = 10;
+  const productsPerPage = 12;
 
   useEffect(() => {
     fetchProducts();

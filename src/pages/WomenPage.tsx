@@ -30,7 +30,7 @@ const WomenPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [categoryParams, setCategoryParams] = useState<string | null>(null);
 
-  const productsPerPage = 10;
+  const productsPerPage = 12;
   const parentCategoryId = 2;
 
   useEffect(() => {
