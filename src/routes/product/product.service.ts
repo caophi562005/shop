@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { ProductRepository } from './product.repo'
-import { GetProductsQueryType } from './product.model'
+import { GetProductsQueryType, GetDiscountedProductsQueryType } from './product.model'
 import { I18nContext } from 'nestjs-i18n'
 import { NotFoundRecordException } from 'src/shared/error'
 
@@ -27,5 +27,13 @@ export class ProductService {
       throw NotFoundRecordException
     }
     return product
+  }
+
+  async getDiscountedProducts(query: GetDiscountedProductsQueryType) {
+    const data = await this.productRepository.getDiscountedProducts({
+      query,
+      languageId: I18nContext.current()?.lang as string,
+    })
+    return data
   }
 }

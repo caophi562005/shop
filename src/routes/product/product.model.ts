@@ -49,6 +49,21 @@ export const GetManageProductsQuerySchema = GetProductsQuerySchema.extend({
   isPublic: z.preprocess((value) => value === 'true', z.boolean()).optional(),
 })
 
+//Dành cho lấy products đang giảm giá (basePrice < virtualPrice)
+export const GetDiscountedProductsQuerySchema = PaginationQuerySchema.extend({
+  name: z.string().optional(),
+  categories: z
+    .preprocess((value) => {
+      if (typeof value === 'string') {
+        return [Number(value)]
+      }
+      return value
+    }, z.array(z.coerce.number().int().positive()))
+    .optional(),
+  orderBy: z.enum([OrderBy.Asc, OrderBy.Desc]).default(OrderBy.Desc),
+  sortBy: z.enum([SortBy.Price, SortBy.CreatedAt, SortBy.Sale]).default(SortBy.CreatedAt),
+})
+
 export const GetProductsResSchema = z.object({
   data: z.array(
     ProductSchema.extend({
@@ -129,3 +144,4 @@ export type CreateProductBodyType = z.infer<typeof CreateProductBodySchema>
 export type UpdateProductBodyType = z.infer<typeof updateProductBodySchema>
 export type GetManageProductsQueryType = z.infer<typeof GetManageProductsQuerySchema>
 export type GetProductsQueryType = z.infer<typeof GetProductsQuerySchema>
+export type GetDiscountedProductsQueryType = z.infer<typeof GetDiscountedProductsQuerySchema>

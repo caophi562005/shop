@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/shared/services/prisma.service'
 import {
   CreateProductBodyType,
+  GetDiscountedProductsQueryType,
   GetProductDetailResType,
   GetProductsQueryType,
   GetProductsResType,
@@ -378,6 +379,113 @@ export class ProductRepository {
         }),
       ])
       return product
+    }
+  }
+
+  async getDiscountedProducts({
+    query,
+    languageId,
+  }: {
+    query: GetDiscountedProductsQueryType
+    languageId: string
+  }): Promise<GetProductsResType> {
+    const skip = (query.page - 1) * query.limit
+    const take = query.limit
+
+    // Điều kiện cơ bản cho products đang giảm giá
+    let where: Prisma.ProductWhereInput = {
+      deletedAt: null,
+      // Chỉ lấy products đã publish
+      publishedAt: {
+        lte: new Date(),
+        not: null,
+      },
+      // Workaround: Filter products có virtualPrice > basePrice
+      AND: [
+        {
+          basePrice: {
+            not: undefined,
+          },
+        },
+        {
+          virtualPrice: {
+            not: undefined,
+          },
+        },
+      ],
+    }
+
+    // Filter theo tên
+    if (query.name) {
+      where.name = {
+        contains: query.name,
+        mode: 'insensitive',
+      }
+    }
+
+    // Filter theo categories
+    if (query.categories && query.categories.length > 0) {
+      where.categories = {
+        some: {
+          id: {
+            in: query.categories,
+          },
+        },
+      }
+    }
+
+    // Sorting
+    let calculatedOrderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[] = {
+      createdAt: query.orderBy,
+    }
+
+    if (query.sortBy === SortBy.Price) {
+      calculatedOrderBy = {
+        basePrice: query.orderBy,
+      }
+    } else if (query.sortBy === SortBy.Sale) {
+      calculatedOrderBy = {
+        orders: {
+          _count: query.orderBy,
+        },
+      }
+    }
+
+    // Lấy tất cả products trước, sau đó filter trong memory
+    const allProducts = await this.prismaService.product.findMany({
+      where,
+      include: {
+        productTranslations: {
+          where: {
+            languageId: languageId === ALL_LANGUAGE_CODE ? undefined : languageId,
+          },
+        },
+        categories: {
+          include: {
+            categoryTranslations: {
+              where: {
+                languageId: languageId === ALL_LANGUAGE_CODE ? undefined : languageId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: calculatedOrderBy,
+    })
+
+    // Filter products có basePrice < virtualPrice
+    const discountedProducts = allProducts.filter((product) => product.basePrice < product.virtualPrice)
+
+    // Apply pagination
+    const totalItems = discountedProducts.length
+    const data = discountedProducts.slice(skip, skip + take)
+
+    return {
+      data,
+      page: query.page,
+      limit: query.limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / query.limit),
     }
   }
 }

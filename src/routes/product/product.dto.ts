@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod'
 import {
   CreateProductBodySchema,
+  GetDiscountedProductsQuerySchema,
   GetManageProductsQuerySchema,
   GetProductDetailResSchema,
   GetProductsParamsSchema,
@@ -21,6 +22,8 @@ export class GetProductsParamsDTO extends createZodDto(GetProductsParamsSchema) 
 export class GetProductsQueryDTO extends createZodDto(GetProductsQuerySchema) {}
 
 export class GetManageProductsQueryDTO extends createZodDto(GetManageProductsQuerySchema) {}
+
+export class GetDiscountedProductsQueryDTO extends createZodDto(GetDiscountedProductsQuerySchema) {}
 
 export class CreateProductBodyDTO extends createZodDto(CreateProductBodySchema) {}
 
