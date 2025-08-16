@@ -65,8 +65,26 @@
 .page-subtitle {
   font-size: 1.1rem;
   color: #6c757d;
-  margin: 0;
+  margin: 0 0 1rem 0;
   font-weight: 400;
+}
+
+.admin-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #667eea;
+  margin: 0;
+}
+
+.note-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 /* ===== ALERT STYLES ===== */
@@ -254,6 +272,54 @@
 .option-description {
   color: #6b7280;
   font-size: 0.9rem;
+}
+
+/* ===== ADMIN OPTION STYLES ===== */
+
+.admin-option {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.checkbox-option input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-custom-admin {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffc107;
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  background: white;
+}
+
+.checkbox-option input[type="checkbox"]:checked + .checkbox-custom-admin {
+  background: #ffc107;
+  border-color: #ffc107;
+}
+
+.checkbox-option input[type="checkbox"]:checked + .checkbox-custom-admin::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 /* ===== USER SELECTION STYLES ===== */

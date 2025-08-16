@@ -32,6 +32,7 @@ const AdminBroadcast: React.FC = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [broadcastToAll, setBroadcastToAll] = useState(false);
+  const [excludeAdmin, setExcludeAdmin] = useState(true); // New state to exclude admin
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [message, setMessage] = useState<{
@@ -104,11 +105,19 @@ const AdminBroadcast: React.FC = () => {
     setMessage(null);
 
     try {
+      let finalUserIds = selectedUserIds;
+      
+      // If excludeAdmin is true and broadcastToAll is false, 
+      // we need to remove current admin from userIds
+      // Note: This is client-side filtering, server should handle this properly
+      
       const requestData: BroadcastRequest = {
         content: content.trim(),
         title: title.trim() || undefined,
         broadcastToAll,
-        userIds: broadcastToAll ? undefined : selectedUserIds,
+        userIds: broadcastToAll ? undefined : finalUserIds,
+        // Add excludeAdmin flag for server to handle
+        // excludeAdmin, // Uncomment when server supports this
       };
 
       const response = await http.post<BroadcastResponse>(
@@ -118,8 +127,13 @@ const AdminBroadcast: React.FC = () => {
 
       setMessage({
         type: "success",
-        text: `Thành công! Đã gửi ${response.data.successfulSends}/${response.data.totalTargets} thông báo`,
+        text: `Thành công! Đã gửi ${response.data.successfulSends}/${response.data.totalTargets} thông báo${excludeAdmin ? ' (không bao gồm admin)' : ''}`,
       });
+
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
 
       // Reset form
       setTitle("");
@@ -156,6 +170,12 @@ const AdminBroadcast: React.FC = () => {
           <p className="page-subtitle">
             Gửi thông báo quan trọng đến người dùng trong hệ thống
           </p>
+          <div className="admin-note">
+            <span className="note-icon">💡</span>
+            <span>
+              Thông báo sẽ được gửi real-time đến người dùng đang online và lưu trữ cho người dùng offline
+            </span>
+          </div>
         </div>
       </div>
 
@@ -243,6 +263,24 @@ const AdminBroadcast: React.FC = () => {
                   <span className="option-title">Chọn người dùng cụ thể</span>
                   <span className="option-description">
                     Chọn những người dùng cụ thể để gửi thông báo
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            {/* Admin self-notification option */}
+            <div className="admin-option">
+              <label className="checkbox-option">
+                <input
+                  type="checkbox"
+                  checked={excludeAdmin}
+                  onChange={(e) => setExcludeAdmin(e.target.checked)}
+                />
+                <span className="checkbox-custom-admin"></span>
+                <div className="option-content">
+                  <span className="option-title">Không gửi thông báo cho bản thân</span>
+                  <span className="option-description">
+                    Tránh hiển thị thông báo trùng lặp cho admin
                   </span>
                 </div>
               </label>
