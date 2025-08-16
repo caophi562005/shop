@@ -32,32 +32,33 @@
     align-items: stretch;
     gap: 15px;
   }
-  
+
   .filter_shopAlll {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
   }
-  
+
   .filter-results-text {
     text-align: center;
   }
-  
+
   .filter-dropdowns {
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
   }
-  
+
   .custom-dropdown {
     width: 160px;
     font-size: 13px;
   }
-  
+
   .custom-dropdown .selected {
     padding: 8px 12px;
   }
-}.title_navigate {
+}
+.title_navigate {
   font-size: 1rem;
   color: #555;
 }

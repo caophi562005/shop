@@ -136,10 +136,28 @@ const Header: React.FC = () => {
 
     try {
       const response = await categoryApi.getSubcategories(categoryId);
-      const subcategories = response.data.map((sub) => ({
-        ...sub,
-        path: `/products/category/${sub.id}`,
-      }));
+      const subcategories = response.data.map((sub) => {
+        // Map subcategory to parent category page with query parameter
+        let parentPath = "";
+        switch (categoryId) {
+          case 1: // Men
+            parentPath = "/products/men";
+            break;
+          case 2: // Women
+            parentPath = "/products/women";
+            break;
+          case 3: // Accessories
+            parentPath = "/products/accessories";
+            break;
+          default:
+            parentPath = `/products/category/${categoryId}`;
+        }
+
+        return {
+          ...sub,
+          path: `${parentPath}?category=${sub.id}`,
+        };
+      });
 
       // Update the category with subcategories
       setCategories((prevCategories) =>

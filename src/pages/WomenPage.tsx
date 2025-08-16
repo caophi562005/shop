@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "../assets/css/style.css";
 import "../assets/css/CategoryPage.css";
 import type { ProductType } from "../models/shared/shared-product.model";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import http from "../api/http";
 import { OrderBy, SortBy } from "../constants/other.constant";
 
@@ -26,6 +26,7 @@ const SortChooseType = {
 } as const;
 
 const WomenPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [sortOption, setSortOption] = useState<keyof typeof SortChooseType>(
     SortChooseType.LATEST
   );
@@ -63,6 +64,17 @@ const WomenPage: React.FC = () => {
     };
     fetchCategories();
   }, [parentCategoryId]);
+
+  // Handle query parameter for pre-selecting category
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      const categoryId = parseInt(categoryParam, 10);
+      if (!isNaN(categoryId)) {
+        setSelectedCategoryId(categoryId);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -319,10 +331,14 @@ const WomenPage: React.FC = () => {
                   <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
                     Mới nhất
                   </li>
-                  <li onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}>
+                  <li
+                    onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
+                  >
                     Giá: thấp → cao
                   </li>
-                  <li onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}>
+                  <li
+                    onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}
+                  >
                     Giá: cao → thấp
                   </li>
                 </ul>
