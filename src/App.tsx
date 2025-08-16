@@ -36,6 +36,7 @@ import OAuthGoogleCallback from "./pages/OAuthGoogleCallback";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AdminProducts from "./pages/AdminProducts";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminBroadcast from "./pages/AdminBroadcast";
 
 const App: React.FC = () => {
   const {
@@ -227,6 +228,14 @@ const App: React.FC = () => {
               element={
                 <AdminRoute>
                   <AdminOrder />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="broadcast"
+              element={
+                <AdminRoute>
+                  <AdminBroadcast />
                 </AdminRoute>
               }
             />

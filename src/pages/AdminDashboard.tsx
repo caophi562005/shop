@@ -46,6 +46,13 @@ const AdminDashboard: React.FC = () => {
       link: "/admin/chat",
       color: "#e83e8c",
     },
+    {
+      title: "Thông Báo Hệ Thống",
+      description: "Gửi thông báo đến toàn bộ người dùng",
+      icon: "📢",
+      link: "/admin/broadcast",
+      color: "#20c997",
+    },
   ];
 
   return (
