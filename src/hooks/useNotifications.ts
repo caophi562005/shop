@@ -21,7 +21,17 @@ export const useNotifications = () => {
     if (!socket) return;
 
     const handleNewNotification = (notification: Notification) => {
-      setNotifications((prev) => [notification, ...prev]);
+      setNotifications((prev) => {
+        // Check if notification already exists to prevent duplicates
+        const exists = prev.some(n => n.id === notification.id);
+        if (exists) {
+          console.log('Notification already exists, skipping duplicate:', notification.id);
+          return prev;
+        }
+        
+        // Add new notification to the beginning of the list
+        return [notification, ...prev];
+      });
       setHasUnread(true);
     };
 
@@ -39,7 +49,24 @@ export const useNotifications = () => {
     setLoading(true);
     try {
       const data = await notificationApi.getNotifications();
-      setNotifications(data);
+      
+      // Merge with existing notifications to prevent duplicates
+      setNotifications((prev) => {
+        const existingIds = new Set(prev.map(n => n.id));
+        const newNotifications = data.filter(n => !existingIds.has(n.id));
+        
+        // If we have existing notifications from socket, merge them
+        if (prev.length > 0) {
+          // Sort by createdAt to maintain order
+          const merged = [...prev, ...newNotifications].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          return merged;
+        }
+        
+        // If no existing notifications, just use the API data
+        return data;
+      });
 
       // Check for unread notifications
       const hasUnreadNotifications = data.some(
@@ -102,15 +129,16 @@ export const useNotifications = () => {
     }
   }, [notifications]);
 
-  // Load notifications khi component mount
+  // Load notifications khi component mount và khi login status thay đổi
   useEffect(() => {
     if (isLoggedIn) {
       loadNotifications();
     } else {
+      // Clear notifications when logged out
       setNotifications([]);
       setHasUnread(false);
     }
-  }, [isLoggedIn, loadNotifications]);
+  }, [isLoggedIn]); // Remove loadNotifications dependency to prevent multiple calls
 
   return {
     notifications,
