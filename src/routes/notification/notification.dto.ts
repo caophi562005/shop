@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod'
 import {
   BroadcastNotificationSchema,
+  BroadcastToAllNotificationSchema,
   DeleteNotificationParamsSchema,
   MarkAsReadParamsSchema,
 } from './notification.model'
@@ -13,3 +14,5 @@ export class MarkAsReadParamsDTO extends createZodDto(MarkAsReadParamsSchema) {}
 export class DeleteNotificationParamsDTO extends createZodDto(DeleteNotificationParamsSchema) {}
 
 export class BroadcastNotificationDTO extends createZodDto(BroadcastNotificationSchema) {}
+
+export class BroadcastToAllNotificationDTO extends createZodDto(BroadcastToAllNotificationSchema) {}
