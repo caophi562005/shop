@@ -154,7 +154,7 @@ export class ProductRepository {
             deletedAt: null,
           },
           orderBy: {
-            updatedAt: 'desc',
+            id: 'asc', // Order by creation order để giữ thứ tự logic combinations
           },
         },
         categories: {
@@ -226,6 +226,9 @@ export class ProductRepository {
         skus: {
           where: {
             deletedAt: null,
+          },
+          orderBy: {
+            id: 'asc', // Order by creation order để giữ thứ tự logic combinations
           },
         },
       },
