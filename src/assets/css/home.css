@@ -316,11 +316,12 @@
   transform: translateY(0);
 }
 
-.product-name {
+/* Chỉ áp dụng cho tên sản phẩm trong HomePage - section "HÀNG MỚI VỀ" */
+.products-section .product-name {
   font-size: 18px;
   font-weight: bold;
   margin: 0 0 10px 0;
-  color: white !important;
+  color: white !important; /* Màu trắng chỉ cho HomePage */
   letter-spacing: 0.5px;
 }
 

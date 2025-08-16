@@ -43,7 +43,6 @@ const AccessoriesPage: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     null
   );
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const productsPerPage = 10;
   const parentCategoryId = 3;
@@ -66,7 +65,6 @@ const AccessoriesPage: React.FC = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      setIsLoading(true);
       let sortBy = "";
       let order = "";
       if (sortOption === SortChooseType.PRICE_ASC) {
@@ -82,33 +80,27 @@ const AccessoriesPage: React.FC = () => {
 
       // Build categories array for API call
       const categoriesParam = selectedCategoryId
-        ? [selectedCategoryId] // Chỉ dùng category con được chọn
-        : [parentCategoryId]; // Dùng parent category khi chưa chọn category con
+        ? [parentCategoryId, selectedCategoryId]
+        : [parentCategoryId];
 
       try {
         const categoriesQuery = categoriesParam
           .map((id) => `categories=${id}`)
           .join("&");
-        console.log(
-          "Fetching products with URL:",
-          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoriesQuery}`
-        );
         const response = await http.get(
           `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoriesQuery}`
         );
         const data = response.data;
-        console.log("API Response:", data);
-        // Hiển thị tất cả sản phẩm (không lọc giảm giá)
-        const allProducts = data.data || [];
-        console.log("Products to display:", allProducts);
-        setProducts(allProducts);
+        // Lọc sản phẩm có basePrice = virtualPrice (không có giảm giá)
+        const filteredProducts = (data.data || []).filter(
+          (product: ProductType) => product.basePrice === product.virtualPrice
+        );
+        setProducts(filteredProducts);
         setTotalPages(data.totalPages || 0);
         setTotalItems(data.totalItems || 0);
       } catch (error) {
         console.error("Failed to fetch products:", error);
         setProducts([]);
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchProducts();
@@ -273,67 +265,64 @@ const AccessoriesPage: React.FC = () => {
             </p>
           </div>
           <div className="filter_shopAlll">
-            <p className="filter-results-text">
+            <p>
               Hiển thị {products.length} của {totalItems} kết quả
             </p>
-            <div className="filter-dropdowns">
+            <div
+              className={`custom-dropdown ${
+                isCategoryDropdownOpen ? "open" : ""
+              }`}
+              ref={categoryDropdownRef}
+              style={{ marginRight: "10px" }}
+            >
               <div
-                className={`custom-dropdown ${
-                  isCategoryDropdownOpen ? "open" : ""
-                }`}
-                ref={categoryDropdownRef}
+                className="selected"
+                onClick={() => setIsCategoryDropdownOpen((o) => !o)}
               >
-                <div
-                  className="selected"
-                  onClick={() => setIsCategoryDropdownOpen((o) => !o)}
-                >
-                  <span>{getCategoryLabel()}</span>
-                  <span>&#9662;</span>
-                </div>
-                <ul className="options" onClick={(e) => e.stopPropagation()}>
-                  <li onClick={() => handleCategoryChange(null)}>
-                    Tất cả danh mục
-                  </li>
-                  {categories.map((category) => (
-                    <li
-                      key={category.id}
-                      onClick={() => handleCategoryChange(category.id)}
-                    >
-                      {category.name}
-                    </li>
-                  ))}
-                </ul>
+                <span>{getCategoryLabel()}</span>
+                <span>&#9662;</span>
               </div>
+              <ul className="options" onClick={(e) => e.stopPropagation()}>
+                <li onClick={() => handleCategoryChange(null)}>
+                  Tất cả danh mục
+                </li>
+                {categories.map((category) => (
+                  <li
+                    key={category.id}
+                    onClick={() => handleCategoryChange(category.id)}
+                  >
+                    {category.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div
+              className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
+              ref={dropdownRef}
+            >
               <div
-                className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
-                ref={dropdownRef}
+                className="selected"
+                onClick={() => setIsDropdownOpen((o) => !o)}
               >
-                <div
-                  className="selected"
-                  onClick={() => setIsDropdownOpen((o) => !o)}
-                >
-                  <span>{getSortLabel(sortOption)}</span>
-                  <span>&#9662;</span>
-                </div>
-                <ul className="options" onClick={(e) => e.stopPropagation()}>
-                  <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
-                    Mới nhất
-                  </li>
-                  <li onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}>
-                    Giá: thấp → cao
-                  </li>
-                  <li onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}>
-                    Giá: cao → thấp
-                  </li>
-                </ul>
+                <span>{getSortLabel(sortOption)}</span>
+                <span>&#9662;</span>
               </div>
+              <ul className="options" onClick={(e) => e.stopPropagation()}>
+                <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                  Mới nhất
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}>
+                  Giá: thấp → cao
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}>
+                  Giá: cao → thấp
+                </li>
+              </ul>
             </div>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="filter-loading">Đang tải sản phẩm...</div>
-        ) : products.length === 0 ? (
+        {products.length === 0 ? (
           <p style={{ textAlign: "center", padding: "40px 0" }}>
             Chưa có sản phẩm nào cho danh mục này.
           </p>

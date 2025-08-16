@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "../assets/css/adminProducts.css";
 import "../assets/css/modal.css";
 import { toast } from "react-toastify";
@@ -279,6 +280,26 @@ const AdminProducts: React.FC = () => {
                   <td>{formatDate(String(product.createdAt))}</td>
                   <td>
                     <div className="action-buttons">
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="btn-view"
+                        title="Xem chi tiết"
+                        style={{
+                          backgroundColor: "#17a2b8",
+                          color: "white",
+                          border: "none",
+                          padding: "5px 8px",
+                          borderRadius: "3px",
+                          cursor: "pointer",
+                          margin: "0 2px",
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <i className="fas fa-eye"></i>
+                      </Link>
                       <button
                         className="btn-edit"
                         onClick={() => openEditModal(product)}
