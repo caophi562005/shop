@@ -268,8 +268,12 @@ const WomenPage: React.FC = () => {
     basePrice: number,
     virtualPrice: number
   ): number => {
-    if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
-    return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
+    // basePrice: giá bán thực tế (thấp hơn)
+    // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
+    // Sale khi basePrice < virtualPrice
+    if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
+      return 0;
+    return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
   };
 
   return (
@@ -387,10 +391,10 @@ const WomenPage: React.FC = () => {
                         {hasDiscount ? (
                           <>
                             <span className="price-original">
-                              {formatCurrency(product.basePrice)}
+                              {formatCurrency(product.virtualPrice)}
                             </span>
                             <span className="price-sale">
-                              {formatCurrency(product.virtualPrice)}
+                              {formatCurrency(product.basePrice)}
                             </span>
                           </>
                         ) : (
