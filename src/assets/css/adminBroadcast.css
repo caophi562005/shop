@@ -311,7 +311,9 @@
   border-color: #ffc107;
 }
 
-.checkbox-option input[type="checkbox"]:checked + .checkbox-custom-admin::after {
+.checkbox-option
+  input[type="checkbox"]:checked
+  + .checkbox-custom-admin::after {
   content: "✓";
   position: absolute;
   top: 50%;

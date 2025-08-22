@@ -106,11 +106,11 @@ const AdminBroadcast: React.FC = () => {
 
     try {
       let finalUserIds = selectedUserIds;
-      
-      // If excludeAdmin is true and broadcastToAll is false, 
+
+      // If excludeAdmin is true and broadcastToAll is false,
       // we need to remove current admin from userIds
       // Note: This is client-side filtering, server should handle this properly
-      
+
       const requestData: BroadcastRequest = {
         content: content.trim(),
         title: title.trim() || undefined,
@@ -127,7 +127,9 @@ const AdminBroadcast: React.FC = () => {
 
       setMessage({
         type: "success",
-        text: `Thành công! Đã gửi ${response.data.successfulSends}/${response.data.totalTargets} thông báo${excludeAdmin ? ' (không bao gồm admin)' : ''}`,
+        text: `Thành công! Đã gửi ${response.data.successfulSends}/${
+          response.data.totalTargets
+        } thông báo${excludeAdmin ? " (không bao gồm admin)" : ""}`,
       });
 
       // Auto-hide success message after 3 seconds
@@ -173,7 +175,8 @@ const AdminBroadcast: React.FC = () => {
           <div className="admin-note">
             <span className="note-icon">💡</span>
             <span>
-              Thông báo sẽ được gửi real-time đến người dùng đang online và lưu trữ cho người dùng offline
+              Thông báo sẽ được gửi real-time đến người dùng đang online và lưu
+              trữ cho người dùng offline
             </span>
           </div>
         </div>
@@ -278,7 +281,9 @@ const AdminBroadcast: React.FC = () => {
                 />
                 <span className="checkbox-custom-admin"></span>
                 <div className="option-content">
-                  <span className="option-title">Không gửi thông báo cho bản thân</span>
+                  <span className="option-title">
+                    Không gửi thông báo cho bản thân
+                  </span>
                   <span className="option-description">
                     Tránh hiển thị thông báo trùng lặp cho admin
                   </span>
