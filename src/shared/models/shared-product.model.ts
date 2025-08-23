@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { ProductTranslationSchema } from './shared-product-translation.model'
+import { SKUSchema } from './shared-sku.model'
+import { CategoryIncludeTranslationSchema } from './shared-category.model'
 
 export const VariantSchema = z.object({
   value: z.string(),
@@ -50,5 +53,12 @@ export const ProductSchema = z.object({
   deletedAt: z.date().nullable(),
 })
 
+export const GetProductDetailResSchema = ProductSchema.extend({
+  productTranslations: z.array(ProductTranslationSchema),
+  skus: z.array(SKUSchema),
+  categories: z.array(CategoryIncludeTranslationSchema),
+})
+
 export type ProductType = z.infer<typeof ProductSchema>
+export type GetProductDetailResType = z.infer<typeof GetProductDetailResSchema>
 export type VariantsType = z.infer<typeof VariantsSchema>

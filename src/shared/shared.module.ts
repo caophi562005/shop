@@ -14,6 +14,7 @@ import { SharedPaymentRepository } from './repositories/shared-payment.repo'
 import { SharedNotificationRepository } from './repositories/shared-notification.repo'
 import { NotificationGateway } from 'src/websockets/notification.gateway'
 import { S3Service } from './services/s3.service'
+import { SharedProductRepository } from './repositories/shared-product.repo'
 
 const sharedServices = [
   PrismaService,
@@ -26,6 +27,7 @@ const sharedServices = [
   SharedRoleRepository,
   SharedPaymentRepository,
   SharedNotificationRepository,
+  SharedProductRepository,
   NotificationGateway,
 ]
 

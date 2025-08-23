@@ -23,12 +23,17 @@ import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { PaymentStatus } from 'src/shared/constants/payment.constant'
 import { OrderProducer } from './order.producer'
 import { OrderInProductSKUSnapshotType } from 'src/shared/models/shared-order.model'
+import { ProductGateway } from '../product/product.gateway'
+import { ALL_LANGUAGE_CODE } from 'src/shared/constants/other.constant'
+import { SharedProductRepository } from 'src/shared/repositories/shared-product.repo'
 
 @Injectable()
 export class OrderRepository {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly orderProducer: OrderProducer,
+    private readonly productGateway: ProductGateway,
+    private readonly sharedProductRepository: SharedProductRepository,
   ) {}
 
   private getTotalPrice(order: OrderInProductSKUSnapshotType) {
@@ -187,6 +192,9 @@ export class OrderRepository {
       cartItemMap.set(item.id, item)
     })
 
+    //Lấy productId để cập nhập Websocket
+    const productIds = [...new Set(cartItems.map((item) => item.sku.product.id as number))]
+
     // Tạo order và xoá cartItem
     const [orders] = await this.prismaService.$transaction(async (tx) => {
       // Tạo payment record - COD vẫn cần payment record để track
@@ -260,6 +268,21 @@ export class OrderRepository {
       const [orders] = await Promise.all([orders$, cartItem$, sku$, addCancelPaymentJob$])
       return [orders]
     })
+
+    for (const productId of productIds) {
+      try {
+        const updatedProduct = await this.sharedProductRepository.getDetail({
+          productId,
+          languageId: ALL_LANGUAGE_CODE, // Default language
+        })
+        if (updatedProduct) {
+          this.productGateway.handleProductUpdate(updatedProduct)
+        }
+      } catch (error) {
+        console.error(`Failed to notify product update for productId ${productId}:`, error)
+      }
+    }
+
     return {
       data: orders,
     }

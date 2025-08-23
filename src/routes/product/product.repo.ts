@@ -3,14 +3,13 @@ import { PrismaService } from 'src/shared/services/prisma.service'
 import {
   CreateProductBodyType,
   GetDiscountedProductsQueryType,
-  GetProductDetailResType,
   GetProductsQueryType,
   GetProductsResType,
   UpdateProductBodyType,
 } from './product.model'
 import { Prisma } from '@prisma/client'
 import { ALL_LANGUAGE_CODE, SortBy } from 'src/shared/constants/other.constant'
-import { ProductType } from 'src/shared/models/shared-product.model'
+import { GetProductDetailResType, ProductType } from 'src/shared/models/shared-product.model'
 
 @Injectable()
 export class ProductRepository {
@@ -116,60 +115,6 @@ export class ProductRepository {
       limit: query.limit,
       totalPages: Math.ceil(totalItems / query.limit),
     }
-  }
-
-  getDetail({
-    productId,
-    languageId,
-    isPublish,
-  }: {
-    productId: number
-    languageId: string
-    isPublish?: boolean
-  }): Promise<GetProductDetailResType | null> {
-    let where: Prisma.ProductWhereUniqueInput = {
-      id: productId,
-      deletedAt: null,
-    }
-
-    if (isPublish === true) {
-      where.publishedAt = {
-        lte: new Date(),
-        not: null,
-      }
-    } else if (isPublish === false) {
-      where = {
-        ...where,
-        OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
-      }
-    }
-    return this.prismaService.product.findUnique({
-      where,
-      include: {
-        productTranslations: {
-          where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId: languageId, deletedAt: null },
-        },
-        skus: {
-          where: {
-            deletedAt: null,
-          },
-          orderBy: {
-            id: 'asc', // Order by creation order để giữ thứ tự logic combinations
-          },
-        },
-        categories: {
-          where: {
-            deletedAt: null,
-          },
-          include: {
-            categoryTranslations: {
-              where:
-                languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId: languageId, deletedAt: null },
-            },
-          },
-        },
-      },
-    })
   }
 
   findById(productId: number): Promise<ProductType | null> {

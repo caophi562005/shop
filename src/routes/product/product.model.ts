@@ -87,12 +87,6 @@ export const GetProductsParamsSchema = z
   })
   .strict()
 
-export const GetProductDetailResSchema = ProductSchema.extend({
-  productTranslations: z.array(ProductTranslationSchema),
-  skus: z.array(SKUSchema),
-  categories: z.array(CategoryIncludeTranslationSchema),
-})
-
 export const CreateProductBodySchema = ProductSchema.pick({
   publishedAt: true,
   name: true,
@@ -139,7 +133,6 @@ export const updateProductBodySchema = CreateProductBodySchema
 
 export type GetProductsResType = z.infer<typeof GetProductsResSchema>
 export type GetProductsParamsType = z.infer<typeof GetProductsParamsSchema>
-export type GetProductDetailResType = z.infer<typeof GetProductDetailResSchema>
 export type CreateProductBodyType = z.infer<typeof CreateProductBodySchema>
 export type UpdateProductBodyType = z.infer<typeof updateProductBodySchema>
 export type GetManageProductsQueryType = z.infer<typeof GetManageProductsQuerySchema>

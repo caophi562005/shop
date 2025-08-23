@@ -6,12 +6,14 @@ import { NotFoundRecordException } from 'src/shared/error'
 import { isNotFoundPrismaError } from 'src/shared/helpers'
 import { RoleName } from 'src/shared/constants/role.constant'
 import { ProductGateway } from './product.gateway'
+import { SharedProductRepository } from 'src/shared/repositories/shared-product.repo'
 
 @Injectable()
 export class ManageProductService {
   constructor(
     private readonly productRepository: ProductRepository,
     private readonly productGateway: ProductGateway,
+    private readonly sharedProductRepository: SharedProductRepository,
   ) {}
 
   validatePrivilege({
@@ -60,7 +62,7 @@ export class ManageProductService {
     userIdRequest: number
     roleNameRequest: string
   }) {
-    const product = await this.productRepository.getDetail({
+    const product = await this.sharedProductRepository.getDetail({
       productId,
       languageId: I18nContext.current()?.lang as string,
     })
@@ -110,7 +112,7 @@ export class ManageProductService {
         data,
         updatedById,
       })
-      const fullUpdatedProduct = await this.productRepository.getDetail({
+      const fullUpdatedProduct = await this.sharedProductRepository.getDetail({
         productId: updatedProduct.id,
         languageId: 'all',
       })

@@ -1,7 +1,7 @@
 import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
 import { Server, Socket } from 'socket.io'
-import { GetProductDetailResType } from './product.model'
 import { generateRoomProductId } from 'src/shared/helpers'
+import { GetProductDetailResType } from 'src/shared/models/shared-product.model'
 
 @WebSocketGateway({ namespace: 'product' })
 export class ProductGateway {

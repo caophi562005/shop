@@ -3,10 +3,14 @@ import { ProductRepository } from './product.repo'
 import { GetProductsQueryType, GetDiscountedProductsQueryType } from './product.model'
 import { I18nContext } from 'nestjs-i18n'
 import { NotFoundRecordException } from 'src/shared/error'
+import { SharedProductRepository } from 'src/shared/repositories/shared-product.repo'
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    private readonly productRepository: ProductRepository,
+    private readonly sharedProductRepository: SharedProductRepository,
+  ) {}
 
   async list(query: GetProductsQueryType) {
     const data = await this.productRepository.list({
@@ -18,7 +22,7 @@ export class ProductService {
   }
 
   async getDetail(productId: number) {
-    const product = await this.productRepository.getDetail({
+    const product = await this.sharedProductRepository.getDetail({
       productId,
       languageId: I18nContext.current()?.lang as string,
       isPublish: true,

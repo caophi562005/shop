@@ -9,10 +9,11 @@ import { OrderRevenueController } from './order-revenue.controller'
 import { OrderRevenueService } from './order-revenue.service'
 import { ManageOrderController } from './manage-order.controller'
 import { ManageOrderService } from './manage-order.service'
+import { ProductGateway } from '../product/product.gateway'
 
 @Module({
   controllers: [OrderController, OrderRevenueController, ManageOrderController],
-  providers: [OrderService, OrderRepository, OrderProducer, OrderRevenueService, ManageOrderService],
+  providers: [OrderService, OrderRepository, OrderProducer, OrderRevenueService, ManageOrderService, ProductGateway],
   imports: [
     BullModule.registerQueue({
       name: PAYMENT_QUEUE_NAME,
