@@ -36,6 +36,7 @@ const Header: React.FC = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isLanguageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [isNotificationModalOpen, setNotificationModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
     languageUtils.getCurrentLanguage()
   );
@@ -118,9 +119,12 @@ const Header: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Function để fetch subcategories khi hover
+  // Function để fetch subcategories khi hover (desktop) hoặc click (mobile)
   const handleCategoryHover = async (categoryId: number) => {
-    if (window.innerWidth <= 768) return; // Skip on mobile
+    if (isMobile) return; // Skip hover on mobile - sẽ dùng click
+
+    // Skip hover effect for Sale category (id: 13)
+    if (categoryId === 13) return;
 
     setOpenCategory(categoryId);
 
@@ -134,6 +138,42 @@ const Header: React.FC = () => {
       return; // Already loaded
     }
 
+    await fetchSubcategories(categoryId);
+  };
+
+  // Function để handle click trên mobile
+  const handleCategoryClick = async (
+    e: React.MouseEvent,
+    categoryId: number
+  ) => {
+    if (!isMobile) return; // Only for mobile
+
+    // Skip for Sale category (id: 13) - let it navigate normally
+    if (categoryId === 13) return;
+
+    e.preventDefault(); // Prevent navigation
+
+    if (openCategory === categoryId) {
+      // If already open, close it
+      setOpenCategory(null);
+    } else {
+      // Open this category
+      setOpenCategory(categoryId);
+
+      // Check if already has subcategories
+      const category = categories.find((cat) => cat.id === categoryId);
+      if (
+        !category ||
+        !category.subcategories ||
+        category.subcategories.length === 0
+      ) {
+        await fetchSubcategories(categoryId);
+      }
+    }
+  };
+
+  // Function để fetch subcategories
+  const fetchSubcategories = async (categoryId: number) => {
     try {
       const response = await categoryApi.getSubcategories(categoryId);
       const subcategories = response.data.map((sub) => {
@@ -175,13 +215,51 @@ const Header: React.FC = () => {
   // Đóng menu khi chuyển từ mobile sang desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 769) {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+
+      if (!mobile) {
         setMenuOpen(false);
+        setOpenCategory(null); // Đóng tất cả dropdown khi chuyển sang desktop
       }
     };
+
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Handle click outside to close sidebar on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobile && isMenuOpen) {
+        const sidebar = document.querySelector(".nav_container");
+        const menuToggle = document.querySelector(".menu_toggle");
+
+        if (
+          sidebar &&
+          menuToggle &&
+          !sidebar.contains(event.target as Node) &&
+          !menuToggle.contains(event.target as Node)
+        ) {
+          setMenuOpen(false);
+          setOpenCategory(null);
+        }
+      }
+    };
+
+    if (isMobile && isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      // Prevent body scroll when sidebar is open
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobile, isMenuOpen]);
 
   // Xử lý submit form tìm kiếm
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -300,6 +378,43 @@ const Header: React.FC = () => {
       </div>
 
       <nav className={`nav_container ${isMenuOpen ? "open" : ""}`}>
+        {/* Header của sidebar cho mobile */}
+        {isMobile && (
+          <div
+            className="sidebar-header"
+            style={{
+              padding: "15px 20px",
+              borderBottom: "1px solid #333",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "#000",
+            }}
+          >
+            <Link to="/" onClick={() => setMenuOpen(false)}>
+              <img
+                src={logoImg}
+                alt="Logo"
+                style={{ width: "120px", height: "auto" }}
+              />
+            </Link>
+            <button
+              onClick={() => setMenuOpen(false)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "white",
+                fontSize: "20px",
+                cursor: "pointer",
+                padding: "5px",
+              }}
+              aria-label="Đóng menu"
+            >
+              <i className="fa-solid fa-times"></i>
+            </button>
+          </div>
+        )}
+
         <ul className="navigate_header">
           <li>
             <Link
@@ -315,27 +430,46 @@ const Header: React.FC = () => {
               key={cat.id}
               className="dropdown_header"
               onMouseEnter={() => handleCategoryHover(cat.id)}
-              onMouseLeave={() =>
-                window.innerWidth > 768 && setOpenCategory(null)
-              }
+              onMouseLeave={() => !isMobile && setOpenCategory(null)}
             >
               <Link
                 to={cat.path || `/products/${cat.id}`}
                 className="title_header"
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => {
+                  if (isMobile) {
+                    handleCategoryClick(e, cat.id);
+                  } else {
+                    setMenuOpen(false);
+                  }
+                }}
               >
                 {cat.name}
+                {/* Thêm icon mũi tên cho mobile để indicate có subcategories */}
+                {isMobile && cat.id !== 13 && (
+                  <i
+                    className={`fa-solid ${
+                      openCategory === cat.id
+                        ? "fa-chevron-up"
+                        : "fa-chevron-down"
+                    }`}
+                    style={{ fontSize: "12px" }}
+                  ></i>
+                )}
               </Link>
               {openCategory === cat.id &&
+                cat.id !== 13 && // Don't show dropdown for Sale category
                 cat.subcategories &&
                 cat.subcategories.length > 0 && (
-                  <div className="mega_menu">
+                  <div className={`mega_menu ${isMobile ? "mobile-open" : ""}`}>
                     <div className="column">
                       {cat.subcategories.map((sub) => (
                         <Link
                           key={sub.id}
                           to={sub.path || `/products/category/${sub.id}`}
-                          onClick={() => setMenuOpen(false)}
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setOpenCategory(null);
+                          }}
                         >
                           {sub.name}
                         </Link>
@@ -347,6 +481,27 @@ const Header: React.FC = () => {
           ))}
         </ul>
       </nav>
+
+      {/* Overlay cho mobile sidebar */}
+      {isMobile && isMenuOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => {
+            setMenuOpen(false);
+            setOpenCategory(null);
+          }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 1000,
+            cursor: "pointer",
+          }}
+        />
+      )}
 
       <div className="tools_header">
         <div className="header_search_wrapper">
