@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io, Socket } from "socket.io-client";
 import http from "../api/http";
 import "../assets/css/ChatWidget.css";
 import { FiMessageSquare, FiX, FiSend } from "react-icons/fi";
 import { useAuthStore } from "../stores/authStore";
-import envConfig from "../envConfig";
+import { useMessageSocket } from "../hooks/useMessageSocket";
 
 // Định nghĩa kiểu dữ liệu cho một tin nhắn
 interface Message {
@@ -24,11 +23,13 @@ const ChatWidget: React.FC = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const { user, isLoggedIn, isInitialized } = useAuthStore();
   const myUserId = user?.id;
+
+  // Use the message socket hook
+  const { sendMessage, onNewMessage, joinMessageRoom, isConnected } =
+    useMessageSocket();
 
   // Tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
@@ -39,33 +40,29 @@ const ChatWidget: React.FC = () => {
     }
   }, [messages, isOpen]);
 
-  // Kết nối WebSocket
+  // Listen for new messages
   useEffect(() => {
-    if (isLoggedIn && myUserId && !socketRef.current) {
-      socketRef.current = io(`${envConfig.VITE_API_END_POINT}/message`, {
-        withCredentials: true,
-      });
+    if (!isLoggedIn || !myUserId) return;
 
-      // Lắng nghe tin nhắn mới từ admin
-      socketRef.current.on("newMessage", (message: Message) => {
-        if (
-          (message.fromUserId === ADMIN_USER_ID &&
-            message.toUserId === myUserId) ||
-          (message.fromUserId === myUserId &&
-            message.toUserId === ADMIN_USER_ID)
-        ) {
-          setMessages((prevMessages) => [...prevMessages, message]);
-        }
-      });
-    }
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
+    const cleanup = onNewMessage((message: Message) => {
+      if (
+        (message.fromUserId === ADMIN_USER_ID &&
+          message.toUserId === myUserId) ||
+        (message.fromUserId === myUserId && message.toUserId === ADMIN_USER_ID)
+      ) {
+        setMessages((prevMessages) => [...prevMessages, message]);
       }
-    };
-  }, [isLoggedIn, myUserId]);
+    });
+
+    return cleanup;
+  }, [isLoggedIn, myUserId, onNewMessage]);
+
+  // Join message room when connected and user is available
+  useEffect(() => {
+    if (isConnected && myUserId) {
+      joinMessageRoom(ADMIN_USER_ID);
+    }
+  }, [isConnected, myUserId, joinMessageRoom]);
 
   // Tải lịch sử chat khi mở widget
   useEffect(() => {
@@ -92,24 +89,10 @@ const ChatWidget: React.FC = () => {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !socketRef.current || !myUserId) return;
+    if (!newMessage.trim() || !myUserId) return;
 
-    // Gửi tin nhắn qua socket
-    socketRef.current.emit("send-message", {
-      toUserId: ADMIN_USER_ID,
-      content: newMessage,
-    });
-
-    // Thêm tin nhắn vào UI ngay lập tức (optimistic update)
-    // const tempMessage: Message = {
-    //   id: Date.now(),
-    //   content: newMessage,
-    //   fromUserId: myUserId,
-    //   toUserId: ADMIN_USER_ID,
-    //   createdAt: new Date().toISOString(),
-    // };
-
-    // setMessages((prev) => [...prev, tempMessage]);
+    // Gửi tin nhắn qua socket hook
+    sendMessage(ADMIN_USER_ID, newMessage);
     setNewMessage("");
   };
 

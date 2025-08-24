@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from "react";
 import type { CreateProductBodyType } from "../models/product.model";
 import type { VariantsType } from "../models/shared/shared-product.model";
-import type { UpsertSKUType } from "../models/sku.model";
-import type { SKUType } from "../models/shared/shared-sku.model";
 import http from "../api/http";
+import axios from "axios";
+import "../assets/css/createProduct.css";
+
+// Local interface for form state với string prices
+interface CreateProductFormData {
+  name: string;
+  publishedAt: string | null;
+  basePrice: string;
+  virtualPrice: string;
+  images: string[];
+  categories: number[];
+  variants: VariantsType;
+  skus: LocalSKUType[];
+}
+
+// Local SKU type with string price
+interface LocalSKUType {
+  value: string;
+  price: string; // Changed from number to string
+  stock: number;
+  image: string;
+}
 
 type Props = {
   isOpen: boolean;
@@ -18,11 +38,11 @@ const CreateProductModal: React.FC<Props> = ({
   onSuccess,
   onRefresh,
 }) => {
-  const [formData, setFormData] = useState<CreateProductBodyType>({
+  const [formData, setFormData] = useState<CreateProductFormData>({
     name: "",
     publishedAt: null,
-    basePrice: 0,
-    virtualPrice: 0,
+    basePrice: "0",
+    virtualPrice: "0",
     images: [""],
     categories: [0],
     variants: [
@@ -33,10 +53,16 @@ const CreateProductModal: React.FC<Props> = ({
   });
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Upload states
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<Record<number, number>>(
+    {}
+  );
+
   function generateSKUs(
     variants: VariantsType,
     basePrice: number = 0
-  ): UpsertSKUType[] {
+  ): LocalSKUType[] {
     function getCombinations(arrays: string[][]): string[] {
       return arrays.reduce(
         (acc, curr) =>
@@ -51,7 +77,7 @@ const CreateProductModal: React.FC<Props> = ({
 
     return combinations.map((value) => ({
       value,
-      price: basePrice,
+      price: basePrice.toString(), // Convert to string
       stock: 100,
       image: "",
     }));
@@ -59,7 +85,8 @@ const CreateProductModal: React.FC<Props> = ({
 
   // Update SKUs when variants or base price change
   useEffect(() => {
-    const newSKUs = generateSKUs(formData.variants, formData.basePrice);
+    const basePriceNum = Number(formData.basePrice) || 0;
+    const newSKUs = generateSKUs(formData.variants, basePriceNum);
     setFormData((prev) => ({ ...prev, skus: newSKUs }));
   }, [formData.variants, formData.basePrice]);
 
@@ -72,7 +99,9 @@ const CreateProductModal: React.FC<Props> = ({
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Trim string values to remove leading/trailing spaces
+    const trimmedValue = typeof value === "string" ? value.trim() : value;
+    setFormData((prev) => ({ ...prev, [field]: trimmedValue }));
   };
 
   const handleVariantChange = (
@@ -82,7 +111,9 @@ const CreateProductModal: React.FC<Props> = ({
   ) => {
     const newVariants = [...formData.variants];
     if (field === "value") {
-      newVariants[variantIndex].value = value;
+      // Trim variant value
+      newVariants[variantIndex].value =
+        typeof value === "string" ? value.trim() : value;
     } else {
       newVariants[variantIndex].options = value;
     }
@@ -95,7 +126,8 @@ const CreateProductModal: React.FC<Props> = ({
     value: string
   ) => {
     const newVariants = [...formData.variants];
-    newVariants[variantIndex].options[optionIndex] = value;
+    // Trim variant option value
+    newVariants[variantIndex].options[optionIndex] = value.trim();
     setFormData((prev) => ({ ...prev, variants: newVariants }));
   };
 
@@ -115,7 +147,8 @@ const CreateProductModal: React.FC<Props> = ({
 
   const handleImageChange = (index: number, value: string) => {
     const newImages = [...formData.images];
-    newImages[index] = value;
+    // Trim image URL
+    newImages[index] = value.trim();
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
 
@@ -130,13 +163,78 @@ const CreateProductModal: React.FC<Props> = ({
     }
   };
 
+  const handleImageUpload = (index: number, file: File) => {
+    setUploadingIndex(index);
+    setUploadProgress((prev) => ({ ...prev, [index]: 0 }));
+
+    // Follow exact same flow as Upload.tsx
+    http
+      .post(
+        "/media/images/upload/presigned-url",
+        {
+          filename: file.name,
+          filesize: file.size,
+        },
+        { withCredentials: false }
+      )
+      .then((res) => {
+        // Store URLs first (matching Upload.tsx logic)
+        const url = res.data.url;
+        const presignedUrl = res.data.presignedUrl;
+
+        // Return axios.put to chain promises (matching Upload.tsx)
+        return axios
+          .put(presignedUrl, file, {
+            headers: {
+              "Content-Type": file.type,
+            },
+            withCredentials: false, // Fix CORS issue with S3
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                setUploadProgress((prev) => ({ ...prev, [index]: progress }));
+              }
+            },
+          })
+          .then(() => {
+            // Return the final URL after successful upload
+            return url;
+          });
+      })
+      .then((finalUrl) => {
+        // Update input form với URL sau khi upload thành công
+        handleImageChange(index, finalUrl);
+
+        setUploadingIndex(null);
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[index];
+          return newProgress;
+        });
+      })
+      .catch((error) => {
+        console.error("Upload failed:", error);
+        alert("Upload thất bại! Vui lòng thử lại.");
+        setUploadingIndex(null);
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[index];
+          return newProgress;
+        });
+      });
+  };
+
   const handleSKUChange = (
     skuIndex: number,
-    field: keyof SKUType,
+    field: keyof LocalSKUType,
     value: any
   ) => {
     const newSKUs = [...formData.skus];
-    newSKUs[skuIndex] = { ...newSKUs[skuIndex], [field]: value };
+    // Trim string values (price, value, image)
+    const trimmedValue = typeof value === "string" ? value.trim() : value;
+    newSKUs[skuIndex] = { ...newSKUs[skuIndex], [field]: trimmedValue };
     setFormData((prev) => ({ ...prev, skus: newSKUs }));
   };
 
@@ -145,10 +243,18 @@ const CreateProductModal: React.FC<Props> = ({
     setLoading(true);
 
     try {
-      const submitData = {
+      const submitData: CreateProductBodyType = {
         ...formData,
+        basePrice: Number(formData.basePrice) || 0,
+        virtualPrice: Number(formData.virtualPrice) || 0,
         images: formData.images.filter((img) => img.trim() !== ""),
-        publishedAt: formData.publishedAt || new Date().toISOString(),
+        publishedAt: formData.publishedAt
+          ? new Date(formData.publishedAt)
+          : new Date(),
+        skus: formData.skus.map((sku) => ({
+          ...sku,
+          price: Number(sku.price) || 0, // Convert price to number
+        })),
       };
 
       await http.post("/manage-product/products", submitData);
@@ -168,8 +274,8 @@ const CreateProductModal: React.FC<Props> = ({
     setFormData({
       name: "",
       publishedAt: null,
-      basePrice: 0,
-      virtualPrice: 0,
+      basePrice: "0",
+      virtualPrice: "0",
       images: [""],
       categories: [0],
       variants: [
@@ -216,27 +322,25 @@ const CreateProductModal: React.FC<Props> = ({
             <div className="form-group">
               <label>Giá gốc *</label>
               <input
-                type="number"
+                type="text"
                 value={formData.basePrice}
-                onChange={(e) =>
-                  handleInputChange("basePrice", Number(e.target.value))
-                }
+                onChange={(e) => handleInputChange("basePrice", e.target.value)}
                 required
-                min="0"
                 disabled={loading}
+                placeholder="Nhập giá gốc"
               />
             </div>
             <div className="form-group">
               <label>Giá ảo *</label>
               <input
-                type="number"
+                type="text"
                 value={formData.virtualPrice}
                 onChange={(e) =>
-                  handleInputChange("virtualPrice", Number(e.target.value))
+                  handleInputChange("virtualPrice", e.target.value)
                 }
                 required
-                min="0"
                 disabled={loading}
+                placeholder="Nhập giá ảo"
               />
             </div>
           </div>
@@ -265,14 +369,43 @@ const CreateProductModal: React.FC<Props> = ({
                   placeholder="URL hình ảnh"
                   value={image}
                   onChange={(e) => handleImageChange(index, e.target.value)}
-                  disabled={loading}
+                  disabled={loading || uploadingIndex === index}
                 />
+
+                {/* Upload button */}
+                <label className="btn-upload">
+                  📁 Upload
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleImageUpload(index, file);
+                      }
+                    }}
+                    disabled={loading || uploadingIndex === index}
+                    style={{ display: "none" }}
+                  />
+                </label>
+
+                {/* Progress bar */}
+                {uploadingIndex === index && (
+                  <div className="upload-progress">
+                    <div
+                      className="progress-bar"
+                      style={{ width: `${uploadProgress[index] || 0}%` }}
+                    ></div>
+                    <span>{uploadProgress[index] || 0}%</span>
+                  </div>
+                )}
+
                 {formData.images.length > 1 && (
                   <button
                     type="button"
                     className="btn-remove"
                     onClick={() => removeImageField(index)}
-                    disabled={loading}
+                    disabled={loading || uploadingIndex === index}
                   >
                     ❌
                   </button>
@@ -369,11 +502,11 @@ const CreateProductModal: React.FC<Props> = ({
                   <h5>SKU: {sku.value}</h5>
                   <div className="sku-fields">
                     <input
-                      type="number"
+                      type="text"
                       placeholder="Giá"
                       value={sku.price}
                       onChange={(e) =>
-                        handleSKUChange(index, "price", Number(e.target.value))
+                        handleSKUChange(index, "price", e.target.value)
                       }
                       disabled={loading}
                     />

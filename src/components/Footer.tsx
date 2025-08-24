@@ -3,6 +3,7 @@
 import "../assets/css/style.css"; // File CSS riêng cho Footer
 import React, { useEffect, useState } from "react";
 import logoImg from "../assets/img/home/logo.png";
+import { Link } from "react-router-dom";
 
 const Footer: React.FC = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -44,15 +45,21 @@ const Footer: React.FC = () => {
           <div className="footer-column">
             <h4 className="title_contact">CHÍNH SÁCH</h4>
             <ul className="content_contact">
-              <li className="address_contact">
-                <a href="#">Chính sách thành viên</a>
-              </li>
-              <li className="address_contact">
-                <a href="#">Chính sách đổi trả</a>
-              </li>
-              <li className="address_contact">
-                <a href="#">Chính sách vận chuyển</a>
-              </li>
+              <Link to="chinh-sach-thanh-vien">
+                <li className="address_contact">
+                  <a>Chính sách thành viên</a>
+                </li>
+              </Link>
+              <Link to="chinh-sach-doi-tra">
+                <li className="address_contact">
+                  <a>Chính sách đổi trả</a>
+                </li>
+              </Link>
+              <Link to="chinh-sach-van-chuyen">
+                <li className="address_contact">
+                  <a>Chính sách vận chuyển</a>
+                </li>
+              </Link>
             </ul>
           </div>
           <div className="footer-column">
