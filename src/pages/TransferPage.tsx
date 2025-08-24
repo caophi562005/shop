@@ -6,14 +6,18 @@ import "../assets/css/Transfer.css";
 import http from "../api/http";
 import type { OrderInProductSKUSnapshotType } from "../models/shared/shared-order.model";
 import { toast } from "react-toastify";
-import io, { Socket } from "socket.io-client";
-
-let socket: Socket;
+import { OrderStatus } from "../constants/order.constant";
+import { usePaymentSocket } from "../hooks/usePaymentSocket";
 
 const TransferPage: React.FC = () => {
   const [paymentId, setPaymentId] = useState<number>(0);
   const [amount, setAmount] = useState(0);
   const { orderId } = useParams<{ orderId: string }>();
+
+  // Use payment socket hook
+  const { onPaymentSuccess, isConnected } = usePaymentSocket(
+    paymentId || undefined
+  );
 
   const qrUrl = `https://qr.sepay.vn/img?acc=${envConfig.VITE_BANK_ACCOUNT}&bank=${envConfig.VITE_BANK_CODE}&amount=${amount}&des=${envConfig.VITE_ORDER_PREFIX}${paymentId}`;
   const [statusMessage, setStatusMessage] = useState("Đang chờ thanh toán...");
@@ -36,10 +40,23 @@ const TransferPage: React.FC = () => {
   useEffect(() => {
     const takeOrder = async () => {
       try {
-        const order = await http.get(`/orders/${Number(orderId)}`);
-        const orderData: OrderInProductSKUSnapshotType = order.data;
-        setPaymentId(orderData.paymentId);
-        setAmount(getTotalPrice(orderData));
+        const response = await http.get(`/orders/${Number(orderId)}`);
+        const orderData: OrderInProductSKUSnapshotType = response.data;
+
+        // Kiểm tra status của order
+        if (orderData.status === OrderStatus.PENDING_PAYMENT) {
+          // Chỉ tiếp tục với transfer page nếu status là PENDING_PAYMENT
+          setPaymentId(orderData.paymentId);
+          setAmount(getTotalPrice(orderData));
+        } else if (orderData.status === OrderStatus.CANCELLED) {
+          // Nếu order đã bị cancel
+          toast.error("Đơn hàng đã bị hủy");
+          navigate("/");
+        } else {
+          // Nếu order đã thanh toán hoặc có status khác (PENDING_PICKUP, PENDING_DELIVERY, DELIVERED, RETURNED)
+          toast.success("Đơn hàng đã được thanh toán thành công");
+          navigate(`/order-success/${orderId}`);
+        }
       } catch (error) {
         navigate("/");
         toast.error("Đơn hàng không tồn tại hoặc không phải của bạn");
@@ -48,53 +65,22 @@ const TransferPage: React.FC = () => {
     takeOrder();
   }, [orderId, navigate]);
 
-  // WebSocket connection - chỉ chạy khi có paymentId
+  // Listen for payment success using the hook
   useEffect(() => {
-    if (!paymentId || paymentId === 0) {
-      console.log("PaymentId not ready yet:", paymentId);
-      return; // Không khởi tạo socket nếu chưa có paymentId
-    }
+    if (!isConnected || !paymentId) return;
 
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      toast.error("Người dùng chưa đăng nhập, không khởi tạo WebSocket");
-      return;
-    }
-
-    socket = io(`${envConfig.VITE_API_END_POINT}/payment`, {
-      extraHeaders: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    socket.on("connect", () => {
-      socket.emit("joinPaymentRoom", paymentId);
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("❌ WebSocket connection error:", err.message);
-      if (err.message.includes("Authentication")) {
-        // Tại đây bạn có thể xử lý việc đăng xuất người dùng hoặc refresh token
-      }
-    });
-
-    socket.on("successPaymentId", (receivedPaymentId: number) => {
+    const cleanup = onPaymentSuccess((receivedPaymentId: number) => {
       if (receivedPaymentId === paymentId) {
         setStatusMessage("Thanh toán thành công");
+        toast.success("Thanh toán thành công!");
         setTimeout(() => {
-          navigate("/order-success/" + orderId); // hoặc trang nào đó
+          navigate("/order-success/" + orderId);
         }, 2000);
       }
     });
 
-    // Cleanup function
-    return () => {
-      if (socket) {
-        socket.emit("leavePaymentRoom", paymentId);
-        socket.disconnect();
-      }
-    };
-  }, [paymentId, navigate]); // Dependency array bao gồm paymentId
+    return cleanup;
+  }, [isConnected, paymentId, onPaymentSuccess, navigate, orderId]);
 
   return (
     <div className="transfer-page-container">

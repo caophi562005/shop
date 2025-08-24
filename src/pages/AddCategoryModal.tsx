@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import "../assets/css/modal.css";
+import http from "../api/http";
+import axios from "axios";
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -16,6 +18,60 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 }) => {
   const [name, setName] = useState("");
   const [logo, setLogo] = useState("");
+
+  // Upload states
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleLogoUpload = (file: File) => {
+    setUploadingLogo(true);
+    setUploadProgress(0);
+
+    // Follow exact same flow as Upload.tsx
+    http
+      .post(
+        "/media/images/upload/presigned-url",
+        {
+          filename: file.name,
+          filesize: file.size,
+        },
+        { withCredentials: false }
+      )
+      .then((res) => {
+        const url = res.data.url;
+        const presignedUrl = res.data.presignedUrl;
+
+        return axios
+          .put(presignedUrl, file, {
+            headers: {
+              "Content-Type": file.type,
+            },
+            withCredentials: false,
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                setUploadProgress(progress);
+              }
+            },
+          })
+          .then(() => {
+            return url;
+          });
+      })
+      .then((finalUrl) => {
+        setLogo(finalUrl);
+        setUploadingLogo(false);
+        setUploadProgress(0);
+      })
+      .catch((error) => {
+        console.error("Upload failed:", error);
+        alert("Upload logo thất bại! Vui lòng thử lại.");
+        setUploadingLogo(false);
+        setUploadProgress(0);
+      });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,16 +119,66 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 
           <div className="form-group">
             <label htmlFor="categoryLogo">Logo</label>
-            <input
-              type="text"
-              id="categoryLogo"
-              value={logo}
-              onChange={(e) => setLogo(e.target.value)}
-              placeholder="Nhập emoji hoặc URL logo"
-            />
+            <div className="field-group">
+              <input
+                type="text"
+                id="categoryLogo"
+                value={logo}
+                onChange={(e) => setLogo(e.target.value)}
+                placeholder="Nhập emoji hoặc URL logo"
+                disabled={uploadingLogo}
+              />
+
+              {/* Upload button */}
+              <label className="btn-upload">
+                📁 Upload
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleLogoUpload(file);
+                    }
+                  }}
+                  disabled={uploadingLogo}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </div>
+
+            {/* Progress bar */}
+            {uploadingLogo && (
+              <div className="upload-progress">
+                <div
+                  className="progress-bar"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+                <span>{uploadProgress}%</span>
+              </div>
+            )}
+
             {logo && (
               <div className="logo-preview">
-                <span>Xem trước: {logo}</span>
+                {logo.startsWith("http") ? (
+                  <div>
+                    <span>Xem trước:</span>
+                    <img
+                      src={logo}
+                      alt="Logo preview"
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                        marginLeft: "10px",
+                        border: "2px solid #ddd",
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <span>Xem trước: {logo}</span>
+                )}
               </div>
             )}
           </div>

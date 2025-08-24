@@ -40,7 +40,7 @@ const FindProductPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalItems, setTotalItems] = useState<number>(0);
 
-  const productsPerPage = 1;
+  const productsPerPage = 12;
 
   useEffect(() => {
     if (!name) return;

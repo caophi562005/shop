@@ -2,18 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import "../assets/css/style.css";
 import "../assets/css/CategoryPage.css";
 import type { ProductType } from "../models/shared/shared-product.model";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import http from "../api/http";
 import { OrderBy, SortBy } from "../constants/other.constant";
-
-interface CategoryType {
-  id: number;
-  name: string;
-  logo: string;
-  parentCategoryId: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const formatCurrency = (price: number): string => {
   return new Intl.NumberFormat("vi-VN").format(price) + " VNĐ";
@@ -25,60 +16,23 @@ const SortChooseType = {
   LATEST: "LATEST",
 } as const;
 
-const WomenPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+const AccessoriesPage: React.FC = () => {
   const [sortOption, setSortOption] = useState<keyof typeof SortChooseType>(
     SortChooseType.LATEST
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] =
-    useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   const [products, setProducts] = useState<ProductType[]>([]);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [totalItems, setTotalItems] = useState<number>(0);
-  const [categories, setCategories] = useState<CategoryType[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const productsPerPage = 12;
-  const parentCategoryId = 2;
-
-  // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await http.get(
-          `/categories?parentCategoryId=${parentCategoryId}`
-        );
-        setCategories(response.data.data || []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        setCategories([]);
-      }
-    };
-    fetchCategories();
-  }, [parentCategoryId]);
-
-  // Handle query parameter for pre-selecting category
-  useEffect(() => {
-    const categoryParam = searchParams.get("category");
-    if (categoryParam) {
-      const categoryId = parseInt(categoryParam, 10);
-      if (!isNaN(categoryId)) {
-        setSelectedCategoryId(categoryId);
-      }
-    }
-  }, [searchParams]);
+  const productsPerPage = 10;
+  const parentCategoryId = 3;
 
   useEffect(() => {
     const fetchProducts = async () => {
-      setIsLoading(true);
       let sortBy = "";
       let order = "";
       if (sortOption === SortChooseType.PRICE_ASC) {
@@ -91,40 +45,25 @@ const WomenPage: React.FC = () => {
         sortBy = SortBy.CreatedAt;
         order = OrderBy.Desc;
       }
-
-      // Build categories array for API call
-      const categoriesParam = selectedCategoryId
-        ? [selectedCategoryId] // Chỉ dùng category con được chọn
-        : [parentCategoryId]; // Dùng parent category khi chưa chọn category con
-
       try {
-        const categoriesQuery = categoriesParam
-          .map((id) => `categories=${id}`)
-          .join("&");
-        console.log(
-          "Fetching products with URL:",
-          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoriesQuery}`
-        );
         const response = await http.get(
-          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&${categoriesQuery}`
+          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}&parentCategoryId=${parentCategoryId}`
         );
         const data = response.data;
-        console.log("API Response:", data);
-        // Hiển thị tất cả sản phẩm (không lọc giảm giá)
-        const allProducts = data.data || [];
-        console.log("Products to display:", allProducts);
-        setProducts(allProducts);
+        // Lọc sản phẩm có basePrice = virtualPrice (không có giảm giá)
+        const filteredProducts = (data.data || []).filter(
+          (product: ProductType) => product.basePrice === product.virtualPrice
+        );
+        setProducts(filteredProducts);
         setTotalPages(data.totalPages || 0);
         setTotalItems(data.totalItems || 0);
       } catch (error) {
         console.error("Failed to fetch products:", error);
         setProducts([]);
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchProducts();
-  }, [currentPage, sortOption, parentCategoryId, selectedCategoryId]);
+  }, [currentPage, sortOption, parentCategoryId]);
 
   const getSortLabel = (sortValue: keyof typeof SortChooseType) => {
     switch (sortValue) {
@@ -143,18 +82,6 @@ const WomenPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleCategoryChange = (categoryId: number | null) => {
-    setSelectedCategoryId(categoryId);
-    setIsCategoryDropdownOpen(false);
-    setCurrentPage(1);
-  };
-
-  const getCategoryLabel = () => {
-    if (!selectedCategoryId) return "Tất cả danh mục";
-    const category = categories.find((cat) => cat.id === selectedCategoryId);
-    return category ? category.name : "Tất cả danh mục";
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -164,17 +91,10 @@ const WomenPage: React.FC = () => {
       ) {
         setIsDropdownOpen(false);
       }
-      if (
-        isCategoryDropdownOpen &&
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsCategoryDropdownOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isDropdownOpen, isCategoryDropdownOpen]);
+  }, [isDropdownOpen]);
 
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -268,12 +188,8 @@ const WomenPage: React.FC = () => {
     basePrice: number,
     virtualPrice: number
   ): number => {
-    // basePrice: giá bán thực tế (thấp hơn)
-    // virtualPrice: giá ảo (cao hơn để tạo cảm giác giảm giá)
-    // Sale khi basePrice < virtualPrice
-    if (virtualPrice <= 0 || basePrice <= 0 || virtualPrice <= basePrice)
-      return 0;
-    return Math.round(((virtualPrice - basePrice) / virtualPrice) * 100);
+    if (basePrice <= 0 || virtualPrice >= basePrice) return 0;
+    return Math.round(((basePrice - virtualPrice) / basePrice) * 100);
   };
 
   return (
@@ -285,75 +201,40 @@ const WomenPage: React.FC = () => {
               <Link to="/" className="home_navigate">
                 TRANG CHỦ
               </Link>{" "}
-              / DANH MỤC NỮ
+              / PHỤ KIỆN
             </p>
           </div>
           <div className="filter_shopAlll">
-            <p className="filter-results-text">
+            <p>
               Hiển thị {products.length} của {totalItems} kết quả
             </p>
-            <div className="filter-dropdowns">
+            <div
+              className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
+              ref={dropdownRef}
+            >
               <div
-                className={`custom-dropdown ${
-                  isCategoryDropdownOpen ? "open" : ""
-                }`}
-                ref={categoryDropdownRef}
+                className="selected"
+                onClick={() => setIsDropdownOpen((o) => !o)}
               >
-                <div
-                  className="selected"
-                  onClick={() => setIsCategoryDropdownOpen((o) => !o)}
-                >
-                  <span>{getCategoryLabel()}</span>
-                  <span>&#9662;</span>
-                </div>
-                <ul className="options" onClick={(e) => e.stopPropagation()}>
-                  <li onClick={() => handleCategoryChange(null)}>
-                    Tất cả danh mục
-                  </li>
-                  {categories.map((category) => (
-                    <li
-                      key={category.id}
-                      onClick={() => handleCategoryChange(category.id)}
-                    >
-                      {category.name}
-                    </li>
-                  ))}
-                </ul>
+                <span>{getSortLabel(sortOption)}</span>
+                <span>&#9662;</span>
               </div>
-              <div
-                className={`custom-dropdown ${isDropdownOpen ? "open" : ""}`}
-                ref={dropdownRef}
-              >
-                <div
-                  className="selected"
-                  onClick={() => setIsDropdownOpen((o) => !o)}
-                >
-                  <span>{getSortLabel(sortOption)}</span>
-                  <span>&#9662;</span>
-                </div>
-                <ul className="options" onClick={(e) => e.stopPropagation()}>
-                  <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
-                    Mới nhất
-                  </li>
-                  <li
-                    onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}
-                  >
-                    Giá: thấp → cao
-                  </li>
-                  <li
-                    onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}
-                  >
-                    Giá: cao → thấp
-                  </li>
-                </ul>
-              </div>
+              <ul className="options" onClick={(e) => e.stopPropagation()}>
+                <li onClick={() => handleSortChange(SortChooseType.LATEST)}>
+                  Mới nhất
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_ASC)}>
+                  Giá: thấp → cao
+                </li>
+                <li onClick={() => handleSortChange(SortChooseType.PRICE_DESC)}>
+                  Giá: cao → thấp
+                </li>
+              </ul>
             </div>
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="filter-loading">Đang tải sản phẩm...</div>
-        ) : products.length === 0 ? (
+        {products.length === 0 ? (
           <p style={{ textAlign: "center", padding: "40px 0" }}>
             Chưa có sản phẩm nào cho danh mục này.
           </p>
@@ -391,10 +272,10 @@ const WomenPage: React.FC = () => {
                         {hasDiscount ? (
                           <>
                             <span className="price-original">
-                              {formatCurrency(product.virtualPrice)}
+                              {formatCurrency(product.basePrice)}
                             </span>
                             <span className="price-sale">
-                              {formatCurrency(product.basePrice)}
+                              {formatCurrency(product.virtualPrice)}
                             </span>
                           </>
                         ) : (
@@ -414,4 +295,4 @@ const WomenPage: React.FC = () => {
   );
 };
 
-export default WomenPage;
+export default AccessoriesPage;

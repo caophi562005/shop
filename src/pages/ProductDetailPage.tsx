@@ -1,16 +1,56 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import io, { Socket } from "socket.io-client";
 import "../assets/css/detailProduct.css";
 import type { GetProductDetailResType } from "../models/product.model";
 import http from "../api/http";
 import type { SKUType } from "../models/shared/shared-sku.model";
 import { languageUtils } from "../utils/language";
+import { useAuthStore } from "../stores/authStore";
+import { toast } from "react-toastify";
+import FeedbackReadonlyComponent from "../components/FeedbackReadonlyComponent";
+import { useProductSocket } from "../hooks/useProductSocket";
 
-// Biến để lưu trữ socket instance bên ngoài component để không bị khởi tạo lại mỗi lần render
-let socket: Socket;
+// Review interfaces
+interface MediaItem {
+  id: number;
+  url: string;
+  type: "IMAGE" | "VIDEO";
+  reviewId: number;
+  createdAt: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  avatar: string | null;
+}
+
+interface ReviewData {
+  id: number;
+  content: string;
+  rating: number;
+  orderId: number;
+  productId: number;
+  userId: number;
+  updateCount: number;
+  createdAt: string;
+  updatedAt: string;
+  medias: MediaItem[];
+  user: User;
+}
+
+interface ReviewsResponse {
+  data: ReviewData[];
+  totalItems: number;
+  totalPages: number;
+  page: number;
+  limit: number;
+}
 
 const ProductDetailPage: React.FC = () => {
+  // Auth store để kiểm tra trạng thái đăng nhập
+  const { user } = useAuthStore();
+
   // State cho dữ liệu sản phẩm, cho phép null để xử lý trường hợp bị xóa
   const [product, setProduct] = useState<GetProductDetailResType | null>();
   // State để theo dõi tình trạng sản phẩm có bị xóa hay không
@@ -24,8 +64,19 @@ const ProductDetailPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string>("");
   // State cho SKU tương ứng với lựa chọn
   const [selectedSku, setSelectedSku] = useState<SKUType | null>(null);
+  // State cho reviews
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
 
   const { productId } = useParams<{ productId: string }>();
+
+  // Use product socket hook
+  const { onProductUpdated, onProductDeleted, isConnected } = useProductSocket(
+    productId ? Number(productId) : undefined
+  );
 
   // Effect để fetch dữ liệu sản phẩm ban đầu khi component được mount hoặc productId thay đổi
   useEffect(() => {
@@ -51,60 +102,35 @@ const ProductDetailPage: React.FC = () => {
     fetchProduct();
   }, [productId]);
 
-  // Effect để quản lý vòng đời của kết nối WebSocket
+  // Effect để set title với tên sản phẩm
   useEffect(() => {
-    // Lấy access token từ localStorage (hoặc bất cứ nơi nào bạn lưu trữ)
-    const accessToken = localStorage.getItem("accessToken");
-
-    // Chỉ khởi tạo kết nối nếu người dùng đã đăng nhập (có token)
-    if (!accessToken) {
-      console.log("Người dùng chưa đăng nhập, không khởi tạo WebSocket.");
-      return; // Dừng lại tại đây
+    if (product) {
+      const currentLang = languageUtils.getCurrentLanguage();
+      const translation = product.productTranslations.find(
+        (trans) => trans.languageId === currentLang
+      );
+      const productName = translation?.name || product.name;
+      document.title = `${productName} - PIXCAM`;
     }
+  }, [product]);
 
-    // Khởi tạo socket với header xác thực
-    socket = io("https://api-pixcam.hacmieu.xyz/product", {
-      extraHeaders: {
-        Authorization: `Bearer ${accessToken}`, // 🔑 Gửi token lên đây
-      },
+  // Listen for product updates using the hook
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const cleanupUpdate = onProductUpdated((updatedProduct) => {
+      setProduct(updatedProduct as unknown as GetProductDetailResType);
     });
 
-    // Listener khi kết nối thành công
-    socket.on("connect", () => {
-      console.log("✅ WebSocket connected successfully! ID:", socket.id);
-      if (productId) {
-        socket.emit("joinProductRoom", Number(productId));
-      }
-    });
-
-    // Listener để bắt lỗi kết nối
-    socket.on("connect_error", (err) => {
-      console.error("❌ WebSocket connection error:", err.message);
-      // Nếu lỗi là "Thiếu Authentication", có thể token đã hết hạn
-      if (err.message.includes("Authentication")) {
-        // Tại đây bạn có thể xử lý việc đăng xuất người dùng hoặc refresh token
-      }
-    });
-
-    // Các listener khác không đổi...
-    socket.on("productUpdated", (updatedProduct: GetProductDetailResType) => {
-      setProduct(updatedProduct);
-    });
-
-    socket.on("productDeleted", () => {
+    const cleanupDelete = onProductDeleted(() => {
       setIsDeleted(true);
     });
 
-    // Hàm dọn dẹp không đổi
     return () => {
-      if (socket) {
-        if (productId) {
-          socket.emit("leaveProductRoom", Number(productId));
-        }
-        socket.disconnect();
-      }
+      cleanupUpdate();
+      cleanupDelete();
     };
-  }, [productId]);
+  }, [isConnected, onProductUpdated, onProductDeleted]);
 
   // Effect để tìm SKU tương ứng mỗi khi lựa chọn của người dùng thay đổi
   useEffect(() => {
@@ -157,17 +183,77 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
-  const handleAddToCart = (e: React.FormEvent) => {
+  const handleAddToCart = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!selectedSku || selectedSku.stock <= 0) {
-      alert(
+      toast.error(
         "Sản phẩm này đã hết hàng hoặc bạn chưa chọn đầy đủ. Vui lòng thử lại."
       );
       return;
     }
-    alert(
-      `Đã thêm vào giỏ: ${quantity} sản phẩm "${product?.name}", Màu: ${selectedColor}, Size: ${selectedSize}`
-    );
+
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+      return;
+    }
+
+    try {
+      // Gọi API để thêm vào giỏ hàng
+      await http.post("/cart", {
+        skuId: selectedSku.id,
+        quantity: quantity,
+      });
+
+      toast.success("Đã thêm sản phẩm vào giỏ hàng thành công!");
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast.error("Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
+    }
+  };
+
+  // Fetch reviews function
+  const fetchReviews = async (page: number = 1) => {
+    if (!productId) return;
+
+    setReviewsLoading(true);
+    try {
+      const response = await http.get(
+        `/reviews/products/${productId}?page=${page}&limit=10`
+      );
+      const reviewsData: ReviewsResponse = response.data;
+
+      if (page === 1) {
+        setReviews(reviewsData.data);
+      } else {
+        setReviews((prev) => [...prev, ...reviewsData.data]);
+      }
+
+      setTotalPages(reviewsData.totalPages);
+      setCurrentPage(page);
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // Effect to fetch reviews when productId changes
+  useEffect(() => {
+    if (productId) {
+      fetchReviews(1);
+    }
+  }, [productId]);
+
+  const handleLoadMoreReviews = () => {
+    if (currentPage < totalPages) {
+      fetchReviews(currentPage + 1);
+    }
+  };
+
+  const toggleShowAllReviews = () => {
+    setShowAllReviews(!showAllReviews);
   };
 
   // --- RENDER LOGIC ---
@@ -345,6 +431,63 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Reviews Section */}
+      <div className="reviews_section">
+        <div className="reviews_header">
+          <h3 className="reviews_title">Đánh giá sản phẩm</h3>
+          {reviews.length > 0 && (
+            <span className="reviews_count">({reviews.length} đánh giá)</span>
+          )}
+        </div>
+
+        {reviewsLoading && reviews.length === 0 ? (
+          <div className="reviews_loading">Đang tải đánh giá...</div>
+        ) : reviews.length === 0 ? (
+          <div className="reviews_empty">
+            Chưa có đánh giá nào cho sản phẩm này.
+          </div>
+        ) : (
+          <div className="reviews_list">
+            {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
+              <div key={review.id} className="review_item_compact">
+                <FeedbackReadonlyComponent
+                  reviewData={review}
+                  isCompact={true}
+                />
+              </div>
+            ))}
+
+            {reviews.length > 3 && !showAllReviews && (
+              <button
+                onClick={toggleShowAllReviews}
+                className="btn_show_more_reviews"
+              >
+                Xem thêm {reviews.length - 3} đánh giá
+              </button>
+            )}
+
+            {showAllReviews && reviews.length > 3 && (
+              <button
+                onClick={toggleShowAllReviews}
+                className="btn_show_less_reviews"
+              >
+                Thu gọn đánh giá
+              </button>
+            )}
+
+            {showAllReviews && currentPage < totalPages && (
+              <button
+                onClick={handleLoadMoreReviews}
+                className="btn_load_more_reviews"
+                disabled={reviewsLoading}
+              >
+                {reviewsLoading ? "Đang tải..." : "Tải thêm đánh giá"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,7 +1,12 @@
 // src/pages/HomePage.tsx
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import "../assets/css/home.css";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import Slider from "react-slick";
+import { productApi } from "../api/productApi";
+import type { Product } from "../api/productApi";
 
 // --- Import ảnh (giữ nguyên) ---
 import banner3 from "../assets/img/home/banner3.jpg";
@@ -10,9 +15,6 @@ import banner2 from "../assets/img/home/banner2.jpg";
 import review1 from "../assets/img/home/review1.jpg";
 import review2 from "../assets/img/home/review2.jpg";
 import review3 from "../assets/img/home/review_3.jpg";
-import product1Img from "../assets/img/products/products_1.jpg";
-import product2Img from "../assets/img/products/products_2.jpg";
-import product3Img from "../assets/img/products/products_3.jpg";
 import poster1 from "../assets/img/poster/hinh1.jpg";
 import poster2 from "../assets/img/poster/hinh2.jpg";
 import poster3 from "../assets/img/poster/hinh3.jpg";
@@ -24,34 +26,6 @@ import fashion2Img from "../assets/img/poster/fashion2.jpg";
 import fashion3Img from "../assets/img/poster/fashion3.jpg";
 import thienNguyenImg from "../assets/img/poster/thiennguyen2.jpg";
 
-// Giả lập dữ liệu sản phẩm
-const mockProducts = [
-  {
-    id: 1,
-    name: "Áo Sơ Mi Nam Tay Dài",
-    imgURL_1: product1Img,
-    price: 550000,
-    price_sale: 450000,
-    sale_name: "20%",
-  },
-  {
-    id: 2,
-    name: "Quần Jeans Nữ Skinny",
-    imgURL_1: product2Img,
-    price: 750000,
-    price_sale: null,
-    sale_name: null,
-  },
-  {
-    id: 3,
-    name: "Váy Hoa Mùa Hè",
-    imgURL_1: product3Img,
-    price: 890000,
-    price_sale: 690000,
-    sale_name: "22%",
-  },
-];
-
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     amount
@@ -60,59 +34,109 @@ const formatCurrency = (amount: number) =>
 const HomePage: React.FC = () => {
   const sliderImages = [banner3, banner1, banner2];
   const posterImages = [poster1, poster2, poster3, poster4, poster5];
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const posterCarouselRef = useRef<HTMLDivElement>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handlePrevSlide = () =>
-    setCurrentSlide(
-      (prev) => (prev - 1 + sliderImages.length) % sliderImages.length
-    );
-  const handleNextSlide = () =>
-    setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
-
+  // Fetch newest products
   useEffect(() => {
-    const timer = setInterval(handleNextSlide, 4000);
-    return () => clearInterval(timer);
-  }, [sliderImages.length]);
+    const fetchNewProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productApi.getNewProducts(10);
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const scrollPoster = (direction: "left" | "right") => {
-    if (posterCarouselRef.current) {
-      const scrollAmount = direction === "left" ? -300 : 300;
-      posterCarouselRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth",
-      });
-    }
+    fetchNewProducts();
+  }, []);
+
+  // Carousel settings
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 4000,
+    arrows: true,
+  };
+
+  const posterSettings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
+  };
+
+  const productSettings = {
+    dots: false,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+    ],
   };
 
   return (
     <main className="content home-page">
-      {/* Section 1: Hero Slider */}
+      {/* Section 1: Hero Slider with Carousel */}
       <section className="slider-container">
-        <div
-          className="slides"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-        >
+        <Slider {...sliderSettings}>
           {sliderImages.map((img, index) => (
-            <div className="slide" key={index}>
+            <div key={index} className="slide">
               <img src={img} alt={`Banner ${index + 1}`} />
             </div>
           ))}
-        </div>
-        <button
-          className="arrow left"
-          onClick={handlePrevSlide}
-          aria-label="Previous slide"
-        >
-          ❮
-        </button>
-        <button
-          className="arrow right"
-          onClick={handleNextSlide}
-          aria-label="Next slide"
-        >
-          ❯
-        </button>
+        </Slider>
       </section>
 
       {/* Section 2: Review Categories */}
@@ -137,72 +161,77 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 3: New Products */}
+      {/* Section 3: New Products with Carousel */}
       <section className="products-section">
         <h1 className="section-title">HÀNG MỚI VỀ</h1>
-        <div className="products_home">
-          {mockProducts.map((prod) => (
-            <div key={prod.id} className="item_products_home">
-              <a href={`/products/${prod.id}`} className="product-link">
-                <div className="image_home_item">
-                  <img
-                    src={prod.imgURL_1}
-                    alt={prod.name}
-                    className="image_products_home"
-                  />
+        {loading ? (
+          <div className="loading-container">
+            <p>Đang tải sản phẩm...</p>
+          </div>
+        ) : products.length > 0 ? (
+          <div className="products-carousel-wrapper">
+            <Slider {...productSettings}>
+              {products.map((product) => (
+                <div key={product.id} className="product-item">
+                  <a href={`/product/${product.id}`} className="product-link">
+                    <img
+                      src={
+                        product.images[0] ||
+                        "https://via.placeholder.com/300x400/e0e0e0/666666?text=No+Image"
+                      }
+                      alt={product.name}
+                      className="image_product"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/300x400/e0e0e0/666666?text=No+Image";
+                      }}
+                    />
+                    <div className="product-overlay">
+                      <h4 className="product-name">{product.name}</h4>
+                      <p className="product-price">
+                        {product.virtualPrice !== product.basePrice ? (
+                          <>
+                            <span className="price-sale">
+                              {formatCurrency(product.virtualPrice)}
+                            </span>
+                            <span className="price-original">
+                              {formatCurrency(product.basePrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="price-normal">
+                            {formatCurrency(product.virtualPrice)}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </a>
                 </div>
-                <h4 className="infProducts_home name">{prod.name}</h4>
-                <p className="infProducts_home price-block">
-                  {prod.price_sale ? (
-                    <>
-                      <span className="price-original">
-                        {formatCurrency(prod.price)}
-                      </span>
-                      <span className="price-sale">
-                        {formatCurrency(prod.price_sale)}
-                      </span>
-                      <span className="discount-label">-{prod.sale_name}</span>
-                    </>
-                  ) : (
-                    <span className="price-normal">
-                      {formatCurrency(prod.price)}
-                    </span>
-                  )}
-                </p>
-              </a>
-            </div>
-          ))}
-        </div>
+              ))}
+            </Slider>
+          </div>
+        ) : (
+          <div className="no-products">
+            <p>Chưa có sản phẩm mới nào.</p>
+          </div>
+        )}
       </section>
 
       {/* Section 4: Poster Carousel */}
       <section className="poster-section">
         <h1 className="section-title">Khám Phá Phong Cách Của Bạn</h1>
         <div className="poster-carousel-wrapper">
-          <button
-            className="btn-scroll btn-left"
-            onClick={() => scrollPoster("left")}
-            aria-label="Scroll Left"
-          >
-            &#10094;
-          </button>
-          <div className="poster-carousel" ref={posterCarouselRef}>
+          <Slider {...posterSettings}>
             {posterImages.map((img, index) => (
-              <img
-                key={index}
-                src={img}
-                alt={`Poster ${index + 1}`}
-                className="image_poster"
-              />
+              <div key={index} className="poster-item">
+                <img
+                  src={img}
+                  alt={`Poster ${index + 1}`}
+                  className="image_poster"
+                />
+              </div>
             ))}
-          </div>
-          <button
-            className="btn-scroll btn-right"
-            onClick={() => scrollPoster("right")}
-            aria-label="Scroll Right"
-          >
-            &#10095;
-          </button>
+          </Slider>
         </div>
       </section>
 

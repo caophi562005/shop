@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
 import "../assets/css/adminChat.css";
-import envConfig from "../envConfig";
 import http from "../api/http";
+import { useMessageSocket } from "../hooks/useMessageSocket";
 
 interface User {
   id: number;
@@ -29,9 +28,6 @@ interface Message {
   fromUser?: User;
 }
 
-// Helper function to generate room ID
-const generateRoomUserId = (userId: number) => `userId-${userId}`;
-
 const ADMIN_USER_ID = 1; // ID của admin
 
 export default function AdminChat() {
@@ -42,9 +38,11 @@ export default function AdminChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentRoomRef = useRef<string | null>(null);
+
+  // Use the message socket hook
+  const { sendMessage, onNewMessage, joinMessageRoom, isConnected } =
+    useMessageSocket();
 
   // Auto scroll to bottom when new messages arrive - only scroll within chat container
   useEffect(() => {
@@ -124,41 +122,21 @@ export default function AdminChat() {
     [selectedUser]
   );
 
-  // Initialize WebSocket connection
+  // Listen for new messages using the hook
   useEffect(() => {
-    if (!socketRef.current) {
-      socketRef.current = io(`${envConfig.VITE_API_END_POINT}/message`, {
-        withCredentials: true,
-      });
+    if (!isConnected) return;
 
-      // Global message listener
-      socketRef.current.on("newMessage", handleNewMessage);
-    }
-
-    // Clean up on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("newMessage", handleNewMessage);
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, [handleNewMessage]);
+    const cleanup = onNewMessage(handleNewMessage);
+    return cleanup;
+  }, [isConnected, onNewMessage, handleNewMessage]);
 
   // Handle user selection and room joining
   useEffect(() => {
     const loadUserMessages = async () => {
-      if (!selectedUser || !socketRef.current) return;
+      if (!selectedUser) return;
 
-      // Leave previous room if exists
-      if (currentRoomRef.current) {
-        socketRef.current.emit("leaveMessageRoom", currentRoomRef.current);
-      }
-
-      // Join new room
-      const newRoom = generateRoomUserId(selectedUser.id);
-      socketRef.current.emit("joinMessageRoom", newRoom);
-      currentRoomRef.current = newRoom;
+      // Join message room using the hook
+      joinMessageRoom(selectedUser.id);
 
       // Load message history
       setIsLoadingMessages(true);
@@ -177,16 +155,12 @@ export default function AdminChat() {
 
   // Send message handler
   const handleSendMessage = useCallback(() => {
-    if (!selectedUser || !newMessage.trim() || !socketRef.current) return;
+    if (!selectedUser || !newMessage.trim()) return;
 
-    // Send message via socket
-    socketRef.current.emit("send-message", {
-      toUserId: selectedUser.id,
-      content: newMessage.trim(),
-    });
-
+    // Send message via socket hook
+    sendMessage(selectedUser.id, newMessage.trim());
     setNewMessage("");
-  }, [selectedUser, newMessage]);
+  }, [selectedUser, newMessage, sendMessage]);
 
   // Handle Enter key press
   const handleKeyPress = useCallback(

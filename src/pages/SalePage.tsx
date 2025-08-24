@@ -60,7 +60,7 @@ const SalePage: React.FC = () => {
 
       try {
         const response = await http.get(
-          `/products?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}`
+          `/products/discounted?page=${currentPage}&limit=${productsPerPage}&sortBy=${sortBy}&orderBy=${order}`
         );
         const data = response.data;
 
