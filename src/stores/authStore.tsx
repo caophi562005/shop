@@ -123,10 +123,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuthCookiesAsync: async () => {
     try {
-      const response = await fetch("/api/profile", {
-        credentials: "include",
-      });
-      return response.ok;
+      const response = await http.get("/profile");
+      return response.status >= 200 && response.status < 300;
     } catch (error) {
       return false;
     }
