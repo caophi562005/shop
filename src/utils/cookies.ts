@@ -60,7 +60,7 @@ export const hasAuthCookies = (): boolean => {
 export const hasAuthCookiesAsync = async (): Promise<boolean> => {
   try {
     const response = await http.get("/profile");
-    return response.status >= 200 && response.status < 300;
+    return response.status >= 200 && response.status <= 304;
   } catch (error) {
     return false;
   }

@@ -124,7 +124,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   checkAuthCookiesAsync: async () => {
     try {
       const response = await http.get("/profile");
-      return response.status >= 200 && response.status < 300;
+      return response.status >= 200 && response.status <= 304;
     } catch (error) {
       return false;
     }
