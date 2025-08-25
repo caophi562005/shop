@@ -41,6 +41,7 @@ export const checkAuthStatusLite = async (): Promise<AuthCheckResponse> => {
 /**
  * Kiểm tra auth bằng fetch (bypass interceptors)
  */
+
 export const checkAuthByFetch = async (): Promise<boolean> => {
   try {
     const response = await fetch(
