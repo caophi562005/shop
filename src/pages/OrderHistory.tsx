@@ -232,7 +232,7 @@ const OrderHistory: React.FC = () => {
           <div className="empty-state">
             <i className="fas fa-shopping-bag empty-icon"></i>
             <p>Bạn chưa có đơn hàng nào.</p>
-            <Link to="/" className="btn-shopping">
+            <Link to="/products/sale" className="btn-shopping">
               Tiếp tục mua sắm
             </Link>
           </div>

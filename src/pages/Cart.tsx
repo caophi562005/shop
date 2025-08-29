@@ -420,7 +420,7 @@ const Cart: React.FC = () => {
             <div className="empty-cart">
               <i className="fas fa-shopping-cart empty-icon"></i>
               <p>Giỏ hàng của bạn đang trống.</p>
-              <a href="/products" className="btn-shopping">
+              <a href="/products/sale" className="btn-shopping">
                 Tiếp tục mua sắm
               </a>
             </div>

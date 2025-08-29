@@ -2,6 +2,8 @@ import axios, { AxiosError } from "axios";
 import type { AxiosRequestConfig } from "axios";
 import envConfig from "../envConfig";
 import { toast } from "react-toastify";
+import { languageUtils } from "../utils/language";
+import { shouldExcludeLang } from "../constants/api.constant";
 
 axios.defaults.withCredentials = true;
 
@@ -35,19 +37,59 @@ async function refreshAccessToken(): Promise<unknown> {
   return refreshTokenRequest;
 }
 
+// Add request interceptor to add lang query parameter
+http.interceptors.request.use(
+  (config) => {
+    const currentLang = languageUtils.getCurrentLanguage();
+
+    // Check if this endpoint should exclude lang parameter
+    const shouldExclude = shouldExcludeLang(config.url || "");
+
+    // Only add lang query parameter if not in exclude list
+    if (!shouldExclude) {
+      if (!config.params) {
+        config.params = {};
+      }
+      config.params.lang = currentLang;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 http.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ErrorResponse>) => {
     const originalRequest = error.config as ExtendedAxiosRequestConfig;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Không retry nếu đang gọi refresh-token endpoint
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh-token")
+    ) {
       originalRequest._retry = true;
       try {
         await refreshAccessToken();
         return http(originalRequest);
-      } catch {
-        window.dispatchEvent(new CustomEvent("auth:logout"));
+      } catch (refreshError) {
+        console.log("Refresh token failed:", refreshError);
+        // Trigger event để xử lý refresh token failure
+        window.dispatchEvent(new CustomEvent("auth:refresh-failed"));
       }
+    }
+
+    // Nếu là refresh-token endpoint bị 401, trigger auth failure ngay
+    if (
+      error.response?.status === 401 &&
+      originalRequest.url?.includes("/auth/refresh-token")
+    ) {
+      console.log("Refresh token endpoint returned 401");
+      window.dispatchEvent(new CustomEvent("auth:refresh-failed"));
+      return Promise.reject(error); // Không hiển thị toast cho refresh token error
     }
 
     handleErrorDisplay(error);

@@ -7,6 +7,7 @@ import type {
 } from "../models/profile.model";
 import http from "../api/http";
 import type { UpdateProfileResType } from "../models/shared/shared-user.model";
+import axios from "axios";
 
 const ProfilePage: React.FC = () => {
   // State để lưu trữ dữ liệu form
@@ -22,6 +23,59 @@ const ProfilePage: React.FC = () => {
       newPassword: "",
       confirmNewPassword: "",
     });
+
+  // Upload states
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleAvatarUpload = (file: File) => {
+    setUploadingAvatar(true);
+    setUploadProgress(0);
+
+    http
+      .post(
+        "/media/images/upload/presigned-url",
+        {
+          filename: file.name,
+          filesize: file.size,
+        },
+        { withCredentials: false }
+      )
+      .then((res) => {
+        const url = res.data.url;
+        const presignedUrl = res.data.presignedUrl;
+
+        return axios
+          .put(presignedUrl, file, {
+            headers: {
+              "Content-Type": file.type,
+            },
+            withCredentials: false,
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                setUploadProgress(progress);
+              }
+            },
+          })
+          .then(() => {
+            return url;
+          });
+      })
+      .then((finalUrl) => {
+        setFormDataProfile((prev) => ({ ...prev, avatar: finalUrl }));
+        setUploadingAvatar(false);
+        setUploadProgress(0);
+      })
+      .catch((error) => {
+        console.error("Upload failed:", error);
+        alert("Upload avatar thất bại! Vui lòng thử lại.");
+        setUploadingAvatar(false);
+        setUploadProgress(0);
+      });
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -102,14 +156,70 @@ const ProfilePage: React.FC = () => {
             </div>
             <div className="field">
               <label htmlFor="f-email">Avatar</label>
-              <input
-                id="f-email"
-                type="text"
-                name="avatar"
-                value={formDataProfile.avatar ?? ""}
-                onChange={handleChangeProfile}
-                required
-              />
+              <div className="field-group">
+                <input
+                  id="f-email"
+                  type="text"
+                  name="avatar"
+                  value={formDataProfile.avatar ?? ""}
+                  onChange={handleChangeProfile}
+                  disabled={uploadingAvatar}
+                  required
+                />
+
+                {/* Upload button */}
+                <label className="btn-upload">
+                  📁 Upload
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleAvatarUpload(file);
+                      }
+                    }}
+                    disabled={uploadingAvatar}
+                    style={{ display: "none" }}
+                  />
+                </label>
+              </div>
+
+              {/* Progress bar */}
+              {uploadingAvatar && (
+                <div className="upload-progress">
+                  <div
+                    className="progress-bar"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                  <span>{uploadProgress}%</span>
+                </div>
+              )}
+
+              {/* Avatar preview */}
+              {formDataProfile.avatar && (
+                <div className="avatar-preview" style={{ marginTop: "10px" }}>
+                  {formDataProfile.avatar.startsWith("http") ? (
+                    <div>
+                      <span>Avatar hiện tại:</span>
+                      <img
+                        src={formDataProfile.avatar}
+                        alt="Avatar preview"
+                        style={{
+                          width: "80px",
+                          height: "80px",
+                          objectFit: "cover",
+                          borderRadius: "50%",
+                          marginLeft: "10px",
+                          border: "3px solid #ff6f00",
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <span>Avatar: {formDataProfile.avatar}</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <hr />
