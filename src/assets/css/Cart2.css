@@ -320,17 +320,35 @@ body {
   background: var(--accent);
   color: white;
   border-radius: 8px;
-  text-decoration: none;
+  border: none;
   margin-top: 24px;
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
+  cursor: pointer;
+  width: 100%;
 }
 
-.btn-payment:hover {
+.btn-payment:hover:not(.disabled) {
   background: #e68900;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 152, 0, 0.3);
+}
+
+.btn-payment.disabled {
+  background: #bdc3c7;
+  color: #7f8c8d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-payment:disabled {
+  background: #bdc3c7;
+  color: #7f8c8d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Empty Cart */

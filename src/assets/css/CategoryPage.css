@@ -14,10 +14,50 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+  flex-wrap: wrap;
   gap: 20px;
 }
 
+.filter_shopAlll {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: nowrap; /* Không cho wrap để 2 dropdown cùng hàng */
+}
+
+@media (max-width: 768px) {
+  .contentProducts_navigate {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .filter_shopAlll {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .filter-results-text {
+    text-align: center;
+  }
+
+  .filter-dropdowns {
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .custom-dropdown {
+    width: 160px;
+    font-size: 13px;
+  }
+
+  .custom-dropdown .selected {
+    padding: 8px 12px;
+  }
+}
 .title_navigate {
   font-size: 1rem;
   color: #555;
@@ -34,16 +74,31 @@
 
 .filter_shopAlll {
   display: flex;
-  gap: 15px;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.filter-results-text {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.filter-dropdowns {
+  display: flex;
+  gap: 12px;
   align-items: center;
 }
 
-/* === SORTING DROPDOWN === */
+/* === FILTER DROPDOWNS === */
 .custom-dropdown {
   position: relative;
-  width: 230px;
+  width: 200px; /* Fixed width để 2 dropdown đồng nhất */
   user-select: none;
+  font-size: 14px;
 }
 
 .custom-dropdown .selected {
@@ -55,30 +110,48 @@
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .custom-dropdown .selected:hover {
   border-color: #999;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.custom-dropdown.open .selected {
+  border-color: #007bff;
+}
+
+.custom-dropdown .selected span:last-child {
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.custom-dropdown.open .selected span:last-child {
+  transform: rotate(180deg);
 }
 
 .custom-dropdown .options {
   position: absolute;
   top: 110%;
   left: 0;
-  width: 100%;
+  right: 0;
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.3s ease;
-  z-index: 100;
+  z-index: 1000;
+  border: 1px solid #ddd;
+  max-height: 250px;
+  overflow-y: auto;
 }
 
 .custom-dropdown.open .options {
@@ -90,13 +163,65 @@
 .custom-dropdown .options li {
   padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
   font-weight: 500;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.custom-dropdown .options li:last-child {
+  border-bottom: none;
 }
 
 .custom-dropdown .options li:hover {
-  background: #f5f5f5;
-  color: #000;
+  background: #f8f9fa;
+  color: #333;
+}
+
+/* Loading state styling */
+.filter-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.filter-loading::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e3e3e3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth fade in animation for products */
+.products_home {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* === PRODUCT GRID === */
@@ -166,14 +291,19 @@
 
 .product-name {
   font-weight: bold;
-  color: #333;
-  margin-bottom: 8px;
-  height: 42px; /* Giữ 2 dòng */
-  line-height: 1.4;
+  color: #333; /* Màu đen cho các trang category */
+  margin-bottom: 6px; /* Giảm margin */
+  height: 52px; /* Tăng chiều cao để hiển thị tốt hơn */
+  line-height: 1.3; /* Giảm line-height một chút */
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  hyphens: auto; /* Tự động ngắt từ */
+  font-size: 0.9rem; /* Giảm kích thước font một chút */
 }
 
 .product-price {

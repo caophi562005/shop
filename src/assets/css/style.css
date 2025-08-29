@@ -191,6 +191,46 @@ header {
   background-color: rgba(238, 80, 34, 0.1);
 }
 
+/* Avatar Button Styles */
+.account-menu .menu-button {
+  transition: transform 0.3s ease;
+}
+
+.account-menu .menu-button:hover {
+  transform: scale(1.1);
+}
+
+.account-menu .menu-button:focus {
+  outline: 2px solid rgba(255, 152, 0, 0.5);
+  outline-offset: 2px;
+}
+
+/* Avatar specific styles */
+.user-avatar-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar-container::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, transparent, rgba(255, 152, 0, 0.3));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.user-avatar-container:hover::after {
+  opacity: 1;
+}
+
 /* --- FOOTER --- */
 footer {
   background-color: #000;
@@ -287,6 +327,11 @@ footer {
 
 /* Mobile */
 @media (max-width: 768px) {
+  /* Debug - add border to check if media query works */
+  body {
+    border-top: 3px solid red;
+  }
+
   .content {
     padding-top: 60px; /* Header nhỏ hơn */
   }
@@ -298,6 +343,9 @@ footer {
   }
 
   .logo_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     flex: 1; /* Chiếm không gian còn lại */
   }
   .logo_header img {
@@ -310,40 +358,106 @@ footer {
     margin-left: auto;
   }
   .menu_toggle {
-    display: block; /* Hiện hamburger */
-    order: 2;
+    display: block !important; /* Hiện hamburger - override desktop none */
+    margin-left: auto; /* Đẩy về bên phải trong logo_header */
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 22px;
+    padding: 8px;
   }
   .header_search_wrapper {
     display: none; /* Ẩn search trên mobile để gọn */
   }
 
-  /* Menu mobile */
+  /* Menu mobile - Slide bar từ bên trái */
   .nav_container {
-    display: none; /* Ẩn menu mặc định */
-    position: absolute;
-    top: 60px; /* Ngay dưới header */
-    left: 0;
-    width: 100%;
+    display: block !important; /* Override desktop flex */
+    position: fixed;
+    top: 0;
+    left: -300px; /* Ẩn bên trái */
+    width: 300px;
+    height: 100vh;
     background-color: #111;
+    transition: left 0.3s ease-in-out;
+    z-index: 1001; /* Cao hơn overlay */
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    flex: none; /* Remove flex properties */
+    justify-content: initial;
   }
+
   .nav_container.open {
-    display: block; /* Hiện khi click */
+    left: 0; /* Slide vào từ bên trái */
   }
+
   .navigate_header {
+    display: flex !important; /* Ensure flex is applied */
     flex-direction: column;
     align-items: flex-start;
-    padding: 10px 0;
+    padding: 0;
     gap: 0;
+    margin-top: 0; /* Removed vì đã có sidebar-header */
   }
+
   .navigate_header li {
     width: 100%;
+    border-bottom: 1px solid #333;
   }
+
+  .navigate_header li:last-child {
+    border-bottom: none;
+  }
+
   .title_header {
     padding: 15px 20px;
     width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
   }
+
+  .title_header:hover {
+    background-color: #222;
+  }
+
   .mega_menu {
-    display: none !important; /* Không dùng mega menu trên mobile */
+    position: static;
+    transform: none;
+    min-width: 100%;
+    background: #222;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+  }
+
+  .mega_menu.mobile-open {
+    display: block;
+    max-height: 300px; /* Adjust theo nhu cầu */
+  }
+
+  .mega_menu .column {
+    padding: 0;
+  }
+
+  .mega_menu a {
+    color: #ccc;
+    padding: 12px 40px; /* Indent để thể hiện đây là subcategory */
+    border-bottom: 1px solid #333;
+    background: #222;
+  }
+
+  .mega_menu a:hover {
+    background: #333;
+    color: #ee5022;
+    transform: none;
   }
 
   /* Footer */
