@@ -1,7 +1,8 @@
+import axios from "axios";
 import React, { useState } from "react";
-import "../assets/css/feedbackfrom.css";
-import http from "../api/http";
 import { toast } from "react-toastify";
+import http from "../api/http";
+import "../assets/css/feedbackfrom.css";
 import LightboxModal from "./LightboxModal";
 
 interface MediaItem {
@@ -28,6 +29,10 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Upload states
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   // Lightbox state
   const [showLightbox, setShowLightbox] = useState<boolean>(false);
   const [lightboxImages, setLightboxImages] = useState<any[]>([]);
@@ -42,6 +47,60 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
       setMedias([...medias, newMedia]);
       setMediaUrl("");
     }
+  };
+
+  const handleMediaUpload = (file: File) => {
+    setUploadingMedia(true);
+    setUploadProgress(0);
+
+    http
+      .post(
+        "/media/images/upload/presigned-url",
+        {
+          filename: file.name,
+          filesize: file.size,
+        },
+        { withCredentials: false }
+      )
+      .then((res) => {
+        const url = res.data.url;
+        const presignedUrl = res.data.presignedUrl;
+
+        return axios
+          .put(presignedUrl, file, {
+            headers: {
+              "Content-Type": file.type,
+            },
+            withCredentials: false,
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                setUploadProgress(progress);
+              }
+            },
+          })
+          .then(() => {
+            return url;
+          });
+      })
+      .then((finalUrl) => {
+        const newMedia: MediaItem = {
+          url: finalUrl,
+          type: "IMAGE",
+        };
+        setMedias((prev) => [...prev, newMedia]);
+        setUploadingMedia(false);
+        setUploadProgress(0);
+        toast.success("Upload ảnh thành công!");
+      })
+      .catch((error) => {
+        console.error("Upload failed:", error);
+        toast.error("Upload ảnh thất bại! Vui lòng thử lại.");
+        setUploadingMedia(false);
+        setUploadProgress(0);
+      });
   };
 
   const handleRemoveMedia = (index: number) => {
@@ -155,15 +214,45 @@ const FeedbackFormComponent: React.FC<FeedbackFormProps> = ({
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
                 placeholder="Nhập URL hình ảnh hoặc video"
+                disabled={uploadingMedia}
               />
               <button
                 type="button"
                 onClick={handleAddMedia}
                 className="add-media-btn"
+                disabled={uploadingMedia}
               >
                 Thêm
               </button>
+
+              {/* Upload button */}
+              <label className="add-media-btn upload-btn">
+                📁 Upload
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleMediaUpload(file);
+                    }
+                  }}
+                  disabled={uploadingMedia}
+                  style={{ display: "none" }}
+                />
+              </label>
             </div>
+
+            {/* Progress bar */}
+            {uploadingMedia && (
+              <div className="upload-progress">
+                <div
+                  className="progress-bar"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+                <span>{uploadProgress}%</span>
+              </div>
+            )}
 
             {medias.length > 0 && (
               <div className="media-list">
