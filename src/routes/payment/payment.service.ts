@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
-import { PaymentRepository } from './payment.repo'
-import { WebhookPaymentBodyType } from './payment.model'
-import { PaymentGateway } from './payment.gateway'
 import { SharedNotificationRepository } from 'src/shared/repositories/shared-notification.repo'
+import { PaymentGateway } from './payment.gateway'
+import { WebhookPaymentBodyType } from './payment.model'
+import { PaymentRepository } from './payment.repo'
 
 @Injectable()
 export class PaymentService {
@@ -19,7 +19,7 @@ export class PaymentService {
     }
     this.sharedNotificationService.create({
       userId,
-      content: `Your payment #${paymentId} has been received.`,
+      content: `Bạn đã thanh toán #${paymentId} thành công.`,
     })
     return {
       message: 'Payment success',

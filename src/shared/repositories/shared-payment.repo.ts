@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from '../services/prisma.service'
 import { OrderStatus } from '@prisma/client'
 import { PaymentStatus } from '../constants/payment.constant'
+import { PrismaService } from '../services/prisma.service'
 import { SharedNotificationRepository } from './shared-notification.repo'
 
 @Injectable()
@@ -79,7 +79,7 @@ export class SharedPaymentRepository {
 
       const notification$ = this.sharedNotificationRepository.create({
         userId,
-        content: `Your payment #${paymentId} has been cancelled.`,
+        content: `Thanh toán #${paymentId} đã bị hủy.`,
       })
 
       return await Promise.all([updateOrder$, updateSkus$, updatePayment$, notification$])
