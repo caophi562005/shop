@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import http from "../api/http";
 import "../assets/css/profile.css";
 import type {
   ChangePasswordBodyType,
   UpdateMeBodyType,
 } from "../models/profile.model";
-import http from "../api/http";
 import type { UpdateProfileResType } from "../models/shared/shared-user.model";
-import axios from "axios";
 
 const ProfilePage: React.FC = () => {
   // State để lưu trữ dữ liệu form
@@ -148,7 +148,7 @@ const ProfilePage: React.FC = () => {
               <input
                 id="f-phone"
                 type="text"
-                name="phone"
+                name="phoneNumber"
                 value={formDataProfile.phoneNumber}
                 onChange={handleChangeProfile}
                 required
